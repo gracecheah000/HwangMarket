@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "init": "^0.1.2",
+    "npm": "^8.19.2"
+  },
+  "devDependencies": {
+    "hardhat": "^2.11.2"
+  }
+}
