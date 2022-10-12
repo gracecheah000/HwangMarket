@@ -1,7 +1,8 @@
 # HwangMarket
 
 ## Truffle & Ganache
-Truffle - a development environment utilizing the EVM (Ethereum Virtual Machine) as a basis. ]
+Truffle - a development environment utilizing the EVM (Ethereum Virtual Machine) as a basis. 
+
 Ganache - tool to set up your own local Ethereum blockchain that you can use to deploy and test your smart contracts/dApps before launching them on an authentic chain.
   1. Download Ganache UI: https://trufflesuite.com/ganache/
       - Once downloaded, create an Ethereum workspace 
