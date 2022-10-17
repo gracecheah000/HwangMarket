@@ -109,10 +109,10 @@ Below, shows a quick way to top up the `gamba` contract balance amount.
 ```
 truffle(development)> gamba.getBalance();
 BN { negative: 0, words: [ 0, <1 empty item> ], length: 1, red: null }
-truffle(development)> const player1 = (await web3.eth.getAccounts())[0];
 
 truffle(development)> const John = (await web3.eth.getAccounts())[0];
 undefined
+
 truffle(development)> gamba.sendTransaction({from: John, value:21})
 {
   tx: '0x4d85042b958a82e9ae2ea421cdd76062bb4fde5eb4c007ee99c3e5ef2e034fdb',
@@ -133,6 +133,7 @@ truffle(development)> gamba.sendTransaction({from: John, value:21})
   },
   logs: []
 }
+
 truffle(development)> await gamba.getBalance();
 BN { negative: 0, words: [ 21, <1 empty item> ], length: 1, red: null }
 ```
