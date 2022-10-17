@@ -32,25 +32,25 @@ npm install ganache
 
 # Developing on local
 
-##### 1. Enter developement console:
+#### 1. Enter developement console:
 
 ```
 truffle console
 ```
 
-##### 2. Compiling contracts ABI:
+#### 2. Compiling contracts ABI:
 
 ```
 truffle(development)> compile
 ```
 
-##### 3. Deploying to local ganache:
+#### 3. Deploying to local ganache:
 
 ```
 truffle(development)> migrate
 ```
 
-##### 4. Deploying main HwangMarket contract
+#### 4. Deploying main HwangMarket contract
 
 ```
 truffle(development)> let hMket = await HwangMarket.deployed();
@@ -61,7 +61,7 @@ undefined
 
 > Noob note: Returned output is undefined, but if you just enter hMket, you will see it is indeed deployed. It is only a problem if you get an error here. Obviously, you can also interact with the contract instance here, such as finding out its address and balance, etc.
 
-##### 5. Create a new game contract via HwangMarket main contract
+#### 5. Create a new game contract via HwangMarket main contract
 
 Call the createGame method. You can confirm the trx hash being returned.
 
@@ -71,7 +71,7 @@ truffle(development)> await hMket.createGame();
 
 ![get funded test accounts](pics/create_game.png)
 
-##### 6. Get the address of the game contract that was just created.
+#### 6. Get the address of the game contract that was just created.
 
 To get the address of the game contract that was just created, we need to reference the HwangMarket main contract's public map `gameContractRegistry`.
 
@@ -87,13 +87,13 @@ truffle(development)> hMket.methods["gameContractRegistry(uint256)"].call(0);
 '0x625a021D3aa2Bf3E26eA455e3cF2e1AD7C83554D'
 ```
 
-##### 7. Get an instance of the game contract that was just created.
+#### 7. Get an instance of the game contract that was just created.
 
 ```
 let gamba = await GameContract.at('0x625a021D3aa2Bf3E26eA455e3cF2e1AD7C83554D');
 ```
 
-##### 8. Invoking the game contract's methods.
+#### 8. Invoking the game contract's methods.
 
 ```
 truffle(development)> gamba.getBalance();
