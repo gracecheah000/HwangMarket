@@ -15,12 +15,18 @@ contract GameContract {
 
   address public creator; 
   GameStatus public status;
-  mapping(address => uint256) betRecords;
-  mapping(address => hasWithdrawn) winningWithdrawals;
+  uint8 public gameOutcome; // 0 - NO, 1 - YES, 2 - undetermined
+  uint256 public gameResolveTime;
+  mapping(address => uint8) betSides; // whether user bets yes or no
+  mapping(address => uint256) betRecords; // bet amount user committed (in wei)
+  mapping(address => hasWithdrawn) winningWithdrawals; // indicate if user has already withdrawn winnings
+  mapping(uint8 => uint256) amtPlacedOnSide; // remember how much amount is placed on each side
   
-  constructor(address _creator) {
+  constructor(address _creator, uint256 resolveTime) {
     creator = _creator;
     status = GameStatus.OPEN;
+    gameResolveTime = resolveTime; // set when the game is allowed to conclude
+    gameOutcome = 2; // explicitly set gameOutcome to undecided
   }
 
   // to check if message sent is by creator
@@ -30,8 +36,6 @@ contract GameContract {
         creator == msg.sender,
         "You are not the creator of this game!"
       );
-    } else {
-      require(creator != msg.sender, "You are the creator of this game.");
     }
     _;
   }
@@ -49,14 +53,19 @@ contract GameContract {
 
   // payable keyword should allow depositing of ethereum into smart contract
   // allow msg.sender address to register as a player
-  function addPlayer(address _player, uint256 _ethAmount) 
+  function addPlayer(address _player, uint256 _ethAmount, uint8 betSide)
     payable
     public
     isCreator(false) {
       require(msg.value <= _player.balance, "You do not have enough balance"); 
       require(_player == msg.sender, "Invalid Transaction");
       require(msg.value == _ethAmount); 
+      require(status == GameStatus.OPEN);
+      
+      // book keeping
       betRecords[msg.sender] = msg.value; // add players and corresponding amount deposited into mapping
+      betSides[msg.sender] = betSide; // add player to side he bets on
+      amtPlacedOnSide[betSide] += _ethAmount;
     }
 
   // allow creator to cancel the game created.
@@ -64,13 +73,24 @@ contract GameContract {
     status = GameStatus.CLOSED;
   }
 
+  // TODO: get decision from oracle instead, for now we let creater close and set game outcome
+  function performUpkeep(uint8 _gameOutcome) public isCreator(true) {
+    require(block.timestamp >= gameResolveTime);
+    status = GameStatus.CLOSED;
+    gameOutcome = _gameOutcome;
+  }
+
   // allow winners to withdraw their winnings
   function withdrawWinnings(address payable _player) public {
-    require(msg.sender == _player);
-    require(betRecords[msg.sender] == 0);
+    require(msg.sender == _player); //restrict only winner can withdraw his/her own winnings
+    require(betRecords[msg.sender] > 0); // player must have bet something
+    require(status == GameStatus.CLOSED); // game must be closed
+    require(gameOutcome == betSides[_player]); // player must be on winning side
+
     // where to calculate amount of winnings
-    uint256 amount = 0;
-    _player.transfer(amount);
+    // calculated winnings = (player's bet amount / total bet amount on winning side) * total bet amount on losing side
+    uint256 winnings = (betRecords[_player] / amtPlacedOnSide[gameOutcome]) * amtPlacedOnSide[gameOutcome ^ 1];
+    _player.transfer(winnings);
   }
 
   // to get smart contract's balance
@@ -78,4 +98,7 @@ contract GameContract {
     return address(this).balance;
   }
 
+  // @notice Will receive any eth sent to the contract
+  receive() external payable {
+  }
 }
