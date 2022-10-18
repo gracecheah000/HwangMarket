@@ -211,3 +211,156 @@ BN { negative: 0, words: [ 13, <1 empty item> ], length: 1, red: null }
 truffle(development)> ga.getSideAmt(1);
 BN { negative: 0, words: [ 21, <1 empty item> ], length: 1, red: null }
 ```
+
+## Connecting to Goerli test network
+
+#### 1. Run the truffle console in goerli network.
+
+Already configured in `truffle-config.js`. You only need to run:
+
+```
+npx truffle console --network goerli
+```
+
+This is useful for connecting to chainlink, since using chainlink in local ganache requires us forking the block and running it locally on our network.
+
+#### 2. Top up your test wallet.
+
+First, check your wallet's balance, which should be zero initially. Then, request for a top up in [goerli faucet](https://goerlifaucet.com/).
+
+Paste the following address into the wallet address input on goerli faucet.
+
+```
+❯ npx truffle console --network goerli
+truffle(goerli)> await web3.eth.getBalance(accounts[0])
+'0'
+truffle(goerli)> accounts[0]
+'0x6Fe9af369bF80b2D18f66a5606383a5f8f83eC9B'
+
+// after getting some goerli eth
+truffle(goerli)> await web3.eth.getBalance(accounts[0])
+'100000000000000000'
+```
+
+#### 3. Developing on the testnet
+
+Just run `compile` and `migrate` to compile and deploy the contract like in local ganache.
+
+```
+truffle(goerli)> compile
+
+Compiling your contracts...
+===========================
+> Compiling ./contracts/GameContract.sol
+> Compiling ./contracts/HwangMarket.sol
+> Compilation warnings encountered:
+
+    Warning: Visibility for constructor is ignored. If you want the contract to be non-deployable, making it "abstract" is sufficient.
+  --> project:/contracts/HwangMarket.sol:12:3:
+   |
+12 |   constructor() public {
+   |   ^ (Relevant source part starts here and spans across multiple lines).
+
+
+> Artifacts written to /Users/gerald/Desktop/HwangMarket/build/contracts
+> Compiled successfully using:
+   - solc: 0.8.17+commit.8df45f5f.Emscripten.clang
+truffle(goerli)> migrate
+
+Compiling your contracts...
+===========================
+> Everything is up to date, there is nothing to compile.
+
+
+Starting migrations...
+======================
+> Network name:    'goerli'
+> Network id:      5
+> Block gas limit: 30000000 (0x1c9c380)
+
+
+2_deploy_contracts.js
+=====================
+
+   Deploying 'HwangMarket'
+   -----------------------
+   > transaction hash:    0x7ea92d9eb1314fa62550b44ce11209647b4c25716730c6b6c8ca002fb03b1f64
+   > Blocks: 2            Seconds: 25
+   > contract address:    0x0b0A553581c91FB635e8D28C9b8a8D4C8273A456
+   > block number:        7791142
+   > block timestamp:     1666099032
+   > account:             0x6Fe9af369bF80b2D18f66a5606383a5f8f83eC9B
+   > balance:             0.09047221062612016
+   > gas used:            1567776 (0x17ec20)
+   > gas price:           6.077264465 gwei
+   > value sent:          0 ETH
+   > total cost:          0.00952778937387984 ETH
+
+   Pausing for 2 confirmations...
+
+   -------------------------------
+   > confirmation number: 1 (block: 7791143)
+   > confirmation number: 2 (block: 7791144)
+   > Saving artifacts
+   -------------------------------------
+   > Total cost:     0.00952778937387984 ETH
+
+Summary
+=======
+> Total deployments:   1
+> Final cost:          0.00952778937387984 ETH
+
+```
+
+You can also view the above trx on etherscan for goerli:
+https://goerli.etherscan.io/tx/0x7ea92d9eb1314fa62550b44ce11209647b4c25716730c6b6c8ca002fb03b1f64
+
+#### Getting the latest price of ETH / USD from chainlink
+
+```
+truffle(goerli)>  ( await gamba.getLatestPrice()).toString();
+'133160765596'
+truffle(goerli)>  ( await gamba.getLatestPrice()).toString();
+'132482575965'
+```
+
+The value is repesented with 8 decimal points and the price only updates when a 1% deviation is recorded. Reference for other price feeds on goerli testnet:
+https://docs.chain.link/docs/data-feeds/price-feeds/addresses/
+
+# Running the entire test contract
+
+1. Create the HwangMarket contract in goerli test net.
+2. Configure accounts list to use those accounts with balance in them.
+
+```
+// replace accounts[i] with whatever you want.
+truffle(goerli)> let accounts = await web3.eth.getAccounts();
+
+// as an example
+truffle(goerli)> Sandy = accounts[1]
+```
+
+3. Create the game contract and hold a reference to its instance by looking up its address in the main contract's game registry mapping.
+4. Add players to any side
+
+```
+truffle(goerli)> x.addPlayer(Sandy, 3, 1, {value: 3, from: Sandy});
+truffle(goerli)> x.addPlayer(accounts[0], 3, 0, {value: 3, from: accounts[0]});
+```
+
+> Note you would most likely need to specify the optional from param, since we assert that only players can self register, we cannot register on their behalf. 5. Run the perform upkeep function whenever ready.
+
+```
+truffle(goerli)> await x.performUpkeep();
+```
+
+6. Then withdraw a player's winnings whenever.
+
+```
+truffle(goerli)> await x.withdrawWinnings(Sandy);
+
+truffle(goerli)> await web3.eth.getBalance(Sandy)
+'20904606684859864'
+```
+
+Boom, we should have a basic contract that bets if ETH / USD is at least 1350 after 5 minutes when the contract is already created. The next goal would be to then focus on making contract creation more flexible since the above is only an example for what a game could look like.

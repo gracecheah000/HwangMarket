@@ -14,7 +14,10 @@ contract HwangMarket {
 
   // create game contract instance
   function createGame() public returns (address) {
-    GameContract newGame = new GameContract(msg.sender, block.timestamp + 100000); // only resolve after 100s from now
+    // 0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e   <- Goerli ETH / USD
+    // for testing purposes, only allow resolve after 5min from contract creation from now
+    // the contract below bets if eth will break 1350 USD after mins
+    GameContract newGame = new GameContract(msg.sender, block.timestamp + 300, 0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e, 135000000000); 
     gameContractRegistry[gameCount] = address(newGame);
     gameCount = SafeMath.add(gameCount, 1);
 
