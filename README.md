@@ -137,3 +137,77 @@ truffle(development)> gamba.sendTransaction({from: John, value:21})
 truffle(development)> await gamba.getBalance();
 BN { negative: 0, words: [ 21, <1 empty item> ], length: 1, red: null }
 ```
+
+#### Adding a player to YES side.
+
+```
+truffle(development)> const ga = await GameContract.at('0xf4A41837A929bc9Aea65085a6cf71969B9514bF8');
+undefined
+truffle(development)> ga.getSideAmt(0);
+BN { negative: 0, words: [ 0, <1 empty item> ], length: 1, red: null }
+truffle(development)> ga.getSideAmt(1);
+BN { negative: 0, words: [ 0, <1 empty item> ], length: 1, red: null }
+truffle(development)> ga.addPlayer(John, 21, 1, {value: 21});
+{
+  tx: '0xbb0a0543dfe81b446ec4befd2e916072996ffe92238d138b42f208ed694c8cef',
+  receipt: {
+    transactionHash: '0xbb0a0543dfe81b446ec4befd2e916072996ffe92238d138b42f208ed694c8cef',
+    transactionIndex: 0,
+    blockHash: '0x2b368d14d84affc466e088f9cd733f9e001a3b53e5c67c7518a93ee155e367a0',
+    blockNumber: 36,
+    from: '0x2c9fd0018863a6937ed17518f428102ec9fee61f',
+    to: '0xf4a41837a929bc9aea65085a6cf71969b9514bf8',
+    gasUsed: 86624,
+    cumulativeGasUsed: 86624,
+    contractAddress: null,
+    logs: [],
+    status: true,
+    logsBloom: '0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
+    rawLogs: []
+  },
+  logs: []
+}
+truffle(development)> ga.getSideAmt(1);
+BN { negative: 0, words: [ 21, <1 empty item> ], length: 1, red: null }
+truffle(development)> ga.getBalance();
+BN { negative: 0, words: [ 21, <1 empty item> ], length: 1, red: null }
+truffle(development)> ga.betRecords(John);
+BN { negative: 0, words: [ 21, <1 empty item> ], length: 1, red: null }
+truffle(development)> ga.betSides(John);
+BN { negative: 0, words: [ 1, <1 empty item> ], length: 1, red: null }
+truffle(development)> ga.getSideAmt(0);
+BN { negative: 0, words: [ 0, <1 empty item> ], length: 1, red: null }
+```
+
+#### Adding another player
+
+Since the `addPlayer` method requires that the sender is the player, you have to specify the optional from if you wish to submit on behalf of another user.
+
+```
+truffle(development)> const Sandy = (await web3.eth.getAccounts())[1];
+undefined
+truffle(development)> ga.addPlayer(Sandy, 13, 0, {value: 13, from: Sandy});
+{
+  tx: '0x21654b61a5befce01d88403dabb9fa4d3fe460684846b65e381c39ca25a3ce39',
+  receipt: {
+    transactionHash: '0x21654b61a5befce01d88403dabb9fa4d3fe460684846b65e381c39ca25a3ce39',
+    transactionIndex: 0,
+    blockHash: '0x57f12d17f807cee6bf88bdacd9eb2c4e6185d4392b5e1917bcea00a732e020d3',
+    blockNumber: 37,
+    from: '0x08a5c12e1488174e19c3fbac4a72995185bc190f',
+    to: '0xf4a41837a929bc9aea65085a6cf71969b9514bf8',
+    gasUsed: 86587,
+    cumulativeGasUsed: 86587,
+    contractAddress: null,
+    logs: [],
+    status: true,
+    logsBloom: '0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
+    rawLogs: []
+  },
+  logs: []
+}
+truffle(development)> ga.getSideAmt(0);
+BN { negative: 0, words: [ 13, <1 empty item> ], length: 1, red: null }
+truffle(development)> ga.getSideAmt(1);
+BN { negative: 0, words: [ 21, <1 empty item> ], length: 1, red: null }
+```

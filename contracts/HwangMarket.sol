@@ -14,7 +14,7 @@ contract HwangMarket {
 
   // create game contract instance
   function createGame() public returns (address) {
-    GameContract newGame = new GameContract(msg.sender, block.timestamp + 100); // only resolve after 100s from now
+    GameContract newGame = new GameContract(msg.sender, block.timestamp + 100000); // only resolve after 100s from now
     gameContractRegistry[gameCount] = address(newGame);
     gameCount = SafeMath.add(gameCount, 1);
 
