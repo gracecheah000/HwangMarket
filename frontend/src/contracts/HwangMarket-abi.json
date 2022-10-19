@@ -1,0 +1,58 @@
+[
+    {
+        "inputs": [],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "gameAddr",
+                "type": "address"
+            }
+        ],
+        "name": "GameCreated",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "gameContractRegistry",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "stateMutability": "payable",
+        "type": "receive",
+        "payable": true
+    },
+    {
+        "inputs": [],
+        "name": "createGame",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+]

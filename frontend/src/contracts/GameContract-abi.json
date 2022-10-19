@@ -1,0 +1,279 @@
+[
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_creator",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "resolveTime",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "oracleAddr",
+                "type": "address"
+            },
+            {
+                "internalType": "int256",
+                "name": "thres",
+                "type": "int256"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "enum GameContract.gameSide",
+                "name": "",
+                "type": "uint8"
+            }
+        ],
+        "name": "amtPlacedOnSide",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "betRecords",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "betSides",
+        "outputs": [
+            {
+                "internalType": "enum GameContract.gameSide",
+                "name": "",
+                "type": "uint8"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "creator",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "gameOutcome",
+        "outputs": [
+            {
+                "internalType": "enum GameContract.gameSide",
+                "name": "",
+                "type": "uint8"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "gameResolveTime",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "status",
+        "outputs": [
+            {
+                "internalType": "enum GameContract.GameStatus",
+                "name": "",
+                "type": "uint8"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "threshold",
+        "outputs": [
+            {
+                "internalType": "int256",
+                "name": "",
+                "type": "int256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "winningWithdrawals",
+        "outputs": [
+            {
+                "internalType": "enum GameContract.hasWithdrawn",
+                "name": "",
+                "type": "uint8"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "stateMutability": "payable",
+        "type": "receive"
+    },
+    {
+        "inputs": [],
+        "name": "getLatestPrice",
+        "outputs": [
+            {
+                "internalType": "int256",
+                "name": "",
+                "type": "int256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getGameInfo",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            },
+            {
+                "internalType": "enum GameContract.GameStatus",
+                "name": "",
+                "type": "uint8"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_player",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_ethAmount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint8",
+                "name": "betSide",
+                "type": "uint8"
+            }
+        ],
+        "name": "addPlayer",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint8",
+                "name": "s",
+                "type": "uint8"
+            }
+        ],
+        "name": "getSideAmt",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "performUpkeep",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address payable",
+                "name": "_player",
+                "type": "address"
+            }
+        ],
+        "name": "withdrawWinnings",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getBalance",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    }
+]
