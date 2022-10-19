@@ -136,11 +136,11 @@ contract GameContract {
   // allow winners to withdraw their winnings
   function withdrawWinnings(address payable _player) public {
     require(msg.sender == _player, "cannot withdraw on someone behalf"); //restrict only winner can withdraw his/her own winnings
-    require(betRecords[msg.sender] > 0); // player must have bet something
-    require(status == GameStatus.CLOSED); // game must be closed
-    require(gameOutcome == betSides[_player]); // player must be on winning side
-    require(gameOutcome != gameSide.UNKNOWN); // player must be on winning side
-    require(gameOutcome != hasWithdrawn.YES); // player must not have already withdrawn
+    require(betRecords[msg.sender] > 0, "player must have bet something"); // player must have bet something
+    require(status == GameStatus.CLOSED, "game is not yet closed"); // game must be closed
+    require(gameOutcome == betSides[_player], "player must be on winning side"); // player must be on winning side
+    require(gameOutcome != gameSide.UNKNOWN, "game outcome cannot be unknown"); // game outcome cannot be unknown
+    require(winningWithdrawals[_player] != hasWithdrawn.YES, "player has already withdrawn winnings"); // player must not have already withdrawn
 
     // where to calculate amount of winnings
     // calculated winnings = (player's bet amount / total bet amount on winning side) * total bet amount on losing side

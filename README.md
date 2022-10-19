@@ -1,5 +1,10 @@
 # HwangMarket
 
+## IMPT notes:
+
+After updating your contracts, remember to update the contract address in frontend/util/interact.js
+and also run the helper script with `python3 helper.py` in the root to move the newly compiled contract's ABI to be referenced, otherwise you would still be working with the old contract ABI.
+
 ## Truffle & Ganache
 
 Truffle - a development environment utilizing the EVM (Ethereum Virtual Machine) as a basis.

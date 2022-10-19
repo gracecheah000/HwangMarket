@@ -43,7 +43,23 @@
         "payable": true
     },
     {
-        "inputs": [],
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "resolveTime",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "oracleAddr",
+                "type": "address"
+            },
+            {
+                "internalType": "int256",
+                "name": "threshold",
+                "type": "int256"
+            }
+        ],
         "name": "createGame",
         "outputs": [
             {
@@ -54,5 +70,31 @@
         ],
         "stateMutability": "nonpayable",
         "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getAllGames",
+        "outputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "uint256",
+                        "name": "id",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "addr",
+                        "type": "address"
+                    }
+                ],
+                "internalType": "struct HwangMarket.GameIdAndAddr[]",
+                "name": "",
+                "type": "tuple[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
     }
 ]
