@@ -19,7 +19,7 @@ import {
   Tooltip,
   NumberInput,
   NumberInputField,
-  useColorMode,
+  Input,
 } from "@chakra-ui/react";
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -39,10 +39,11 @@ import {
   connectWallet,
 } from "../util/interact";
 
-const CreateGame = ({ walletAddress, setStatus }) => {
+const CreateGame = ({ walletAddress, setStatus, colorMode }) => {
   const [resolveTime, setResolveTime] = useState(new Date());
   const [threshold, setThreshold] = useState(0);
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const [title, setTitle] = useState("");
 
   const [category, setCategory] = useState("");
   const allowedCategories = [
@@ -52,8 +53,6 @@ const CreateGame = ({ walletAddress, setStatus }) => {
     "Assets",
     "Weather",
   ];
-
-  const { colorMode, toggleColorMode } = useColorMode();
 
   const [mkt, setMkt] = useState(null);
   const markets = {
@@ -155,7 +154,9 @@ const CreateGame = ({ walletAddress, setStatus }) => {
       walletAddress,
       parsedResolveTime,
       mkt.oracleAddr,
-      parsedThreshold
+      parsedThreshold,
+      category,
+      title
     );
     setStatus(status);
   };
@@ -224,7 +225,7 @@ const CreateGame = ({ walletAddress, setStatus }) => {
                   border="2px solid teal"
                   borderRadius="15px"
                   p="5"
-                  bgColor={colorMode === "light" ? "teal.100" : "teal.700"}
+                  bgColor={colorMode === "light" ? "teal.100" : "cyan.700"}
                   my="2"
                 >
                   <Box display="flex" alignItems="center" mb="2" columnGap="3">
@@ -257,6 +258,15 @@ const CreateGame = ({ walletAddress, setStatus }) => {
                 </Box>
 
                 <FormControl isRequired mt="2" mb="2">
+                  <FormLabel>Title</FormLabel>
+                  <Input
+                    placeholder="Enter a short title describing the game"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                </FormControl>
+
+                <FormControl isRequired my="5">
                   <FormLabel>Resolution time</FormLabel>
                   <DatePicker
                     id={colorMode === "dark" && "darkmode"}

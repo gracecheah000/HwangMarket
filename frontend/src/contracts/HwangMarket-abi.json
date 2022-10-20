@@ -9,6 +9,31 @@
         "inputs": [
             {
                 "indexed": false,
+                "internalType": "uint256",
+                "name": "gameId",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "gameAddr",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint8",
+                "name": "gameOutcome",
+                "type": "uint8"
+            }
+        ],
+        "name": "GameConcluded",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
                 "internalType": "address",
                 "name": "gameAddr",
                 "type": "address"
@@ -16,6 +41,138 @@
         ],
         "name": "GameCreated",
         "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "player",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "gameId",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "gameAddr",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint8",
+                "name": "betSide",
+                "type": "uint8"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "PlayerJoinedGameEvent",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "closedGames",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "id",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "addr",
+                "type": "address"
+            },
+            {
+                "internalType": "string",
+                "name": "tag",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "title",
+                "type": "string"
+            },
+            {
+                "internalType": "address",
+                "name": "oracleAddr",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "resolveTime",
+                "type": "uint256"
+            },
+            {
+                "internalType": "int256",
+                "name": "threshold",
+                "type": "int256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "totalAmount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "betYesAmount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "betNoAmount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bool",
+                "name": "ongoing",
+                "type": "bool"
+            },
+            {
+                "internalType": "uint8",
+                "name": "gameOutcome",
+                "type": "uint8"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "gameAddr2Id",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
     },
     {
         "inputs": [
@@ -28,8 +185,483 @@
         "name": "gameContractRegistry",
         "outputs": [
             {
+                "internalType": "uint256",
+                "name": "id",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "addr",
+                "type": "address"
+            },
+            {
+                "internalType": "string",
+                "name": "tag",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "title",
+                "type": "string"
+            },
+            {
+                "internalType": "address",
+                "name": "oracleAddr",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "resolveTime",
+                "type": "uint256"
+            },
+            {
+                "internalType": "int256",
+                "name": "threshold",
+                "type": "int256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "totalAmount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "betYesAmount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "betNoAmount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bool",
+                "name": "ongoing",
+                "type": "bool"
+            },
+            {
+                "internalType": "uint8",
+                "name": "gameOutcome",
+                "type": "uint8"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "address",
                 "name": "",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "historicalBets",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "trxId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "gameId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint8",
+                "name": "betSide",
+                "type": "uint8"
+            },
+            {
+                "internalType": "uint256",
+                "name": "amt",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint8",
+                "name": "betOutcome",
+                "type": "uint8"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "historicalBetsSize",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "historicalBetsTrxId2Idx",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "ongoingBets",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "trxId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "gameId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint8",
+                "name": "betSide",
+                "type": "uint8"
+            },
+            {
+                "internalType": "uint256",
+                "name": "amt",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint8",
+                "name": "betOutcome",
+                "type": "uint8"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "ongoingBetsSize",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "ongoingBetsTrxId2Idx",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "ongoingGames",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "id",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "addr",
+                "type": "address"
+            },
+            {
+                "internalType": "string",
+                "name": "tag",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "title",
+                "type": "string"
+            },
+            {
+                "internalType": "address",
+                "name": "oracleAddr",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "resolveTime",
+                "type": "uint256"
+            },
+            {
+                "internalType": "int256",
+                "name": "threshold",
+                "type": "int256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "totalAmount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "betYesAmount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "betNoAmount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bool",
+                "name": "ongoing",
+                "type": "bool"
+            },
+            {
+                "internalType": "uint8",
+                "name": "gameOutcome",
+                "type": "uint8"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "pendingWins",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "trxId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "gameId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint8",
+                "name": "betSide",
+                "type": "uint8"
+            },
+            {
+                "internalType": "uint256",
+                "name": "amt",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint8",
+                "name": "betOutcome",
+                "type": "uint8"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "pendingWinsSize",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "pendingWinsTrxId2Idx",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint8",
+                "name": "",
+                "type": "uint8"
+            }
+        ],
+        "name": "playerExistingPositions",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "playersRecords",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "trxId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "string",
+                "name": "activityType",
+                "type": "string"
+            },
+            {
+                "internalType": "uint256",
+                "name": "gameId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "trxAmt",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "trxTime",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint8",
+                "name": "gameSide",
+                "type": "uint8"
+            },
+            {
+                "internalType": "address",
+                "name": "from",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "to",
                 "type": "address"
             }
         ],
@@ -58,6 +690,16 @@
                 "internalType": "int256",
                 "name": "threshold",
                 "type": "int256"
+            },
+            {
+                "internalType": "string",
+                "name": "tag",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "title",
+                "type": "string"
             }
         ],
         "name": "createGame",
@@ -70,6 +712,107 @@
         ],
         "stateMutability": "nonpayable",
         "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getGameCount",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "X",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "Y",
+                "type": "uint256"
+            }
+        ],
+        "name": "getXtoYGame",
+        "outputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "uint256",
+                        "name": "id",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "addr",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "tag",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "title",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "oracleAddr",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "resolveTime",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "int256",
+                        "name": "threshold",
+                        "type": "int256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "totalAmount",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "betYesAmount",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "betNoAmount",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "ongoing",
+                        "type": "bool"
+                    },
+                    {
+                        "internalType": "uint8",
+                        "name": "gameOutcome",
+                        "type": "uint8"
+                    }
+                ],
+                "internalType": "struct HwangMarket.GameMetadata[]",
+                "name": "",
+                "type": "tuple[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
     },
     {
         "inputs": [],
@@ -86,9 +829,59 @@
                         "internalType": "address",
                         "name": "addr",
                         "type": "address"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "tag",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "title",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "oracleAddr",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "resolveTime",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "int256",
+                        "name": "threshold",
+                        "type": "int256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "totalAmount",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "betYesAmount",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "betNoAmount",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "ongoing",
+                        "type": "bool"
+                    },
+                    {
+                        "internalType": "uint8",
+                        "name": "gameOutcome",
+                        "type": "uint8"
                     }
                 ],
-                "internalType": "struct HwangMarket.GameIdAndAddr[]",
+                "internalType": "struct HwangMarket.GameMetadata[]",
                 "name": "",
                 "type": "tuple[]"
             }
@@ -96,5 +889,176 @@
         "stateMutability": "view",
         "type": "function",
         "constant": true
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "player",
+                "type": "address"
+            },
+            {
+                "internalType": "uint8",
+                "name": "betSide",
+                "type": "uint8"
+            },
+            {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "timestamp",
+                "type": "uint256"
+            }
+        ],
+        "name": "playerJoinedSide",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint8",
+                "name": "gameOutcome",
+                "type": "uint8"
+            }
+        ],
+        "name": "concludeGame",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "player",
+                "type": "address"
+            },
+            {
+                "internalType": "bool",
+                "name": "onlyOpen",
+                "type": "bool"
+            }
+        ],
+        "name": "queryAllPlayersTrx",
+        "outputs": [
+            {
+                "components": [
+                    {
+                        "components": [
+                            {
+                                "internalType": "uint256",
+                                "name": "trxId",
+                                "type": "uint256"
+                            },
+                            {
+                                "internalType": "uint256",
+                                "name": "gameId",
+                                "type": "uint256"
+                            },
+                            {
+                                "internalType": "uint8",
+                                "name": "betSide",
+                                "type": "uint8"
+                            },
+                            {
+                                "internalType": "uint256",
+                                "name": "amt",
+                                "type": "uint256"
+                            },
+                            {
+                                "internalType": "uint8",
+                                "name": "betOutcome",
+                                "type": "uint8"
+                            }
+                        ],
+                        "internalType": "struct HwangMarket.BetInfo[]",
+                        "name": "ongoingBets",
+                        "type": "tuple[]"
+                    },
+                    {
+                        "components": [
+                            {
+                                "internalType": "uint256",
+                                "name": "trxId",
+                                "type": "uint256"
+                            },
+                            {
+                                "internalType": "uint256",
+                                "name": "gameId",
+                                "type": "uint256"
+                            },
+                            {
+                                "internalType": "uint8",
+                                "name": "betSide",
+                                "type": "uint8"
+                            },
+                            {
+                                "internalType": "uint256",
+                                "name": "amt",
+                                "type": "uint256"
+                            },
+                            {
+                                "internalType": "uint8",
+                                "name": "betOutcome",
+                                "type": "uint8"
+                            }
+                        ],
+                        "internalType": "struct HwangMarket.BetInfo[]",
+                        "name": "winningsPending",
+                        "type": "tuple[]"
+                    },
+                    {
+                        "components": [
+                            {
+                                "internalType": "uint256",
+                                "name": "trxId",
+                                "type": "uint256"
+                            },
+                            {
+                                "internalType": "uint256",
+                                "name": "gameId",
+                                "type": "uint256"
+                            },
+                            {
+                                "internalType": "uint8",
+                                "name": "betSide",
+                                "type": "uint8"
+                            },
+                            {
+                                "internalType": "uint256",
+                                "name": "amt",
+                                "type": "uint256"
+                            },
+                            {
+                                "internalType": "uint8",
+                                "name": "betOutcome",
+                                "type": "uint8"
+                            }
+                        ],
+                        "internalType": "struct HwangMarket.BetInfo[]",
+                        "name": "historicalBets",
+                        "type": "tuple[]"
+                    }
+                ],
+                "internalType": "struct HwangMarket.PlayerTrx",
+                "name": "",
+                "type": "tuple"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [],
+        "name": "playersSwapSide",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
     }
 ]

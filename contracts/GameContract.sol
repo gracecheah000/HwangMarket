@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
+import "./HwangMarket.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 contract GameContract {
@@ -32,10 +33,35 @@ contract GameContract {
   mapping(gameSide => uint256) public amtPlacedOnSide; // remember how much amount is placed on each side
   AggregatorV3Interface internal priceFeed;
 
+
+  // Trx types constant
+  string constant BetActivityType = "BET";
+  string constant SellActivityType = "SELL";
+
+  // for every record, we track a list of transactions
+  struct Trx {
+    // Common fields
+    uint256 trxId;
+    string activityType;  // "BET", "SELL"
+    uint256 trxAmt;
+    uint256 trxTime; // when the trx was initiated
+    uint8 gameSide;
+
+    // if BET, from = game contract addr, to = player addr
+    // if SELL, from = seller addr, to = buyer addr
+    address from;
+    address to;
+  }
+  Trx[] trxs;
+  uint256 internal trxId;
+
+  HwangMarket public mainContract;
+
   // constructor takes in a resolve time, a oracleAddr (oracle address), and a threshold, 
   // where a gameSide of NO indicates < threshold, and a gameSide of YES indicates >= threshold
-  constructor(address _creator, uint256 resolveTime, address oracleAddr, int256 thres) {
+  constructor(address payable _creator, uint256 resolveTime, address oracleAddr, int256 thres) {
     creator = _creator;
+    mainContract = HwangMarket(_creator);
     status = GameStatus.OPEN;
     gameResolveTime = resolveTime; // set when the game is allowed to conclude
     gameOutcome = gameSide.UNKNOWN; // explicitly set gameOutcome to undecided
@@ -75,9 +101,12 @@ contract GameContract {
     view 
     returns (
       address,  // creator
-      GameStatus // status
+      GameStatus, // status
+      gameSide,
+      uint256,
+      int256
   ) {
-    return (creator, status);
+    return (creator, status, gameOutcome, gameResolveTime, threshold);
   }
 
   // payable keyword should allow depositing of ethereum into smart contract
@@ -90,18 +119,36 @@ contract GameContract {
       require(_player == msg.sender, "Invalid Transaction");
       require(msg.value == _ethAmount, "Msg value not equal to eth amount specified"); 
       require(status == GameStatus.OPEN, "Game is closed, no further bets accepted");
-      require(betSide == 0 || betSide == 1, "bet side is not recognised");
+      require(betSide == 1 || betSide == 2, "bet side is not recognised");
       require(block.timestamp <= gameResolveTime, "cannot put bets after resolve time");
       
       // book keeping
       betRecords[_player] = msg.value; // add players and corresponding amount deposited into mapping
-      gameSide side = gameSide.NO; // 0 - NO, 1 - YES
+      gameSide side = gameSide.NO; // 1 - YES, 2 - NO
       if (betSide == 1) {
         side = gameSide.YES;
       }
       betSides[_player] = side; // add player to side he bets on
       amtPlacedOnSide[side] += _ethAmount;
+
+      trxs.push(Trx({
+        trxId: trxId,
+        activityType: BetActivityType,
+        gameSide: betSide,
+        trxAmt: _ethAmount,
+        trxTime: block.timestamp,
+        from: address(this),
+        to: _player
+      }));
+      trxId++;
+
+      mainContract.playerJoinedSide(_player, betSide, _ethAmount, block.timestamp);
     }
+
+  // for now, we return all, can consider performing pagination here
+  function getTrxs() external view returns(Trx[] memory) {
+    return trxs;
+  }
 
   // disable any backdoor by creator
   // // allow creator to cancel the game created.
@@ -110,7 +157,7 @@ contract GameContract {
   // }
 
   function getSideAmt(uint8 s) public view returns (uint256) {
-    // require(s == 0 || s == 1, "side must be one of 0 or 1");
+    // require(s == 1 || s == 2, "side must be one of 1 or 2");
     gameSide side = gameSide.NO;
     if (s == 1) {
       side = gameSide.YES;
@@ -127,10 +174,14 @@ contract GameContract {
 
     status = GameStatus.CLOSED;
     gameSide side = gameSide.NO;
+    uint8 rawSide = 2;
     if (getLatestPrice() >= threshold) {
       side = gameSide.YES;
+      rawSide = 1;
     }
     gameOutcome = side;
+
+    mainContract.concludeGame(rawSide);
   }
 
   // allow winners to withdraw their winnings

@@ -5,7 +5,9 @@ const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
 const web3 = createAlchemyWeb3(alchemyKey);
 
 const hwangMarketABI = require("../contracts/HwangMarket-abi.json");
-const hwangMarketAddr = "0xE51afD40D2aB8aBDFF70AA255B1B855b0F9fdF51";
+const hwangMarketAddr = "0x079c1F4186C208172217fDBc63168097dF8Bdc56";
+
+const gameContractABI = require("../contracts/GameContract-abi.json");
 
 export const hwangMarket = new web3.eth.Contract(
   hwangMarketABI,
@@ -16,7 +18,9 @@ export const createAGame = async (
   address,
   resolveTime,
   oracleAddr,
-  threshold
+  threshold,
+  category,
+  title
 ) => {
   if (!window.ethereum || address === null) {
     return {
@@ -29,7 +33,13 @@ export const createAGame = async (
     to: hwangMarketAddr, // Required except during contract publications.
     from: address, // must match user's active address.
     data: hwangMarket.methods
-      .createGame(resolveTime, oracleAddr, threshold.toString())
+      .createGame(
+        resolveTime,
+        oracleAddr,
+        threshold.toString(),
+        category,
+        title
+      )
       .encodeABI(),
   };
 
@@ -79,7 +89,7 @@ export const getCurrentWalletConnected = async () => {
       } else {
         return {
           address: "",
-          status: "🦊 Connect to Metamask using the top right button.",
+          status: "🦊 Connect to Metamask",
         };
       }
     } catch (err) {
@@ -139,6 +149,52 @@ export const connectWallet = async () => {
           </p>
         </span>
       ),
+    };
+  }
+};
+
+export const joinGame = async (gameAddr, playerAddr, ethAmt, betSide) => {
+  if (!window.ethereum || !playerAddr || !gameAddr) {
+    return {
+      status:
+        "💡 Connect your Metamask wallet to update the message on the blockchain.",
+    };
+  }
+
+  const gameContract = new web3.eth.Contract(gameContractABI, gameAddr);
+
+  const transactionParameters = {
+    to: gameAddr, // Required except during contract publications.
+    from: playerAddr, // must match user's active address.
+    value: ethAmt.toString(),
+    data: gameContract.methods
+      .addPlayer(playerAddr, ethAmt, betSide)
+      .encodeABI(),
+  };
+
+  //sign the transaction
+  try {
+    const txHash = await window.ethereum.request({
+      method: "eth_sendTransaction",
+      params: [transactionParameters],
+    });
+    return {
+      status: (
+        <span>
+          ✅{" "}
+          <a target="_blank" href={`https://goerli.etherscan.io/tx/${txHash}`}>
+            View the status of your transaction on Etherscan!
+          </a>
+          <br />
+          ℹ️ Once the transaction is verified by the network, the new game addr
+          will be displayed.
+        </span>
+      ),
+    };
+  } catch (error) {
+    console.log("error thrown:", error);
+    return {
+      status: "😥 " + error.message,
     };
   }
 };

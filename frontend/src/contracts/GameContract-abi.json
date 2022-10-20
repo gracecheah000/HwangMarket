@@ -2,7 +2,7 @@
     {
         "inputs": [
             {
-                "internalType": "address",
+                "internalType": "address payable",
                 "name": "_creator",
                 "type": "address"
             },
@@ -123,6 +123,19 @@
     },
     {
         "inputs": [],
+        "name": "mainContract",
+        "outputs": [
+            {
+                "internalType": "contract HwangMarket",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
         "name": "status",
         "outputs": [
             {
@@ -196,6 +209,21 @@
                 "internalType": "enum GameContract.GameStatus",
                 "name": "",
                 "type": "uint8"
+            },
+            {
+                "internalType": "enum GameContract.gameSide",
+                "name": "",
+                "type": "uint8"
+            },
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            },
+            {
+                "internalType": "int256",
+                "name": "",
+                "type": "int256"
             }
         ],
         "stateMutability": "view",
@@ -222,6 +250,56 @@
         "name": "addPlayer",
         "outputs": [],
         "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getTrxs",
+        "outputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "uint256",
+                        "name": "trxId",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "activityType",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "trxAmt",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "trxTime",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint8",
+                        "name": "gameSide",
+                        "type": "uint8"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "from",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "to",
+                        "type": "address"
+                    }
+                ],
+                "internalType": "struct GameContract.Trx[]",
+                "name": "",
+                "type": "tuple[]"
+            }
+        ],
+        "stateMutability": "view",
         "type": "function"
     },
     {
