@@ -19,6 +19,7 @@ import {
   Tooltip,
   NumberInput,
   NumberInputField,
+  useColorMode,
 } from "@chakra-ui/react";
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -51,6 +52,8 @@ const CreateGame = ({ walletAddress, setStatus }) => {
     "Assets",
     "Weather",
   ];
+
+  const { colorMode, toggleColorMode } = useColorMode();
 
   const [mkt, setMkt] = useState(null);
   const markets = {
@@ -201,7 +204,7 @@ const CreateGame = ({ walletAddress, setStatus }) => {
                   defaultValue=""
                 >
                   {markets[category] &&
-                    markets[category].map((o, i) => (
+                    markets[category].map((o) => (
                       <option key={o.description} value={o.description}>
                         {o.description}
                       </option>
@@ -221,7 +224,7 @@ const CreateGame = ({ walletAddress, setStatus }) => {
                   border="2px solid teal"
                   borderRadius="15px"
                   p="5"
-                  bgColor="teal.100"
+                  bgColor={colorMode === "light" ? "teal.100" : "teal.700"}
                   my="2"
                 >
                   <Box display="flex" alignItems="center" mb="2" columnGap="3">
@@ -253,9 +256,10 @@ const CreateGame = ({ walletAddress, setStatus }) => {
                   </Text>
                 </Box>
 
-                <FormControl isRequired mt="2" mb="5">
+                <FormControl isRequired mt="2" mb="2">
                   <FormLabel>Resolution time</FormLabel>
                   <DatePicker
+                    id={colorMode === "dark" && "darkmode"}
                     selected={resolveTime}
                     onChange={(datetime) => setResolveTime(datetime)}
                     showTimeSelect
@@ -288,6 +292,7 @@ const CreateGame = ({ walletAddress, setStatus }) => {
               w="80%"
               variant="outline"
               onClick={submitCreateGame}
+              isDisabled={!category || !mkt || !resolveTime}
             >
               Create game
             </Button>

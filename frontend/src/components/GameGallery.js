@@ -6,6 +6,7 @@ import {
   Button,
   NumberInput,
   NumberInputField,
+  useColorMode,
 } from "@chakra-ui/react";
 import {
   hwangMarket,
@@ -82,9 +83,14 @@ const GamesGallery = () => {
     setWallet(walletResponse.address);
   };
 
+  const { colorMode, toggleColorMode } = useColorMode();
+
   return (
     <Box border="1px solid red">
       <Heading>Games Gallery</Heading>
+      <Button onClick={toggleColorMode}>
+        Toggle {colorMode === "light" ? "Dark" : "Light"}
+      </Button>
       <button id="walletButton" onClick={connectWalletPressed}>
         {walletAddress.length > 0 ? (
           "Connected: " +
