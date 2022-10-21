@@ -157,7 +157,7 @@ contract GameContract {
   // }
 
   function getSideAmt(uint8 s) public view returns (uint256) {
-    // require(s == 1 || s == 2, "side must be one of 1 or 2");
+    require((s == 1 || s == 2), "side must be one of 1 or 2");
     gameSide side = gameSide.NO;
     if (s == 1) {
       side = gameSide.YES;

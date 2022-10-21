@@ -146,7 +146,7 @@ contract HwangMarket {
   }
 
   function getGameCount() public view returns (uint256) {
-    return gameCount;
+    return gameCount-1; // [1, gameCount)
   }
 
   // Fetches all games with id from X to Y, (bounds inclusve)
@@ -262,7 +262,7 @@ contract HwangMarket {
   }
 
   // given an address, identify all the existing bets opened
-  function queryAllPlayersTrx(address player, bool onlyOpen) external view returns (PlayerTrx memory) {
+  function queryAllPlayersTrx(address player) external view returns (PlayerTrx memory) {
     return PlayerTrx({
       ongoingBets: ongoingBets[player],
       winningsPending: pendingWins[player],
