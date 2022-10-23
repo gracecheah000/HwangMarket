@@ -19,7 +19,7 @@ module.exports = {
           `https://eth-goerli.g.alchemy.com/v2/${alchemyApiKey}`
         ),
       network_id: 5, // Goerli's id
-      confirmations: 1, // # of confirmations to wait between deployments. (default: 0)
+      confirmations: 0, // # of confirmations to wait between deployments. (default: 0)
       timeoutBlocks: 200, // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true, // Skip dry run before migrations? (default: false for public nets )
     },
@@ -37,7 +37,7 @@ module.exports = {
       settings: {
         optimizer: {
           enabled: true,
-          runs: 1, // Optimize for how many times you intend to run the code
+          runs: 200, // Optimize for how many times you intend to run the code
         },
         evmVersion: "byzantium",
       },

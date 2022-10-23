@@ -332,6 +332,167 @@ truffle(goerli)>  ( await gamba.getLatestPrice()).toString();
 The value is repesented with 8 decimal points and the price only updates when a 1% deviation is recorded. Reference for other price feeds on goerli testnet:
 https://docs.chain.link/docs/data-feeds/price-feeds/addresses/
 
+### An example run on local dev network.
+
+1. Enter the truffle console, all commands below, unless otherwise stated will be ran in console.
+
+```
+truffle console
+```
+
+2. Compile and deploy
+
+```
+migrate
+```
+
+3. Obtain main hwang market contract deployed.
+
+```
+  let m = await HwangMarket.deployed();
+```
+
+Confirm by getting address of the deployed contract:
+
+```
+m.address
+```
+
+4. Get address of main token.
+
+```
+let a = await m.mainToken()
+```
+
+5. Obtain an instance of the main token contract.
+
+```
+let t = await MainToken.at(a);
+```
+
+Again, you can confirm the instance is loaded into `t` properly by running `t.address`.
+
+6. Select one of the funded test accounts to be our player. We name him `John` in this example.
+
+```
+const John = accounts[0];
+```
+
+We can also check John's balance in wei by running:
+
+```
+await web3.eth.getBalance(John);
+```
+
+7. Make John to exchange eth to the main token. In this case, we trade in 1000 wei for 1000 HMTKN.
+
+```
+t.mint(John, 1000, 1000, {from: John, value: 1000});
+```
+
+8. Create a fake game for John to participate to in.
+   If you were to check the params passed in, this is obviously a fake game, and the timestamp used is sometime in the year 2099, the oracle address is simply using one of the account's address and is not an oracle but I have no intention of resolving the game in this example. In reality, you are supposed to actually pass in an oracle address.
+
+```
+m.createGame(4097039164, accounts[2], 1000, "a", "a");
+```
+
+9. Get the game's address for which we just created.
+
+```
+a = (await m.gameContractRegistry(1)).addr
+```
+
+10. Obtain an instance of the game contract we just created at that address.
+
+```
+let g = await GameContract.at(a);
+```
+
+Again, you can get its address to confirm.
+
+11. John now purchase 500 tokens on side YES (1).
+    Creating the game will also deploy 2 other game tokens with finite supply. Essentially, what John does is purchase 500 GameYesTokens freshly minted for John. In our project, we equate 1 HMTKN to be equal to 1 GameToken, for all games, for either sides.
+    However, John has to first authorize transfer of 500 HMTKN to the game's address. This can be done via the following command:
+
+```
+t.approve(g.address, 500);
+```
+
+Now, John can initiate the purchase of 500 tokens for the game's YES side.
+
+```
+g.addPlayer(John, 500, 1);
+```
+
+Note: Skipping approval, there will be an error returned, which is the correct behaviour under ERC20 token standard.
+
+```
+Error: Returned error: VM Exception while processing transaction: revert player's hwang market token allowance too low
+```
+
+12. We can confirm that John has received the 500 GameYesToken by checking it directly:
+
+```
+truffle(development)> a = await g.gameYesTokenContract();
+'0x0Ce7E920f71443c4522493a1F36D4F8d7C986755'
+truffle(development)> let tmp = await GameERC20Token.at(a);
+undefined
+truffle(development)> tmp.address
+'0x0Ce7E920f71443c4522493a1F36D4F8d7C986755'
+truffle(development)> (await tmp.balanceOf(John)).toString();
+'500'
+```
+
+13. If we try to purchase another 600 GameYesToken, an error will be thrown due to the hard 1000 game token limit imposed.
+    But first, we need to mint John a few more HMTKN tokens, because we only have 500 left after the above :(.
+
+```
+t.mint(John, 1000, 1000, {from: John, value: 1000});
+```
+
+Remember to approve the trx.
+
+```
+t.approve(g.address, 600);
+```
+
+Now purchasing the remaining 600 throws an error since we can no longer mint the requested 600 amount.
+
+```
+g.addPlayer(John, 600, 1);
+Error: Returned error: VM Exception while processing transaction: revert game token cannot mint requested amount
+```
+
+14. Cashing out
+    Now, while John can not exchange the game token back to HMTKN until the game is over and he has won, he can exchange his HMTKN back to eth wei anytime, just like in a casino. Similar to earlier, John will have to approve the amount of HMTKN to exchange back to eth wei. In this example, we exchange back 100 HMTKN to 100 WEI, recall the exchange rate is 1-1 both way.
+
+```
+t.approve(t.address, 100);
+```
+
+Now, before running the cashout, it is good to confirm John actually receives back his WEI, get his balance first.
+
+```
+truffle(development)> await web3.eth.getBalance(John);
+'98590713079999987200'
+```
+
+Now, actually execute the cashout.
+
+```
+t.cashout(John, 100);
+```
+
+Now, we can compare that the final balance of John is 100 wei richer.
+
+```
+truffle(development)> await web3.eth.getBalance(John);
+'98589721779999987300'
+```
+
+## Everything below is outdated, it might or might not be accurate but left in as it might contain helpful commands.
+
 # Running the entire test contract
 
 1. Create the HwangMarket contract in goerli test net.

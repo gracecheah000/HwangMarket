@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
+import "./MainToken.sol";
 import "./GameContract.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract HwangMarket {
   using SafeMath for uint256;
+  address public mainTokenAddress;
+  MainToken public mainToken;
 
   struct GameMetadata {
     uint256 id;
@@ -39,11 +43,6 @@ contract HwangMarket {
   // for all closed games
   GameMetadata[] public closedGames;
 
-  struct GameSideAndAmount {
-    uint8 side;
-    uint256 amt;
-  }
-
   // Activity types constant
   string constant BetActivityType = "BET";
   string constant SellActivityType = "SELL";
@@ -57,7 +56,7 @@ contract HwangMarket {
   // Also, note: players are able to play on both sides if they wish, and are allowed to bet more if they wish
   // but are not allowed to "cancel" bets unless they "sell" to other players
   // {player_address -> game_id -> betSide -> amount}
-  mapping(address => mapping(uint256 => mapping(uint8 => uint256))) public playerExistingPositions;
+  // mapping(address => mapping(uint256 => mapping(uint8 => uint256))) public playerExistingPositions;
 
   // Also, it might prove to be useful to be able to support efficient queries 
   // for player's ongoing bets, pending wins to claim and historical bets
@@ -71,22 +70,22 @@ contract HwangMarket {
     uint8 betOutcome; // 0 - UNKNOWN, 1 - YES, 2 - NO
   }
   // record all ongoing bets for a player
-  mapping(address => BetInfo[]) public ongoingBets;
-  // pointer to mark end of BetInfo[] to support efficient deletion of items in array
-  // For example, we can simply replace the last item in betInfo to replace the item to delete
-  // and simply shrink this pointer, of course, readjusting the last item's index to now be the deleted index
-  mapping(address => uint256) public ongoingBetsSize; 
-  mapping(uint256 => uint256) public ongoingBetsTrxId2Idx; // map game_id -> idx
+  // mapping(address => BetInfo[]) public ongoingBets;
+  // // pointer to mark end of BetInfo[] to support efficient deletion of items in array
+  // // For example, we can simply replace the last item in betInfo to replace the item to delete
+  // // and simply shrink this pointer, of course, readjusting the last item's index to now be the deleted index
+  // mapping(address => uint256) public ongoingBetsSize; 
+  // mapping(uint256 => uint256) public ongoingBetsTrxId2Idx; // map game_id -> idx
 
   // record all pendingWin bets for a player, same idea as above
-  mapping(address => BetInfo[]) public pendingWins;
-  mapping(address => uint256) public pendingWinsSize;
-  mapping(uint256 => uint256) public pendingWinsTrxId2Idx;
+  // mapping(address => BetInfo[]) public pendingWins;
+  // mapping(address => uint256) public pendingWinsSize;
+  // mapping(uint256 => uint256) public pendingWinsTrxId2Idx;
 
   // record all historical bets for a player, same idea as above
-  mapping(address => BetInfo[]) public historicalBets;
-  mapping(address => uint256) public historicalBetsSize;
-  mapping(uint256 => uint256) public historicalBetsTrxId2Idx;
+  // mapping(address => BetInfo[]) public historicalBets;
+  // mapping(address => uint256) public historicalBetsSize;
+  // mapping(uint256 => uint256) public historicalBetsTrxId2Idx;
 
   // Additionally, we want to keep a record of all player's movements on chain.
   // That is, we want to record everytime a player bets (buys a position), or sells his position (and to who), or withdraws his winnings
@@ -107,10 +106,14 @@ contract HwangMarket {
   constructor() {
     // we start counting from game 1, game id 0 is nonsense since its also default value
     gameCount = 1;
+
+    mainToken = new MainToken();
+    mainTokenAddress = address(mainToken);
   }
 
   event GameCreated(GameMetadata gameMetadata);
   event PlayerJoinedGameEvent(address player, uint256 gameId, address gameAddr, uint8 betSide, uint256 amount);
+  event PlayerWithdrawedWinnings(address player, uint256 gameId, address gameAddr, uint8 betSide, uint256 withdrawedAmt);
   event GameConcluded(uint256 gameId, address gameAddr, uint8 gameOutcome);
 
   // create game contract instance
@@ -200,12 +203,12 @@ contract HwangMarket {
       gameMetadata.betYesAmount += amount;
     }
     
-    playerExistingPositions[player][gameId][betSide] += amount;
-    // for simplicity, we do not merge the bets, even if they are for the same game and on the same side
-    // they exist as 2 separate trx with their own unique ids
-    ongoingBetsTrxId2Idx[trxId] = ongoingBetsSize[player];
-    ongoingBets[player].push(BetInfo({trxId: trxId, gameId: gameId, betSide: betSide, amt: amount, betOutcome: 0}));
-    ongoingBetsSize[player] = SafeMath.add(ongoingBetsSize[player], 1);
+    // playerExistingPositions[player][gameId][betSide] += amount;
+    // // for simplicity, we do not merge the bets, even if they are for the same game and on the same side
+    // // they exist as 2 separate trx with their own unique ids
+    // ongoingBetsTrxId2Idx[trxId] = ongoingBetsSize[player];
+    // ongoingBets[player].push(BetInfo({trxId: trxId, gameId: gameId, betSide: betSide, amt: amount, betOutcome: 0}));
+    // ongoingBetsSize[player] = SafeMath.add(ongoingBetsSize[player], 1);
 
     // record this activity as well
     playersRecords[player].push(Activity({
@@ -215,13 +218,34 @@ contract HwangMarket {
       trxAmt: amount,
       trxTime: timestamp,
       gameSide: betSide,
-      from: address(this),
-      to: player
+      from: player,
+      to: gameAddr
     }));
 
     trxId = SafeMath.add(trxId, 1);
 
     emit PlayerJoinedGameEvent(player, gameId, gameAddr, betSide, amount);
+  }
+
+  // callable only by contract
+  // note: withdraw winnings means recording player's owned game tokens -> hwang market tokens
+  function playerWithdrawWinnings(address _player, uint8 betSide, uint256 withdrawAmt, uint256 timestamp) external isExistingGame(true) {
+    address gameAddr = msg.sender;
+    uint256 gameId = gameAddr2Id[gameAddr];
+    playersRecords[_player].push(Activity({
+      trxId: trxId,
+      activityType: WithdrawActivityType,
+      gameId: gameId,
+      trxAmt: withdrawAmt,
+      trxTime: timestamp,
+      gameSide: betSide,
+      from: gameAddr,
+      to: _player
+    }));
+
+    trxId = SafeMath.add(trxId, 1);
+
+    emit PlayerWithdrawedWinnings(_player, gameId, gameAddr, betSide, withdrawAmt);
   }
 
   function concludeGame(uint8 gameOutcome) external isExistingGame(true) {
@@ -237,7 +261,7 @@ contract HwangMarket {
     ongoingGames[existingGameIdx] = lastOngoingGame;
     ongoingGamesCnt = SafeMath.sub(ongoingGamesCnt, 1);
 
-    // update metadata for the game
+    // // update metadata for the game
     finisedGame.ongoing = false;
     finisedGame.gameOutcome = gameOutcome;
 
@@ -250,25 +274,25 @@ contract HwangMarket {
     emit GameConcluded(gameId, gameAddr, gameOutcome);
   }
 
-  struct PlayerTrx {
-    // ongoing bets
-    BetInfo[] ongoingBets;
+  // struct PlayerTrx {
+  //   // ongoing bets
+  //   BetInfo[] ongoingBets;
 
-    // pending win claims, games that have closed and player should withdraw his/her winnings
-    BetInfo[] winningsPending;
+  //   // pending win claims, games that have closed and player should withdraw his/her winnings
+  //   BetInfo[] winningsPending;
 
-    // concluded bets, wins and loses
-    BetInfo[] historicalBets;
-  }
+  //   // concluded bets, wins and loses
+  //   BetInfo[] historicalBets;
+  // }
 
-  // given an address, identify all the existing bets opened
-  function queryAllPlayersTrx(address player) external view returns (PlayerTrx memory) {
-    return PlayerTrx({
-      ongoingBets: ongoingBets[player],
-      winningsPending: pendingWins[player],
-      historicalBets: historicalBets[player]
-    });
-  }
+  // // given an address, identify all the existing bets opened
+  // function queryAPlayerTrxs(address player) external view returns (PlayerTrx memory) {
+  //   return PlayerTrx({
+  //     ongoingBets: ongoingBets[player],
+  //     winningsPending: pendingWins[player],
+  //     historicalBets: historicalBets[player]
+  //   });
+  // }
 
   // callable only by the game itself
   // A player gave his side to someone else
@@ -276,6 +300,11 @@ contract HwangMarket {
     // TODO: update the mappings to the latest game state
     // address gameAddr = msg.sender;
 
+  }
+
+  // to get smart contract's balance
+  function getBalance() public view returns (uint256) {
+    return address(this).balance;
   }
 
   // @notice Will receive any eth sent to the contract
