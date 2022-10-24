@@ -14,4 +14,39 @@ library Models {
 
     bool fulfilled;
   }
+
+  // Additionally, we want to keep a record of all player's movements on chain.
+  // That is, we want to record everytime a player bets (buys a position), or sells his position (and to who), or withdraws his winnings
+  struct Activity {
+    // Common fields
+    uint256 trxId;
+    string activityType;  // "BET", "SELL", "WITHDRAW"
+    uint256 gameId;
+    uint256 trxAmt;
+    uint256 trxTime; // when the trx was initiated
+    uint8 gameSide; // 1 - YES, 2 - NO
+    address from;
+    address to;
+  }
+
+  struct GameMetadata {
+    uint256 id;
+    address addr;
+    string tag;
+    string title;
+    address oracleAddr;
+    uint256 resolveTime;
+    int256 threshold;
+
+    uint256 totalAmount;
+    uint256 betYesAmount;
+    uint256 betNoAmount;
+    bool ongoing;
+    uint8 gameOutcome;
+  }
+
+  struct AllGames {
+    GameMetadata[] ongoingGames;
+    GameMetadata[] closedGames;
+  }
 }

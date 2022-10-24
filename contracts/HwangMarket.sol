@@ -3,6 +3,7 @@ pragma solidity >=0.4.22 <0.9.0;
 
 import "./MainToken.sol";
 import "./GameContract.sol";
+import "./GameContractFactory.sol";
 import "./IterableMapping.sol";
 import "./Models.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
@@ -14,57 +15,31 @@ contract HwangMarket {
   address public mainTokenAddress;
   MainToken public mainToken;
 
-  struct GameMetadata {
-    uint256 id;
-    address addr;
-    string tag;
-    string title;
-    address oracleAddr;
-    uint256 resolveTime;
-    int256 threshold;
-
-    uint256 totalAmount;
-    uint256 betYesAmount;
-    uint256 betNoAmount;
-    bool ongoing;
-    uint8 gameOutcome;
-  }
+  // game contract factory is used to reduce contract build size :(
+  GameContractFactory gameFactory;
 
   // for all activity
   uint256 private trxId;
 
   // for all games created
   uint256 private gameCount;
-  mapping(uint256 => GameMetadata) public gameContractRegistry;
+  mapping(uint256 => Models.GameMetadata) public gameContractRegistry;
   mapping(address => uint256) public gameAddr2Id;
   
   // for all ongoing games
   uint256 private ongoingGamesCnt; // record end of ongoing games array
-  GameMetadata[] public ongoingGames;
+  Models.GameMetadata[] public ongoingGames;
   mapping(uint256 => uint256) ongoingGamesId2Idx;
 
   // for all closed games
-  GameMetadata[] public closedGames;
+  Models.GameMetadata[] public closedGames;
 
   // Activity types constant
   string constant BetActivityType = "BET";
   string constant SellActivityType = "SELL";
   string constant WithdrawActivityType = "WITHDRAW";
 
-  // Additionally, we want to keep a record of all player's movements on chain.
-  // That is, we want to record everytime a player bets (buys a position), or sells his position (and to who), or withdraws his winnings
-  struct Activity {
-    // Common fields
-    uint256 trxId;
-    string activityType;  // "BET", "SELL", "WITHDRAW"
-    uint256 gameId;
-    uint256 trxAmt;
-    uint256 trxTime; // when the trx was initiated
-    uint8 gameSide; // 1 - YES, 2 - NO
-    address from;
-    address to;
-  }
-  mapping(address => Activity[]) public playersRecords;
+  mapping(address => Models.Activity[]) public playersRecords;
 
   IterableMapping.ListingsMap private listingContracts;
   uint256 public listingsCount;
@@ -76,18 +51,19 @@ contract HwangMarket {
 
     mainToken = new MainToken();
     mainTokenAddress = address(mainToken);
+    gameFactory = new GameContractFactory();
   }
 
-  event GameCreated(GameMetadata gameMetadata);
+  event GameCreated(Models.GameMetadata gameMetadata);
   event PlayerJoinedGameEvent(address player, uint256 gameId, address gameAddr, uint8 betSide, uint256 amount);
   event PlayerWithdrawedWinnings(address player, uint256 gameId, address gameAddr, uint8 betSide, uint256 withdrawedAmt);
   event GameConcluded(uint256 gameId, address gameAddr, uint8 gameOutcome);
 
   // create game contract instance
   function createGame(uint256 resolveTime, address oracleAddr, int256 threshold, string memory tag, string memory title) public returns (address) {
-    GameContract newGame = new GameContract(payable(address(this)), resolveTime, oracleAddr, threshold); 
+    GameContract newGame = gameFactory.createGame(address(this), resolveTime, oracleAddr, threshold); 
     address newGameAddress = address(newGame);
-    gameContractRegistry[gameCount] = GameMetadata({
+    gameContractRegistry[gameCount] = Models.GameMetadata({
       id: gameCount,
       addr: newGameAddress,
       tag: tag,
@@ -119,42 +95,10 @@ contract HwangMarket {
     return gameCount-1; // [1, gameCount)
   }
 
-  // Fetches all games with id from X to Y, (bounds inclusve)
-  // note: even if the game doesn't exist, a game object would still be returned with default values filled
-  function getXtoYGame(uint256 X, uint256 Y) public view returns (GameMetadata[] memory) {
-    require(X <= Y, "X cannot be greater than Y");
-
-    GameMetadata[] memory res = new GameMetadata[](Y-X+1);
-    for (uint256 j=X; j<=Y; j++) {
-      res[j-X] = gameContractRegistry[j];
-    }
-
-    return res;
-  }
-
+  
   // fetches all games
-  function getAllGames() public view returns (GameMetadata[] memory) {
-    GameMetadata[] memory res = new GameMetadata[](gameCount-1);
-    for (uint256 j=1; j<=gameCount; j++) {
-      res[j-1] = gameContractRegistry[j-1];
-    }
-
-    return res;
-  }
-
-  // fetches all ongoing games
-  function getAllOngoingGames() external view returns (GameMetadata[] memory) {
-    return ongoingGames;
-  }
-
-  modifier isExistingGame(bool mustBeGame) {
-    if (mustBeGame) {
-      require(
-        gameAddr2Id[msg.sender] != 0,
-        "not a recognised game"
-      );
-    }
-    _;
+  function getAllGames() public view returns (Models.AllGames memory) {
+    return Models.AllGames({ongoingGames: ongoingGames, closedGames: closedGames});
   }
 
   // creates a new listing
@@ -178,10 +122,6 @@ contract HwangMarket {
     return listingInfo;
   }
 
-  function getListingContractAddressById(uint listingId) external view returns(address) {
-    return listingContracts.get(listingId).listingAddr;
-  }
-
   function getAllListings() external view returns (Models.ListingInfo[] memory) {
     return listingContracts.getlistingValues();
   }
@@ -189,7 +129,7 @@ contract HwangMarket {
   // player joins an existing listing already posted by another player
   // this player joining now is regarded as player2 under the listing contract
   function partakeInListing(address _player, uint listingId) public {
-    require(listingContracts.contains(listingId), "listing contract does not exist");
+    require(listingContracts.contains(listingId), "contract not exist");
     address listingAddr = listingContracts.get(listingId).listingAddr;
     ListingContract token2Contract = ListingContract(listingAddr);
     token2Contract.trigger(_player);
@@ -197,10 +137,11 @@ contract HwangMarket {
 
   // callable only by the game itself
   // A player joined the game on a particular side
-  function playerJoinedSide(address player, uint8 betSide, uint256 amount, uint256 timestamp) external isExistingGame(true) {
+  function playerJoinedSide(address player, uint8 betSide, uint256 amount, uint256 timestamp) external {
+    require(gameAddr2Id[msg.sender] != 0);
     address gameAddr = msg.sender;
     uint256 gameId = gameAddr2Id[gameAddr];
-    GameMetadata memory gameMetadata = gameContractRegistry[gameId];
+    Models.GameMetadata memory gameMetadata = gameContractRegistry[gameId];
     gameMetadata.totalAmount += amount;
     if (betSide == 2) {
       gameMetadata.betNoAmount += amount;
@@ -209,7 +150,7 @@ contract HwangMarket {
     }
 
     // record this activity as well
-    playersRecords[player].push(Activity({
+    playersRecords[player].push(Models.Activity({
       trxId: trxId,
       activityType: BetActivityType,
       gameId: gameId,
@@ -227,10 +168,11 @@ contract HwangMarket {
 
   // callable only by contract
   // note: withdraw winnings means recording player's owned game tokens -> hwang market tokens
-  function playerWithdrawWinnings(address _player, uint8 betSide, uint256 withdrawAmt, uint256 timestamp) external isExistingGame(true) {
+  function playerWithdrawWinnings(address _player, uint8 betSide, uint256 withdrawAmt, uint256 timestamp) external {
+    require(gameAddr2Id[msg.sender] != 0);
     address gameAddr = msg.sender;
     uint256 gameId = gameAddr2Id[gameAddr];
-    playersRecords[_player].push(Activity({
+    playersRecords[_player].push(Models.Activity({
       trxId: trxId,
       activityType: WithdrawActivityType,
       gameId: gameId,
@@ -246,14 +188,15 @@ contract HwangMarket {
     emit PlayerWithdrawedWinnings(_player, gameId, gameAddr, betSide, withdrawAmt);
   }
 
-  function concludeGame(uint8 gameOutcome) external isExistingGame(true) {
+  function concludeGame(uint8 gameOutcome) external {
+    require(gameAddr2Id[msg.sender] != 0);
     address gameAddr = msg.sender;
     uint256 gameId = gameAddr2Id[gameAddr];
 
     // move game out of existing ongoing games
     uint256 existingGameIdx = ongoingGamesId2Idx[gameId];
-    GameMetadata memory finisedGame = ongoingGames[existingGameIdx];
-    GameMetadata memory lastOngoingGame = ongoingGames[SafeMath.sub(ongoingGamesCnt, 1)];
+    Models.GameMetadata memory finisedGame = ongoingGames[existingGameIdx];
+    Models.GameMetadata memory lastOngoingGame = ongoingGames[SafeMath.sub(ongoingGamesCnt, 1)];
     ongoingGamesId2Idx[lastOngoingGame.id] = existingGameIdx;
     delete ongoingGamesId2Idx[gameId];
     ongoingGames[existingGameIdx] = lastOngoingGame;
@@ -272,20 +215,8 @@ contract HwangMarket {
     emit GameConcluded(gameId, gameAddr, gameOutcome);
   }
 
-  // callable only by the game itself
-  // A player gave his side to someone else
-  function playersSwapSide() external isExistingGame(true) {
-    // TODO: update the mappings to the latest game state
-    // address gameAddr = msg.sender;
-
-  }
-
   // to get smart contract's balance
   function getBalance() public view returns (uint256) {
     return address(this).balance;
-  }
-
-  // @notice Will receive any eth sent to the contract
-  receive() external payable {
   }
 }

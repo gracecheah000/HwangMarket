@@ -35,6 +35,25 @@ npm install ganache
    - Add Project under 'Workspace' section, selecting `truffle-config.js` in the Truffle project
      ![image](https://user-images.githubusercontent.com/65240352/195335284-5d638ece-e6ec-4314-9153-901957ff7ef5.png)
 
+# Usage
+
+Here, we document how the contract interactions are meant to be set up. The interactions should be built out in such a way where they can be reached programatically, without any magic "address" appearing out of everywhere, wherever applicable, I will try to point out prerequisites which the frontend will need to store for certain interactions, and how it can achieve the prerequisites.
+There are a few milestones we want to demonstrate for the main contract, and game contract.
+
+### Main contract
+
+1. Players should be able to create a new game, customizing it to a certain degree.
+2. We should be able to fetch all games, making a distinction between games that are ongoing and closed.
+3. Players should be able to exchange ETH to purchase HMTKN.
+4. Players should be able to cash out HMTKN back to ETH.
+5. We should be able to get all listings where users are looking to exchange HMTKN for some game's "side" token.
+6. Players should be able to create a listing to exchange HMTKN for a game's "side" token.
+7. Players should be able to partake in a listing as a willing buyer, to exchange their game's side token for HMTKN.
+8. We should be able to fetch all transactions recorded for display in a transparent market.
+9. We should be able to fetch all transactions for a player.
+
+## Everything below is outdated, it might or might not be accurate but left in as it might contain helpful commands.
+
 # Developing on local
 
 #### 1. Enter developement console:
@@ -490,8 +509,6 @@ Now, we can compare that the final balance of John is 100 wei richer.
 truffle(development)> await web3.eth.getBalance(John);
 '98589721779999987300'
 ```
-
-## Everything below is outdated, it might or might not be accurate but left in as it might contain helpful commands.
 
 # Running the entire test contract
 

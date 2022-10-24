@@ -76,7 +76,7 @@ contract GameContract {
 
   // constructor takes in a resolve time, a oracleAddr (oracle address), and a threshold, 
   // where a gameSide of NO indicates < threshold, and a gameSide of YES indicates >= threshold
-  constructor(address payable _creator, uint256 resolveTime, address oracleAddr, int256 thres) {
+  constructor(address _creator, uint256 resolveTime, address oracleAddr, int256 thres) {
     creator = _creator;
     mainContract = HwangMarket(_creator);
     status = GameStatus.OPEN;
