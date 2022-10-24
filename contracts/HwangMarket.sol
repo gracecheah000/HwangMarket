@@ -3,10 +3,13 @@ pragma solidity >=0.4.22 <0.9.0;
 
 import "./MainToken.sol";
 import "./GameContract.sol";
+import "./IterableMapping.sol";
+import "./Models.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract HwangMarket {
+  using IterableMapping for IterableMapping.ListingsMap;
   using SafeMath for uint256;
   address public mainTokenAddress;
   MainToken public mainToken;
@@ -48,45 +51,6 @@ contract HwangMarket {
   string constant SellActivityType = "SELL";
   string constant WithdrawActivityType = "WITHDRAW";
 
-  // keep track of players' address bet on what game and their bet amount, and side
-  // we keep such a mapping instead of delegating it to the game contract
-  // to support more efficient lookup + since reads are more common than writes
-  // we will stand to gain from gas free view calls to read this mapping from outside the chain
-  // than to call a view function from main contract to game contract which costs gas
-  // Also, note: players are able to play on both sides if they wish, and are allowed to bet more if they wish
-  // but are not allowed to "cancel" bets unless they "sell" to other players
-  // {player_address -> game_id -> betSide -> amount}
-  // mapping(address => mapping(uint256 => mapping(uint8 => uint256))) public playerExistingPositions;
-
-  // Also, it might prove to be useful to be able to support efficient queries 
-  // for player's ongoing bets, pending wins to claim and historical bets
-  // The following data structure are meant to faciliatate such queries.
-  struct BetInfo {
-    uint256 trxId;
-    uint256 gameId;
-    uint8 betSide; // 1 - YES, 2 - NO
-    uint256 amt;
-
-    uint8 betOutcome; // 0 - UNKNOWN, 1 - YES, 2 - NO
-  }
-  // record all ongoing bets for a player
-  // mapping(address => BetInfo[]) public ongoingBets;
-  // // pointer to mark end of BetInfo[] to support efficient deletion of items in array
-  // // For example, we can simply replace the last item in betInfo to replace the item to delete
-  // // and simply shrink this pointer, of course, readjusting the last item's index to now be the deleted index
-  // mapping(address => uint256) public ongoingBetsSize; 
-  // mapping(uint256 => uint256) public ongoingBetsTrxId2Idx; // map game_id -> idx
-
-  // record all pendingWin bets for a player, same idea as above
-  // mapping(address => BetInfo[]) public pendingWins;
-  // mapping(address => uint256) public pendingWinsSize;
-  // mapping(uint256 => uint256) public pendingWinsTrxId2Idx;
-
-  // record all historical bets for a player, same idea as above
-  // mapping(address => BetInfo[]) public historicalBets;
-  // mapping(address => uint256) public historicalBetsSize;
-  // mapping(uint256 => uint256) public historicalBetsTrxId2Idx;
-
   // Additionally, we want to keep a record of all player's movements on chain.
   // That is, we want to record everytime a player bets (buys a position), or sells his position (and to who), or withdraws his winnings
   struct Activity {
@@ -101,6 +65,9 @@ contract HwangMarket {
     address to;
   }
   mapping(address => Activity[]) public playersRecords;
+
+  IterableMapping.ListingsMap private listingContracts;
+  uint256 public listingsCount;
   
 
   constructor() {
@@ -190,6 +157,44 @@ contract HwangMarket {
     _;
   }
 
+  // creates a new listing
+  function newListing(address _player, address token1, uint256 token1Amt, address token2, uint256 token2Amt) public returns(Models.ListingInfo memory) {
+    uint256 newListingId = listingsCount;
+    ListingContract newListingContract = new ListingContract(newListingId, _player, token1, token1Amt, token2, token2Amt);
+    Models.ListingInfo memory listingInfo = Models.ListingInfo({
+      listingId: newListingId,
+      listingAddr: address(newListingContract),
+      player1: _player,
+      token1: token1,
+      token1Amt: token1Amt,
+      player2: address(0),
+      token2: token2,
+      token2Amt: token2Amt,
+      fulfilled: false
+    });
+    listingContracts.set(newListingId, listingInfo);
+
+    listingsCount++;
+    return listingInfo;
+  }
+
+  function getListingContractAddressById(uint listingId) external view returns(address) {
+    return listingContracts.get(listingId).listingAddr;
+  }
+
+  function getAllListings() external view returns (Models.ListingInfo[] memory) {
+    return listingContracts.getlistingValues();
+  }
+
+  // player joins an existing listing already posted by another player
+  // this player joining now is regarded as player2 under the listing contract
+  function partakeInListing(address _player, uint listingId) public {
+    require(listingContracts.contains(listingId), "listing contract does not exist");
+    address listingAddr = listingContracts.get(listingId).listingAddr;
+    ListingContract token2Contract = ListingContract(listingAddr);
+    token2Contract.trigger(_player);
+  }
+
   // callable only by the game itself
   // A player joined the game on a particular side
   function playerJoinedSide(address player, uint8 betSide, uint256 amount, uint256 timestamp) external isExistingGame(true) {
@@ -202,13 +207,6 @@ contract HwangMarket {
     } else {
       gameMetadata.betYesAmount += amount;
     }
-    
-    // playerExistingPositions[player][gameId][betSide] += amount;
-    // // for simplicity, we do not merge the bets, even if they are for the same game and on the same side
-    // // they exist as 2 separate trx with their own unique ids
-    // ongoingBetsTrxId2Idx[trxId] = ongoingBetsSize[player];
-    // ongoingBets[player].push(BetInfo({trxId: trxId, gameId: gameId, betSide: betSide, amt: amount, betOutcome: 0}));
-    // ongoingBetsSize[player] = SafeMath.add(ongoingBetsSize[player], 1);
 
     // record this activity as well
     playersRecords[player].push(Activity({
@@ -273,26 +271,6 @@ contract HwangMarket {
 
     emit GameConcluded(gameId, gameAddr, gameOutcome);
   }
-
-  // struct PlayerTrx {
-  //   // ongoing bets
-  //   BetInfo[] ongoingBets;
-
-  //   // pending win claims, games that have closed and player should withdraw his/her winnings
-  //   BetInfo[] winningsPending;
-
-  //   // concluded bets, wins and loses
-  //   BetInfo[] historicalBets;
-  // }
-
-  // // given an address, identify all the existing bets opened
-  // function queryAPlayerTrxs(address player) external view returns (PlayerTrx memory) {
-  //   return PlayerTrx({
-  //     ongoingBets: ongoingBets[player],
-  //     winningsPending: pendingWins[player],
-  //     historicalBets: historicalBets[player]
-  //   });
-  // }
 
   // callable only by the game itself
   // A player gave his side to someone else

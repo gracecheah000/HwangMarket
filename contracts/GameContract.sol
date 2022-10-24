@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
+import "./ListingContract.sol";
+import "./Models.sol";
 import "./HwangMarket.sol";
 import "./IterableMapping.sol";
 import "./GameERC20Token.sol";
@@ -8,7 +10,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract GameContract {
-  using IterableMapping for IterableMapping.Map;
+  using IterableMapping for IterableMapping.ListingsMap;
 
   enum GameStatus {
     OPEN,
@@ -69,8 +71,8 @@ contract GameContract {
   address public gameYesTokenContractAddress;
   GameERC20Token public gameYesTokenContract;
 
-  uint256 public listingContractsCount;
-  IterableMapping.Map private listingContracts;
+  IterableMapping.ListingsMap private listingContracts;
+  uint256 public listingsCount;
 
   // constructor takes in a resolve time, a oracleAddr (oracle address), and a threshold, 
   // where a gameSide of NO indicates < threshold, and a gameSide of YES indicates >= threshold
@@ -90,6 +92,44 @@ contract GameContract {
     gameNoTokenContractAddress = address(gameNoTokenContract);
     gameYesTokenContract = new GameERC20Token("GameYesToken", "GYT", supplyLimit);
     gameYesTokenContractAddress = address(gameYesTokenContract);
+  }
+
+  // creates a new listing
+  function newListing(address _player, address token1, uint256 token1Amt, address token2, uint256 token2Amt) public returns(Models.ListingInfo memory) {
+    uint256 newListingId = listingsCount;
+    ListingContract newListingContract = new ListingContract(newListingId, _player, token1, token1Amt, token2, token2Amt);
+    Models.ListingInfo memory listingInfo = Models.ListingInfo({
+      listingId: newListingId,
+      listingAddr: address(newListingContract),
+      player1: _player,
+      token1: token1,
+      token1Amt: token1Amt,
+      player2: address(0),
+      token2: token2,
+      token2Amt: token2Amt,
+      fulfilled: false
+    });
+    listingContracts.set(newListingId, listingInfo);
+
+    listingsCount++;
+    return listingInfo;
+  }
+
+  function getListingContractAddressById(uint listingId) external view returns(address) {
+    return listingContracts.get(listingId).listingAddr;
+  }
+
+  function getAllListings() external view returns (Models.ListingInfo[] memory) {
+    return listingContracts.getlistingValues();
+  }
+
+  // player joins an existing listing already posted by another player
+  // this player joining now is regarded as player2 under the listing contract
+  function partakeInListing(address _player, uint listingId) public {
+    require(listingContracts.contains(listingId), "listing contract does not exist");
+    address listingAddr = listingContracts.get(listingId).listingAddr;
+    ListingContract token2Contract = ListingContract(listingAddr);
+    token2Contract.trigger(_player);
   }
 
   /**
@@ -223,8 +263,8 @@ contract GameContract {
     if (gameOutcome == gameSide.YES) {
       gameTokenContract = gameYesTokenContract;
     }
-    require(gameTokenContract.balanceOf(_player) >= withdrawAmt, "player must approve withdraw amount");
     require(gameTokenContract.allowance(_player, address(this)) >= withdrawAmt, "player must approve withdraw amount");
+    require(gameTokenContract.balanceOf(_player) >= withdrawAmt, "player must have game token amount to withdraw");
 
     // where to calculate amount of winnings
     // calculated winnings = (player's bet amount / total bet amount on winning side) * total bet amount on losing side
@@ -266,10 +306,6 @@ contract GameContract {
   // to get smart contract's balance
   function getBalance() public view returns (uint256) {
     return address(this).balance;
-  }
-
-  // @notice Will receive any eth sent to the contract
-  receive() external payable {
   }
 
   function _safeTransferFrom(

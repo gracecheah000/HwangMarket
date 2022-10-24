@@ -1,30 +1,39 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
+import "./HwangMarket.sol";
+import "./IListableToken.sol";
+import "./ListingContract.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract MainToken is IERC20 {
+contract MainToken is IERC20, IListableToken {
   /*
     IERC20 implementation
   */
   uint public totalSupply;
   mapping(address => uint) public balanceOf;
+  // mapping(address => uint) public totalAllowanceCommited;
   mapping(address => mapping(address => uint)) public allowance;
   string public name = "HwangMarket";
   string public symbol = "HMTKN";
   uint8 public decimals = 18;
   uint256 public totalEthSupply = 0;
-  address creator;
+  address public creator;
+  HwangMarket public mainContract;
 
-  uint constant eth2TknConversionRate = 1;
+  uint constant public eth2TknConversionRate = 1;
+  event NewListing(Models.ListingInfo listingInfo);
+  event ListingFulfilled(Models.ListingInfo listingInfo);
 
   constructor() {
     creator = msg.sender;
+    mainContract = HwangMarket(payable(msg.sender));
   }
 
   function transfer(address recipient, uint amount) external returns (bool) {
     require(allowance[msg.sender][recipient] >= amount, "insufficient allowance from sender to recipient");
     require(balanceOf[msg.sender] >= amount, "insufficient balance in sender");
+    // totalAllowanceCommited[msg.sender] -= amount;
     balanceOf[msg.sender] -= amount;
     balanceOf[recipient] += amount;
     emit Transfer(msg.sender, recipient, amount);
@@ -33,6 +42,8 @@ contract MainToken is IERC20 {
 
   function approve(address spender, uint amount) external returns (bool) {
     require(balanceOf[msg.sender] >= amount, "insufficient balance in sender");
+    // require(totalAllowanceCommited[msg.sender] + amount <= balanceOf[msg.sender], "total allowance for approver overcommited, you cannot allow more than you own");
+    // totalAllowanceCommited[msg.sender] += amount;
     allowance[msg.sender][spender] = amount;
     emit Approval(msg.sender, spender, amount);
     return true;
@@ -43,10 +54,11 @@ contract MainToken is IERC20 {
     address recipient,
     uint amount
   ) external returns (bool) {
-    require(allowance[sender][recipient] >= amount, "insufficient allowance to recipient from sender");
+    require(allowance[msg.sender][recipient] >= amount, "insufficient allowance to recipient from sender");
     require(balanceOf[sender] >= amount, "insufficient balance in sender");
     
-    allowance[sender][recipient] -= amount;
+    // totalAllowanceCommited[sender] -= amount;
+    allowance[sender][msg.sender] -= amount;
     balanceOf[sender] -= amount;
     balanceOf[recipient] += amount;
     emit Transfer(sender, recipient, amount);
@@ -71,6 +83,8 @@ contract MainToken is IERC20 {
     require(_player == msg.sender, "Invalid Transaction");
     require(allowance[msg.sender][address(this)] >= tokenAmt, "insufficient allowance in player to contract");
     require(balanceOf[msg.sender] >= tokenAmt, "insufficient balance in player");
+
+    // totalAllowanceCommited[msg.sender] -= tokenAmt;
     uint ethAmt = tokenAmt * (1 / eth2TknConversionRate);
     _player.transfer(ethAmt);
     balanceOf[_player] -= tokenAmt;
@@ -83,6 +97,41 @@ contract MainToken is IERC20 {
     balanceOf[msg.sender] -= amount;
     totalSupply -= amount;
     emit Transfer(msg.sender, address(0), amount);
+  }
+
+  // player1 has to approve the token1 amount to the listing contract for spending
+  function listUpTokensForExchange(address token1, uint256 token1Amt, address token2, uint256 token2Amt) external returns (bool) {
+    require(balanceOf[msg.sender] >= token1Amt, "insufficient balance in sender");
+    // require(totalAllowanceCommited[msg.sender] + token1Amt <= balanceOf[msg.sender], "total allowance for approver overcommited, you cannot allow more than you own");
+    require(token1 == address(this), "token must be token 1");
+
+    // create a listing and approve the transfer amount for the newly listed contract
+    Models.ListingInfo memory listingInfo = mainContract.newListing(msg.sender, token1, token1Amt, token2, token2Amt);
+    address listingAddress = listingInfo.listingAddr;
+    allowance[msg.sender][listingAddress] += token1Amt;
+    // totalAllowanceCommited[msg.sender] += token1Amt;
+    emit Approval(msg.sender, listingAddress, token1Amt);
+    emit NewListing(listingInfo);
+
+    return true;
+  }
+
+  function acceptTokenExchange(address listingAddress) external returns (Models.ListingInfo memory) {
+    ListingContract listingContract = ListingContract(listingAddress);
+    require(listingContract.token2() == address(this), "listing wants a different token2");
+    require(balanceOf[msg.sender] >= listingContract.token2Amt(), "insufficient balance in sender");
+    // require(totalAllowanceCommited[msg.sender] + listingContract.token2Amt() <= balanceOf[msg.sender], "total allowance for approver overcommited, you cannot allow more than you own");
+
+    // perform approval
+    allowance[msg.sender][listingAddress] += listingContract.token2Amt();
+    // totalAllowanceCommited[msg.sender] += listingContract.token2();
+    emit Approval(msg.sender, listingAddress, listingContract.token2Amt());
+
+    // trigger listing
+    Models.ListingInfo memory listingInfo = listingContract.trigger(msg.sender);
+    emit ListingFulfilled(listingInfo);
+
+    return listingInfo;
   }
 
   // to get smart contract's balance
