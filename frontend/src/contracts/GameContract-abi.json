@@ -2,7 +2,7 @@
     {
         "inputs": [
             {
-                "internalType": "address payable",
+                "internalType": "address",
                 "name": "_creator",
                 "type": "address"
             },
@@ -45,38 +45,13 @@
         "type": "function"
     },
     {
-        "inputs": [
+        "inputs": [],
+        "name": "creator",
+        "outputs": [
             {
                 "internalType": "address",
                 "name": "",
                 "type": "address"
-            }
-        ],
-        "name": "betRecords",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "name": "betSides",
-        "outputs": [
-            {
-                "internalType": "enum GameContract.gameSide",
-                "name": "",
-                "type": "uint8"
             }
         ],
         "stateMutability": "view",
@@ -84,7 +59,20 @@
     },
     {
         "inputs": [],
-        "name": "creator",
+        "name": "gameNoTokenContract",
+        "outputs": [
+            {
+                "internalType": "contract GameERC20Token",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "gameNoTokenContractAddress",
         "outputs": [
             {
                 "internalType": "address",
@@ -111,6 +99,45 @@
     {
         "inputs": [],
         "name": "gameResolveTime",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "gameYesTokenContract",
+        "outputs": [
+            {
+                "internalType": "contract GameERC20Token",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "gameYesTokenContractAddress",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "listingsCount",
         "outputs": [
             {
                 "internalType": "uint256",
@@ -164,24 +191,292 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "",
+                "name": "_player",
                 "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "token1Amt",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "token2",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "token2Amt",
+                "type": "uint256"
             }
         ],
-        "name": "winningWithdrawals",
+        "name": "newListing",
         "outputs": [
             {
-                "internalType": "enum GameContract.hasWithdrawn",
+                "components": [
+                    {
+                        "internalType": "uint256",
+                        "name": "listingId",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "listingAddr",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "player1",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "token1",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "token1Amt",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "player2",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "token2",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "token2Amt",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "fulfilled",
+                        "type": "bool"
+                    }
+                ],
+                "internalType": "struct Models.ListingInfo",
                 "name": "",
-                "type": "uint8"
+                "type": "tuple"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "listingId",
+                "type": "uint256"
+            }
+        ],
+        "name": "getListingContractAddressById",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
             }
         ],
         "stateMutability": "view",
         "type": "function"
     },
     {
-        "stateMutability": "payable",
-        "type": "receive"
+        "inputs": [],
+        "name": "getAllListings",
+        "outputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "uint256",
+                        "name": "listingId",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "listingAddr",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "player1",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "token1",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "token1Amt",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "player2",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "token2",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "token2Amt",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "fulfilled",
+                        "type": "bool"
+                    }
+                ],
+                "internalType": "struct Models.ListingInfo[]",
+                "name": "",
+                "type": "tuple[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "uint256",
+                        "name": "listingId",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "listingAddr",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "player1",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "token1",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "token1Amt",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "player2",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "token2",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "token2Amt",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "fulfilled",
+                        "type": "bool"
+                    }
+                ],
+                "internalType": "struct Models.ListingInfo",
+                "name": "listingInfo",
+                "type": "tuple"
+            }
+        ],
+        "name": "updateListing",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_player",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "listingAddr",
+                "type": "address"
+            }
+        ],
+        "name": "partakeInListing",
+        "outputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "uint256",
+                        "name": "listingId",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "listingAddr",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "player1",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "token1",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "token1Amt",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "player2",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "token2",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "token2Amt",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "fulfilled",
+                        "type": "bool"
+                    }
+                ],
+                "internalType": "struct Models.ListingInfo",
+                "name": "",
+                "type": "tuple"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
     },
     {
         "inputs": [],
@@ -238,7 +533,7 @@
             },
             {
                 "internalType": "uint256",
-                "name": "_ethAmount",
+                "name": "hwangMktTokenAmt",
                 "type": "uint256"
             },
             {
@@ -249,7 +544,7 @@
         ],
         "name": "addPlayer",
         "outputs": [],
-        "stateMutability": "payable",
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
@@ -331,9 +626,9 @@
     {
         "inputs": [
             {
-                "internalType": "address payable",
-                "name": "_player",
-                "type": "address"
+                "internalType": "uint256",
+                "name": "withdrawAmt",
+                "type": "uint256"
             }
         ],
         "name": "withdrawWinnings",
@@ -352,6 +647,19 @@
             }
         ],
         "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "int256",
+                "name": "price",
+                "type": "int256"
+            }
+        ],
+        "name": "backdoor",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     }
 ]

@@ -25,6 +25,7 @@ import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faExternalLink,
+  faPlus,
   faQuestionCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import DatePicker from "react-datepicker";
@@ -163,9 +164,13 @@ const CreateGame = ({ walletAddress, setStatus, colorMode }) => {
 
   return (
     <Box>
-      <Heading>Create a game</Heading>
-
-      <Button onClick={onOpen}>New Game</Button>
+      <Button
+        leftIcon={<FontAwesomeIcon icon={faPlus} />}
+        colorScheme="green"
+        onClick={onOpen}
+      >
+        New Game
+      </Button>
 
       <Modal isOpen={isOpen} onClose={onClose} size="2xl">
         <ModalOverlay />
@@ -179,7 +184,6 @@ const CreateGame = ({ walletAddress, setStatus, colorMode }) => {
                 placeholder="Select a game category"
                 onChange={(e) => setCategory(e.target.value)}
                 value={category}
-                defaultValue=""
               >
                 {allowedCategories.map((cat) => (
                   <option key={cat} value={cat}>
@@ -201,8 +205,7 @@ const CreateGame = ({ walletAddress, setStatus, colorMode }) => {
                       )
                     )
                   }
-                  value={mkt && mkt.description}
-                  defaultValue=""
+                  value={mkt ? mkt.description : ""}
                 >
                   {markets[category] &&
                     markets[category].map((o) => (

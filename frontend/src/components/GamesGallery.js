@@ -14,27 +14,31 @@ import {
   getGameAddrById,
   getCurrentWalletConnected,
   connectWallet,
+  getAllGames,
   joinGame,
 } from "../util/interact";
 
 import CreateGame from "./CreateGame";
+import GameCard from "./GameCard";
 
 const GamesGallery = ({ walletAddress, colorMode }) => {
   const [status, setStatus] = useState("");
   const [getGameId, setGetGameId] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [games, setGames] = useState([]);
+  const [ongoingGames, setOngoingGames] = useState([]);
+  const [closedGames, setClosedGames] = useState([]);
 
   function addHwangMarketListener() {
     console.log("hwang market game created listener added");
     hwangMarket.events.GameCreated({}, (error, data) => {
       if (error) {
         setStatus("😥 " + error.message);
-      } else {
-        console.log("data returned from hwang market listener: ", data);
-        // setGamesAddr((prev) =>
-        //   prev.concat(data.returnValues.gameAddr.toString())
-        // );
+      } else if (data && data.returnValues && data.returnValues.gameMetadata) {
+        console.log(
+          "received game created event",
+          data.returnValues.gameMetadata
+        );
+        setOngoingGames((prev) => [...prev, data.returnValues.gameMetadata]);
         setStatus("🎉 Your game was created!");
       }
     });
@@ -57,8 +61,10 @@ const GamesGallery = ({ walletAddress, colorMode }) => {
     addHwangMarketListener();
     setLoading(true);
     async function getGames() {
-      // const { fetchedGames } = getAllGames();
-      // setGames(fetchedGames);
+      const games = await getAllGames();
+      console.log("games loaded in", games);
+      setOngoingGames(games.ongoingGames);
+      setClosedGames(games.closedGames);
       setLoading(false);
     }
     getGames();
@@ -75,26 +81,39 @@ const GamesGallery = ({ walletAddress, colorMode }) => {
   };
 
   return (
-    <Box border="1px solid red">
-      <Heading>Games Gallery</Heading>
-      <NumberInput value={getGameId} onChange={(v) => setGetGameId(v)}>
-        <NumberInputField></NumberInputField>
-      </NumberInput>
-      <Button onClick={() => getGameAddrById(getGameId)}>
-        get game {getGameId}
-      </Button>
-      <CreateGame
-        walletAddress={walletAddress}
-        setStatus={setStatus}
-        colorMode={colorMode}
-      />
+    <Box px="28" py="16">
+      <Heading size="2xl" textAlign="center">
+        Games Gallery
+      </Heading>
+      <Box
+        display="flex"
+        justifyContent="flex-end"
+        alignItems="center"
+        columnGap="10"
+      >
+        <Text px="4" py="2" border="1px solid white" borderRadius="10px">
+          Number of open games: {ongoingGames ? ongoingGames.length : 0}
+        </Text>
+        <CreateGame
+          walletAddress={walletAddress}
+          setStatus={setStatus}
+          colorMode={colorMode}
+        />
+      </Box>
       <Text>{status}</Text>
-      Number of games: {games.length}
-      {games && games.map((g) => <Text key={g}>{g}</Text>)}
-      <Button onClick={pressJoinGame}>
-        join 0xdbd75dd9dcaEf0b5cf6f3FA00A57a719F786a902 bet YES, betting amount
-        of 1wei
-      </Button>
+
+      <Box
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        flexWrap="wrap"
+        rowGap="16"
+        columnGap="16"
+        my="24"
+      >
+        {ongoingGames &&
+          ongoingGames.map((g) => <GameCard key={g.addr} game={g} />)}
+      </Box>
     </Box>
   );
 };

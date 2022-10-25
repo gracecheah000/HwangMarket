@@ -15,7 +15,6 @@ const CommonTop = ({ wallet, setWallet, colorMode, toggleColorMode }) => {
 
   const connectWalletPressed = async () => {
     if (wallet) {
-      setWallet("");
       return;
     }
     const walletResponse = await connectWallet();
@@ -61,14 +60,7 @@ const CommonTop = ({ wallet, setWallet, colorMode, toggleColorMode }) => {
   }, []);
 
   return (
-    <Box
-      border="1px solid blue"
-      display="flex"
-      p="5"
-      alignItems="center"
-      px="5%"
-      flexWrap="wrap"
-    >
+    <Box display="flex" p="5" alignItems="center" px="5%" flexWrap="wrap">
       <Box w="300px">
         <Heading color="blue.600">HWANGMARKET</Heading>
         <Text>The only place to lose your money, fast.</Text>

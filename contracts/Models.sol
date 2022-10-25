@@ -31,6 +31,7 @@ library Models {
 
   struct GameMetadata {
     uint256 id;
+    uint256 createdTime;
     address addr;
     string tag;
     string title;

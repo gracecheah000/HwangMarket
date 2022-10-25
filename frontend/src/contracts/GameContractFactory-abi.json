@@ -1,0 +1,36 @@
+[
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "addr",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "resolveTime",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "oracleAddr",
+                "type": "address"
+            },
+            {
+                "internalType": "int256",
+                "name": "threshold",
+                "type": "int256"
+            }
+        ],
+        "name": "createGame",
+        "outputs": [
+            {
+                "internalType": "contract GameContract",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+]

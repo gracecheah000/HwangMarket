@@ -5,6 +5,11 @@
 After updating your contracts, remember to update the contract address in frontend/util/interact.js
 and also run the helper script with `python3 helper.py` in the root to move the newly compiled contract's ABI to be referenced, otherwise you would still be working with the old contract ABI.
 
+## Truffle cmds
+
+To send some test eth to another wallet:
+`truffle(development)> web3.eth.sendTransaction({to: "0xb50b7E6629901979580a440B8C066122506Ed7ae", from: accounts[0], value: web3.utils.toWei("50", "ether")});`
+
 ## Truffle & Ganache
 
 Truffle - a development environment utilizing the EVM (Ethereum Virtual Machine) as a basis.
@@ -348,7 +353,7 @@ function backdoor(int256 price) external {
   gameOutcome = side;
 
   // also, disable gameResolveTime for other assertions
-  gameResolveTime = 0;
+  gameResolveTime = block.timestamp;
 
   mainContract.concludeGame(rawSide);
 }

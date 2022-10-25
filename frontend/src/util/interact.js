@@ -1,11 +1,18 @@
 /* Abstractions to deal with all functions interacting with the blockchain */
 require("dotenv").config();
-const alchemyKey = process.env.REACT_APP_ALCHEMY_KEY;
-const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
-const web3 = createAlchemyWeb3(alchemyKey);
+// const alchemyKey = process.env.REACT_APP_ALCHEMY_KEY;
+// const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
+// const web3 = createAlchemyWeb3(alchemyKey);
+
+// For development on local ganache, on goerli test net, its the above commented out snippet
+const Web3 = require("web3");
+const web3 = new Web3(
+  new Web3.providers.WebsocketProvider("ws://127.0.0.1:7545")
+);
+// End
 
 const hwangMarketABI = require("../contracts/HwangMarket-abi.json");
-const hwangMarketAddr = "0x079c1F4186C208172217fDBc63168097dF8Bdc56";
+const hwangMarketAddr = process.env.REACT_APP_HwangMarket_Address;
 
 const gameContractABI = require("../contracts/GameContract-abi.json");
 
@@ -151,6 +158,11 @@ export const connectWallet = async () => {
       ),
     };
   }
+};
+
+export const getAllGames = async () => {
+  const games = await hwangMarket.methods.getAllGames().call();
+  return games;
 };
 
 export const joinGame = async (gameAddr, playerAddr, ethAmt, betSide) => {

@@ -317,8 +317,8 @@ contract GameContract is IListingOwner {
       require(sent, "Token transfer failed");
     }
 
-  // TODO: please remove this backdoor
   // this is only part of the demo to bypass no chainlink oracle on local
+  // this is removed in actual deployed contract
   function backdoor(int256 price) external {
     status = GameStatus.CLOSED;
     gameSide side = gameSide.NO;
@@ -330,7 +330,7 @@ contract GameContract is IListingOwner {
     gameOutcome = side;
 
     // also, disable gameResolveTime for other assertions
-    gameResolveTime = 0;
+    gameResolveTime = block.timestamp;
 
     mainContract.concludeGame(rawSide);
   }

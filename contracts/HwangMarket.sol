@@ -65,6 +65,7 @@ contract HwangMarket is IListingOwner {
     address newGameAddress = address(newGame);
     gameContractRegistry[gameCount] = Models.GameMetadata({
       id: gameCount,
+      createdTime: block.timestamp,
       addr: newGameAddress,
       tag: tag,
       title: title,
@@ -106,10 +107,10 @@ contract HwangMarket is IListingOwner {
     ongoingGames.push(gameContractRegistry[gameCount]);
 
     ongoingGamesCnt = SafeMath.add(ongoingGamesCnt, 1);
-    gameCount = SafeMath.add(gameCount, 1);
 
     emit GameCreated(gameContractRegistry[gameCount]);
 
+    gameCount = SafeMath.add(gameCount, 1);
     return newGameAddress;
   }
 
