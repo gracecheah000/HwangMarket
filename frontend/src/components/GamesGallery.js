@@ -90,8 +90,14 @@ const GamesGallery = ({ walletAddress, colorMode }) => {
         justifyContent="flex-end"
         alignItems="center"
         columnGap="10"
+        mt="7"
       >
-        <Text px="4" py="2" border="1px solid white" borderRadius="10px">
+        <Text
+          px="4"
+          py="2"
+          border={colorMode === "light" ? "1px solid black" : "1px solid white"}
+          borderRadius="10px"
+        >
           Number of open games: {ongoingGames ? ongoingGames.length : 0}
         </Text>
         <CreateGame
