@@ -10,6 +10,6 @@ import "./Models.sol";
   just that it cannot be done via the UI which will expect these methods to be implemented on the token contract.
   */
 interface IListableToken {
-  function listUpTokensForExchange(address token1, uint256 token1Amt, address token2, uint256 token2Amt) external returns (bool);
+  function listUpTokensForExchange(uint256 token1Amt, address token2, uint256 token2Amt) external returns (Models.ListingInfo memory);
   function acceptTokenExchange(address listingAddress) external returns (Models.ListingInfo memory);
 }

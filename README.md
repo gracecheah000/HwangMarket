@@ -37,7 +37,7 @@ npm install ganache
 
 # Usage
 
-Here, we document how the contract interactions are meant to be set up. The interactions should be built out in such a way where they can be reached programatically, without any magic "address" appearing out of everywhere, wherever applicable, I will try to point out prerequisites which the frontend will need to store for certain interactions, and how it can achieve the prerequisites.
+Here, we document how the contract interactions are meant to be set up. The interactions should be built out in such a way where they can be reached programatically, without any magic "address" appearing out of thin air, wherever applicable, I will try to point out prerequisites which the frontend will need to store for certain interactions, and how it can achieve the prerequisites.
 There are a few milestones we want to demonstrate for the main contract, and game contract.
 
 ### Main contract
@@ -50,9 +50,648 @@ There are a few milestones we want to demonstrate for the main contract, and gam
 6. Players should be able to create a listing to exchange HMTKN for a game's "side" token.
 7. Players should be able to partake in a listing as a willing buyer, to exchange their game's side token for HMTKN.
 8. We should be able to fetch all transactions recorded for display in a transparent market.
-9. We should be able to fetch all transactions for a player.
+9. We should be able to fetch all transactions for a player. (BET, WITHDRAW activities)
 
-## Everything below is outdated, it might or might not be accurate but left in as it might contain helpful commands.
+### Game contract
+
+1. Players should be to able join a game by purchasing tokens from initial pool, specifying the bet side.
+2. Players should be able to list their game tokens to exchange for HMTKN.
+3. Players should be able to partake in a listing by other players to exchange HMTKN for the game tokens.
+4. The game outcome should be auto resolved by an oracle.
+5. Players should be able to exchange the winning tokens back to HMTKN / collect their winnings.
+6. We should be able to fetch all current player's listings for a game.
+7. We should be able to get the bet ratio for both sides for a game.
+8. We should be able to get all transactions relating to the game. (BET, WITHDRAW)
+
+### Demonstration
+
+Since the above goals cannot really be shown as independent steps, it will make more sense to show them sequentially, mimicking how the interactions are supposed to be called in real life.
+
+The demonstration here is ran on the goerli network, and so the games are created with no intention to resolve them as we do not have a fork of chainlink oracle running on our local network. However, I will still show the steps dependent on a resolved game by implementing a backdoor function, which is not part of the deployed code, allowing me to resolve the game. Again, this function is removed after this demonstration, and is not part of the actual deployed contract.
+
+Also, unless otherwise, all below functions are ran in the truffle development console.
+
+```
+truffle console
+```
+
+Deploy the contract. (Again a gentle reminder, you will not be able to perform the steps which requires the game to be resolved, unless you deploy on the goerli network or edit the contract code to include a backdoor like in this demo.)
+
+```
+deploy
+```
+
+Before proceeding, we establish 2 players, John and Sandy, both of which are funded accounts.
+
+```
+truffle(development)> const John = accounts[0];
+undefined
+truffle(development)> const Sandy = accounts[1];
+undefined
+
+truffle(development)> (await web3.eth.getBalance(John)).toString();
+'94580785199999989050'
+truffle(development)> (await web3.eth.getBalance(Sandy)).toString();
+'99928175379999988450'
+```
+
+1. Obtain the deployed contract.
+
+```
+truffle(development)> let m = await HwangMarket.deployed();
+```
+
+2. Create a new fake game with the following settings:
+   Game Resolve Time: 1919136291 (Friday, October 25, 2030 1:24:51 PM GMT+08:00)
+   Oracle Address: (We lazily assign it to accounts[2], obviously its not an oracle, but we have no intention to resolve this game via chainlink oracle.)
+   Threshold: 1000
+   Game Tag: Price Feeds
+   Title: Testing game 123
+
+```
+truffle(development)> m.createGame(1919136291, accounts[2], 1000, "Price Feeds", "Testing game 123");
+
+// obtain a reference to the game just created, we start counting from game id of 1.
+truffle(development)> let g = await GameContract.at((await m.gameContractRegistry(1)).addr);
+
+// Alternatively, if we want to list all the games.
+truffle(development)> m.getAllGames();
+[
+  [
+    [
+      '1',
+      '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c',
+      'Price Feeds',
+      'Testing game 123',
+      '0xA50B3795732c3C7C94333fB36ac2474fe5eeADd9',
+      '1919136291',
+      '1000',
+      '0',
+      '0',
+      '0',
+      true,
+      '0',
+      id: '1',
+      addr: '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c',
+      tag: 'Price Feeds',
+      title: 'Testing game 123',
+      oracleAddr: '0xA50B3795732c3C7C94333fB36ac2474fe5eeADd9',
+      resolveTime: '1919136291',
+      threshold: '1000',
+      totalAmount: '0',
+      betYesAmount: '0',
+      betNoAmount: '0',
+      ongoing: true,
+      gameOutcome: '0'
+    ]
+  ],
+  [],
+  ongoingGames: [
+    [
+      '1',
+      '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c',
+      'Price Feeds',
+      'Testing game 123',
+      '0xA50B3795732c3C7C94333fB36ac2474fe5eeADd9',
+      '1919136291',
+      '1000',
+      '0',
+      '0',
+      '0',
+      true,
+      '0',
+      id: '1',
+      addr: '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c',
+      tag: 'Price Feeds',
+      title: 'Testing game 123',
+      oracleAddr: '0xA50B3795732c3C7C94333fB36ac2474fe5eeADd9',
+      resolveTime: '1919136291',
+      threshold: '1000',
+      totalAmount: '0',
+      betYesAmount: '0',
+      betNoAmount: '0',
+      ongoing: true,
+      gameOutcome: '0'
+    ]
+  ],
+  closedGames: []
+]
+```
+
+3. Let John and Sandy purchase some HMTKN using ETH, to join the above game.
+
+Obtain the main token contract.
+
+```
+truffle(development)> let t = await MainToken.at((await m.mainTokenAddress()));
+```
+
+Mint 1000 HMTKN for John and Sandy, the exchange rate is 1 HKMTN = 1 wei, vice versa.
+
+```
+truffle(development)> t.mint(John, 1000, 1000, {from: John, value: 1000});
+truffle(development)> t.mint(Sandy, 1000, 1000, {from: Sandy, value: 1000});
+
+truffle(development)> (await t.balanceOf(John)).toString();
+'1000'
+truffle(development)> (await t.balanceOf(Sandy)).toString();
+'1000'
+```
+
+4. Referencing the game created in step 2, John purchases 500 token of GameYesToken, Sandy purchases 500 token of GameNoToken.
+
+Before being able to join the game, John and Sandy must approve the corresponding HMTKN to be swapped for the game token.
+
+```
+truffle(development)> t.approve(g.address, 500, {from: John});
+truffle(development)> t.approve(g.address, 500, {from: Sandy});
+```
+
+Now, we can try to join the game.
+
+> Note: In this case, the last parameter refers to the bet side, where 1 = Yes, 2 = No. We will see this idea applied throughout our code.
+
+```
+truffle(development)> g.addPlayer(John, 500, 1);
+truffle(development)> g.addPlayer(Sandy, 500, 2);
+```
+
+Obtain a reference to the GameYesToken and GameNoToken contract, so we can check if the balance has been correctly updated. This is not required, just for our own confirmation.
+
+```
+truffle(development)> let gyt = await GameERC20Token.at((await g.gameYesTokenContractAddress()));
+
+truffle(development)> let gnt = await GameERC20Token.at((await g.gameNoTokenContractAddress()));
+
+// Sanity check
+truffle(development)> (await gyt.balanceOf(John)).toString();
+'500'
+truffle(development)> (await gyt.balanceOf(Sandy)).toString();
+'0'
+truffle(development)> (await gnt.balanceOf(John)).toString();
+'0'
+truffle(development)> (await gnt.balanceOf(Sandy)).toString();
+'500'
+```
+
+5. Before, we proceed to game resolution, we show how John could list 100 of his GameYesToken for this particular game up, asking for 150 HMTKN in exchange.
+
+```
+truffle(development)> gyt.listUpTokensForExchange(100, t.address, 150);
+```
+
+Now, we can get the newly created listing info. Note, on the frontend we should be able to receive the struct / rely on emit of NewListing. Alternatively, we can just query all the latest listings under the game like below.
+
+```
+truffle(development)> g.getAllListings();
+[
+  [
+    '0',
+    '0x0e88bA8E659A4d0cf16b504B8Ca20cdD139b7e90',
+    '0xc55De8931433adB28eE7767782E716dD00F7DEd9',
+    '0x93116b6d4129739f64eE96C4C46d43f217409ba3',
+    '100',
+    '0x0000000000000000000000000000000000000000',
+    '0xEa4Fb6E0a758EF5aEC01CB05DF94F7B5a433072c',
+    '150',
+    false,
+    listingId: '0',
+    listingAddr: '0x0e88bA8E659A4d0cf16b504B8Ca20cdD139b7e90',
+    player1: '0xc55De8931433adB28eE7767782E716dD00F7DEd9',
+    token1: '0x93116b6d4129739f64eE96C4C46d43f217409ba3',
+    token1Amt: '100',
+    player2: '0x0000000000000000000000000000000000000000',
+    token2: '0xEa4Fb6E0a758EF5aEC01CB05DF94F7B5a433072c',
+    token2Amt: '150',
+    fulfilled: false
+  ]
+]
+```
+
+6. Now, suppose Sandy, is interested in the listing that John listed above. She can partake in the listing as a willing buyer, assuming she owns token 2 with the right amount.
+
+In the above listing, token 2 is a HMTKN.
+
+```
+truffle(development)> t.address
+'0xEa4Fb6E0a758EF5aEC01CB05DF94F7B5a433072c'
+```
+
+But assuming we do not know this ahead of time, we can use the IListableToken interface which HMTKN and game tokens implement to simplify the process. Below shows a generic case to partake in all listings in HwangMarket.
+
+> Note, IListableToken is completely optional and it is fully possible to use only IERC20 compliant tokens for exchange. But implementing IListableToken greatly simplifies the process on the frontend, albeit it is more specific to HwangMarket use case. In general, it combines the approval and creation of listing / fulfilling a listing step into a single step, again purely for convenience and doing without it is also ok.
+
+```
+truffle(development)> let li = (await g.getAllListings())[0];
+
+truffle(development)> let t2Swap = await IListableToken.at(li.token2);
+
+truffle(development)> t2Swap.acceptTokenExchange(li.listingAddr, {from: Sandy});
+
+truffle(development)> g.getAllListings();
+[
+  [
+    '0',
+    '0x0e88bA8E659A4d0cf16b504B8Ca20cdD139b7e90',
+    '0xc55De8931433adB28eE7767782E716dD00F7DEd9',
+    '0x93116b6d4129739f64eE96C4C46d43f217409ba3',
+    '100',
+    '0xc7997A1c60d610609fd6Fb4bD54c266511e313D0',
+    '0xEa4Fb6E0a758EF5aEC01CB05DF94F7B5a433072c',
+    '150',
+    true,
+    listingId: '0',
+    listingAddr: '0x0e88bA8E659A4d0cf16b504B8Ca20cdD139b7e90',
+    player1: '0xc55De8931433adB28eE7767782E716dD00F7DEd9',
+    token1: '0x93116b6d4129739f64eE96C4C46d43f217409ba3',
+    token1Amt: '100',
+    player2: '0xc7997A1c60d610609fd6Fb4bD54c266511e313D0',
+    token2: '0xEa4Fb6E0a758EF5aEC01CB05DF94F7B5a433072c',
+    token2Amt: '150',
+    fulfilled: true
+  ]
+]
+```
+
+Perform a confirmation check. Recall, the trade listing is 100 GameYesToken from John for 150 HMTKN from Sandy.
+
+Printing out John's and Sandy's balances in all the tokens we have created:
+
+```
+truffle(development)> (await t.balanceOf(John)).toString();
+'650'
+truffle(development)> (await gyt.balanceOf(John)).toString();
+'400'
+truffle(development)> (await gnt.balanceOf(John)).toString();
+'0'
+truffle(development)> (await t.balanceOf(Sandy)).toString();
+'350'
+truffle(development)> (await gyt.balanceOf(Sandy)).toString();
+'100'
+truffle(development)> (await gnt.balanceOf(Sandy)).toString();
+'500'
+```
+
+7. Now, usually there would be a chainlink job scheduler to call the game's `performUpkeep` function to trigger the resolution. However, for this demo, we will be using a backdoor function which mimicks the game resolution part. For obvious reasons, this will be left out the actual deployed contract. If you wish to follow along this demo yourself, you would need to include this function in `GameContract.sol` and repeat the above steps. The code for the backdoor function is:
+
+```
+// this is only part of the demo to bypass no chainlink oracle on local
+// this is removed in actual deployed contract
+function backdoor(int256 price) external {
+  status = GameStatus.CLOSED;
+  gameSide side = gameSide.NO;
+  uint8 rawSide = 2;
+  if (price >= threshold) {
+    side = gameSide.YES;
+    rawSide = 1;
+  }
+  gameOutcome = side;
+
+  // also, disable gameResolveTime for other assertions
+  gameResolveTime = 0;
+
+  mainContract.concludeGame(rawSide);
+}
+```
+
+We now backdoor a conclusion of the game's final price reaching 1000, meaning it is resolved with a outcome of YES.
+
+```
+truffle(development)> g.backdoor(1000);
+
+// Returns: (creator, status, gameOutcome, gameResolveTime, threshold);
+truffle(development)> g.getGameInfo();
+Result {
+  '0': '0xCEC383D0C69265D996063D2536adf60BC8708f76',
+  '1': BN {
+    negative: 0,
+    words: [ 1, <1 empty item> ],
+    length: 1,
+    red: null
+  },
+  '2': BN {
+    negative: 0,
+    words: [ 1, <1 empty item> ],
+    length: 1,
+    red: null
+  },
+  '3': BN {
+    negative: 0,
+    words: [ 0, <1 empty item> ],
+    length: 1,
+    red: null
+  },
+  '4': BN {
+    negative: 0,
+    words: [ 1000, <1 empty item> ],
+    length: 1,
+    red: null
+  }
+}
+```
+
+8. Once a game is concluded, players can collect their winnings by exchanging in their winning game tokens for their corresponding winning in terms of HMTKN.
+
+> The formula for winnings calculation is:
+> Winnings (in HwangMarket Token) = (((Game1YesToken traded in) / (Total pool of Game1YesToken owned by other players, NOT by the game)) \* (Total pool of HwangMarket Token placed on losing side)) + (Amount of Game1YesToken traded in, in terms of HwangMarket Token).
+
+Suppose, Sandy wants to trade in her 100 GameYesToken. She has to first approve the game contract as a spender for the 100 GameYesToken.
+
+```
+truffle(development)> gyt.approve(g.address, 100, {from: Sandy});
+```
+
+Next, Sandy can withdraw her winnings.
+
+```
+truffle(development)> g.withdrawWinnings(100, {from: Sandy});
+```
+
+John can also withdraw his 400 GameYesToken.
+
+```
+truffle(development)> gyt.approve(g.address, 400, {from: John});
+truffle(development)> g.withdrawWinnings(400, {from: John});
+```
+
+To confirm, we now check their HMTKN balances and their GameYesToken balances.
+
+```
+truffle(development)> (await t.balanceOf(John)).toString();
+'1050'
+truffle(development)> (await t.balanceOf(Sandy)).toString();
+'450'
+truffle(development)> (await gyt.balanceOf(John)).toString();
+'0'
+truffle(development)> (await gyt.balanceOf(Sandy)).toString();
+'0'
+```
+
+John's HMTKN balance = 500 + 150 (from trade earlier) + (4/5) x 500 = 1050.
+Sandy's HMTKN balance = 500 - 150 (from trade earlier) + (1/5) x 500 = 450.
+
+As we can see, the math checks out.
+
+9. Also, we can view all transactions related to the game.
+
+```
+truffle(development)> g.getTrxs();
+[
+  [
+    '0',
+    'BET',
+    '500',
+    '1666698864',
+    '1',
+    '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c',
+    '0xc55De8931433adB28eE7767782E716dD00F7DEd9',
+    trxId: '0',
+    activityType: 'BET',
+    trxAmt: '500',
+    trxTime: '1666698864',
+    gameSide: '1',
+    from: '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c',
+    to: '0xc55De8931433adB28eE7767782E716dD00F7DEd9'
+  ],
+  [
+    '1',
+    'BET',
+    '500',
+    '1666698868',
+    '2',
+    '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c',
+    '0xc7997A1c60d610609fd6Fb4bD54c266511e313D0',
+    trxId: '1',
+    activityType: 'BET',
+    trxAmt: '500',
+    trxTime: '1666698868',
+    gameSide: '2',
+    from: '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c',
+    to: '0xc7997A1c60d610609fd6Fb4bD54c266511e313D0'
+  ],
+  [
+    '2',
+    'WITHDRAW',
+    '100',
+    '1666698993',
+    '1',
+    '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c',
+    '0xc7997A1c60d610609fd6Fb4bD54c266511e313D0',
+    trxId: '2',
+    activityType: 'WITHDRAW',
+    trxAmt: '100',
+    trxTime: '1666698993',
+    gameSide: '1',
+    from: '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c',
+    to: '0xc7997A1c60d610609fd6Fb4bD54c266511e313D0'
+  ],
+  [
+    '3',
+    'WITHDRAW',
+    '400',
+    '1666699002',
+    '1',
+    '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c',
+    '0xc55De8931433adB28eE7767782E716dD00F7DEd9',
+    trxId: '3',
+    activityType: 'WITHDRAW',
+    trxAmt: '400',
+    trxTime: '1666699002',
+    gameSide: '1',
+    from: '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c',
+    to: '0xc55De8931433adB28eE7767782E716dD00F7DEd9'
+  ]
+```
+
+10. Finally, suppose John and Sandy now wishes to cash out all their HMTKN back to ETH.
+
+But first, lets capture their latest balance, so we can confirm that ETH was indeed deposited in exchange for their HMTKN.
+
+```
+truffle(development)> (await web3.eth.getBalance(John)).toString();
+'94410073039999988050'
+truffle(development)> (await web3.eth.getBalance(Sandy)).toString();
+'99912861539999987450'
+truffle(development)> (await t.balanceOf(John)).toString();
+'1050'
+truffle(development)> (await t.balanceOf(Sandy)).toString();
+'450'
+```
+
+Now, cash out.
+
+```
+truffle(development)> t.cashout(1050, {from: John});
+truffle(development)> t.cashout(450, {from: Sandy});
+```
+
+Check the final balance.
+
+```
+truffle(development)>  (await web3.eth.getBalance(John)).toString();
+'94409414079999989100'
+truffle(development)> (await web3.eth.getBalance(Sandy)).toString();
+'99912202579999987900'
+truffle(development)> (await t.balanceOf(John)).toString();
+'0'
+truffle(development)> (await t.balanceOf(Sandy)).toString();
+'0'
+```
+
+11. Finally, we can also view the game from earlier is closed.
+
+```
+truffle(development)> m.getAllGames();
+truffle(development)> m.getAllGames();
+[
+  [],
+  [
+    [
+      '1',
+      '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c',
+      'Price Feeds',
+      'Testing game 123',
+      '0xA50B3795732c3C7C94333fB36ac2474fe5eeADd9',
+      '1919136291',
+      '1000',
+      '0',
+      '0',
+      '0',
+      false,
+      '1',
+      id: '1',
+      addr: '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c',
+      tag: 'Price Feeds',
+      title: 'Testing game 123',
+      oracleAddr: '0xA50B3795732c3C7C94333fB36ac2474fe5eeADd9',
+      resolveTime: '1919136291',
+      threshold: '1000',
+      totalAmount: '0',
+      betYesAmount: '0',
+      betNoAmount: '0',
+      ongoing: false,
+      gameOutcome: '1'
+    ]
+  ],
+  ongoingGames: [],
+  closedGames: [
+    [
+      '1',
+      '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c',
+      'Price Feeds',
+      'Testing game 123',
+      '0xA50B3795732c3C7C94333fB36ac2474fe5eeADd9',
+      '1919136291',
+      '1000',
+      '0',
+      '0',
+      '0',
+      false,
+      '1',
+      id: '1',
+      addr: '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c',
+      tag: 'Price Feeds',
+      title: 'Testing game 123',
+      oracleAddr: '0xA50B3795732c3C7C94333fB36ac2474fe5eeADd9',
+      resolveTime: '1919136291',
+      threshold: '1000',
+      totalAmount: '0',
+      betYesAmount: '0',
+      betNoAmount: '0',
+      ongoing: false,
+      gameOutcome: '1'
+    ]
+  ]
+]
+```
+
+12. Also, we can view all activities related to John and Sandy at the level of HwangMarket.
+
+```
+truffle(development)> m.getPlayersTrxRecords(John);
+[
+  [
+    '0',
+    'BET',
+    '1',
+    '500',
+    '1666698864',
+    '1',
+    '0xc55De8931433adB28eE7767782E716dD00F7DEd9',
+    '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c',
+    trxId: '0',
+    activityType: 'BET',
+    gameId: '1',
+    trxAmt: '500',
+    trxTime: '1666698864',
+    gameSide: '1',
+    from: '0xc55De8931433adB28eE7767782E716dD00F7DEd9',
+    to: '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c'
+  ],
+  [
+    '3',
+    'WITHDRAW',
+    '1',
+    '400',
+    '1666699002',
+    '1',
+    '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c',
+    '0xc55De8931433adB28eE7767782E716dD00F7DEd9',
+    trxId: '3',
+    activityType: 'WITHDRAW',
+    gameId: '1',
+    trxAmt: '400',
+    trxTime: '1666699002',
+    gameSide: '1',
+    from: '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c',
+    to: '0xc55De8931433adB28eE7767782E716dD00F7DEd9'
+  ]
+]
+```
+
+```
+truffle(development)> m.getPlayersTrxRecords(Sandy);
+[
+  [
+    '1',
+    'BET',
+    '1',
+    '500',
+    '1666698868',
+    '2',
+    '0xc7997A1c60d610609fd6Fb4bD54c266511e313D0',
+    '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c',
+    trxId: '1',
+    activityType: 'BET',
+    gameId: '1',
+    trxAmt: '500',
+    trxTime: '1666698868',
+    gameSide: '2',
+    from: '0xc7997A1c60d610609fd6Fb4bD54c266511e313D0',
+    to: '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c'
+  ],
+  [
+    '2',
+    'WITHDRAW',
+    '1',
+    '100',
+    '1666698993',
+    '1',
+    '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c',
+    '0xc7997A1c60d610609fd6Fb4bD54c266511e313D0',
+    trxId: '2',
+    activityType: 'WITHDRAW',
+    gameId: '1',
+    trxAmt: '100',
+    trxTime: '1666698993',
+    gameSide: '1',
+    from: '0xd8104b4a741b00EE7D03189008d0bd6bf497cF8c',
+    to: '0xc7997A1c60d610609fd6Fb4bD54c266511e313D0'
+  ]
+]
+```
+
+# Everything below is outdated, it might or might not be accurate but is left in as it might contain helpful commands.
 
 # Developing on local
 

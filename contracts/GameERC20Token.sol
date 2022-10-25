@@ -87,20 +87,19 @@ contract GameERC20Token is IERC20, IListableToken {
   }
 
   // player1 has to approve the token1 amount to the listing contract for spending
-  function listUpTokensForExchange(address token1, uint256 token1Amt, address token2, uint256 token2Amt) external returns (bool) {
+  function listUpTokensForExchange(uint256 token1Amt, address token2, uint256 token2Amt) external returns (Models.ListingInfo memory) {
     require(balanceOf[msg.sender] >= token1Amt, "insufficient balance in sender");
     // require(totalAllowanceCommited[msg.sender] + token1Amt <= balanceOf[msg.sender], "total allowance for approver overcommited, you cannot allow more than you own");
-    require(token1 == address(this), "token must be token 1");
 
     // create a listing and approve the transfer amount for the newly listed contract
-    Models.ListingInfo memory listingInfo = gameContract.newListing(msg.sender, token1, token1Amt, token2, token2Amt);
+    Models.ListingInfo memory listingInfo = gameContract.newListing(msg.sender, token1Amt, token2, token2Amt);
     address listingAddress = listingInfo.listingAddr;
     allowance[msg.sender][listingAddress] += token1Amt;
     // totalAllowanceCommited[msg.sender] += token1Amt;
     emit Approval(msg.sender, listingAddress, token1Amt);
     emit NewListing(listingInfo);
 
-    return true;
+    return listingInfo;
   }
 
   function acceptTokenExchange(address listingAddress) external returns (Models.ListingInfo memory) {
@@ -114,8 +113,8 @@ contract GameERC20Token is IERC20, IListableToken {
     // totalAllowanceCommited[msg.sender] += listingContract.token2();
     emit Approval(msg.sender, listingAddress, listingContract.token2Amt());
 
-    // trigger listing
-    Models.ListingInfo memory listingInfo = listingContract.trigger(msg.sender);
+    // trigger listing via main contract for book keeping
+    Models.ListingInfo memory listingInfo = gameContract.partakeInListing(msg.sender, listingAddress);
     emit ListingFulfilled(listingInfo);
 
     return listingInfo;

@@ -31,7 +31,6 @@ contract MainToken is IERC20, IListableToken {
   }
 
   function transfer(address recipient, uint amount) external returns (bool) {
-    require(allowance[msg.sender][recipient] >= amount, "insufficient allowance from sender to recipient");
     require(balanceOf[msg.sender] >= amount, "insufficient balance in sender");
     // totalAllowanceCommited[msg.sender] -= amount;
     balanceOf[msg.sender] -= amount;
@@ -54,7 +53,7 @@ contract MainToken is IERC20, IListableToken {
     address recipient,
     uint amount
   ) external returns (bool) {
-    require(allowance[msg.sender][recipient] >= amount, "insufficient allowance to recipient from sender");
+    require(allowance[sender][msg.sender] >= amount, "insufficient allowance to recipient from msg sender");
     require(balanceOf[sender] >= amount, "insufficient balance in sender");
     
     // totalAllowanceCommited[sender] -= amount;
@@ -79,15 +78,13 @@ contract MainToken is IERC20, IListableToken {
   }
 
   // player can exchange in HwangMarket tokens for eth
-  function cashout(address payable _player, uint tokenAmt) external {
-    require(_player == msg.sender, "Invalid Transaction");
-    require(allowance[msg.sender][address(this)] >= tokenAmt, "insufficient allowance in player to contract");
+  function cashout(uint tokenAmt) external {
     require(balanceOf[msg.sender] >= tokenAmt, "insufficient balance in player");
 
     // totalAllowanceCommited[msg.sender] -= tokenAmt;
     uint ethAmt = tokenAmt * (1 / eth2TknConversionRate);
-    _player.transfer(ethAmt);
-    balanceOf[_player] -= tokenAmt;
+    payable(msg.sender).transfer(ethAmt);
+    balanceOf[msg.sender] -= tokenAmt;
     totalSupply -= tokenAmt;
     totalEthSupply -= ethAmt;
   }
@@ -100,20 +97,19 @@ contract MainToken is IERC20, IListableToken {
   }
 
   // player1 has to approve the token1 amount to the listing contract for spending
-  function listUpTokensForExchange(address token1, uint256 token1Amt, address token2, uint256 token2Amt) external returns (bool) {
+  function listUpTokensForExchange(uint256 token1Amt, address token2, uint256 token2Amt) external returns (Models.ListingInfo memory) {
     require(balanceOf[msg.sender] >= token1Amt, "insufficient balance in sender");
     // require(totalAllowanceCommited[msg.sender] + token1Amt <= balanceOf[msg.sender], "total allowance for approver overcommited, you cannot allow more than you own");
-    require(token1 == address(this), "token must be token 1");
 
     // create a listing and approve the transfer amount for the newly listed contract
-    Models.ListingInfo memory listingInfo = mainContract.newListing(msg.sender, token1, token1Amt, token2, token2Amt);
+    Models.ListingInfo memory listingInfo = mainContract.newListing(msg.sender, token1Amt, token2, token2Amt);
     address listingAddress = listingInfo.listingAddr;
-    allowance[msg.sender][listingAddress] += token1Amt;
+    allowance[msg.sender][listingAddress] = token1Amt;
     // totalAllowanceCommited[msg.sender] += token1Amt;
     emit Approval(msg.sender, listingAddress, token1Amt);
     emit NewListing(listingInfo);
 
-    return true;
+    return listingInfo;
   }
 
   function acceptTokenExchange(address listingAddress) external returns (Models.ListingInfo memory) {
@@ -123,12 +119,12 @@ contract MainToken is IERC20, IListableToken {
     // require(totalAllowanceCommited[msg.sender] + listingContract.token2Amt() <= balanceOf[msg.sender], "total allowance for approver overcommited, you cannot allow more than you own");
 
     // perform approval
-    allowance[msg.sender][listingAddress] += listingContract.token2Amt();
+    allowance[msg.sender][listingAddress] = listingContract.token2Amt();
     // totalAllowanceCommited[msg.sender] += listingContract.token2();
     emit Approval(msg.sender, listingAddress, listingContract.token2Amt());
 
-    // trigger listing
-    Models.ListingInfo memory listingInfo = listingContract.trigger(msg.sender);
+    // trigger listing via main contract for book keeping
+    Models.ListingInfo memory listingInfo = mainContract.partakeInListing(msg.sender, listingAddress);
     emit ListingFulfilled(listingInfo);
 
     return listingInfo;

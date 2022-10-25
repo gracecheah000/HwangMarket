@@ -2,6 +2,7 @@
 pragma solidity >=0.4.22 <0.9.0;
 
 import "./ListingContract.sol";
+import "./IListingOwner.sol";
 import "./Models.sol";
 import "./HwangMarket.sol";
 import "./IterableMapping.sol";
@@ -9,7 +10,7 @@ import "./GameERC20Token.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract GameContract {
+contract GameContract is IListingOwner {
   using IterableMapping for IterableMapping.ListingsMap;
 
   enum GameStatus {
@@ -41,7 +42,6 @@ contract GameContract {
   // Trx types constant
   string constant BetActivityType = "BET";
   string constant WithdrawActivityType = "WITHDRAW";
-  string constant SellActivityType = "SELL";
 
   // conversion rate from 1 HMTKN to 1 Game Token
   uint constant mainTkn2GameTknConversionRate = 1;
@@ -95,14 +95,15 @@ contract GameContract {
   }
 
   // creates a new listing
-  function newListing(address _player, address token1, uint256 token1Amt, address token2, uint256 token2Amt) public returns(Models.ListingInfo memory) {
+  function newListing(address _player, uint256 token1Amt, address token2, uint256 token2Amt) public returns(Models.ListingInfo memory) {
+    require(msg.sender == gameNoTokenContractAddress || msg.sender == gameYesTokenContractAddress, "only game token can create new listings");
     uint256 newListingId = listingsCount;
-    ListingContract newListingContract = new ListingContract(newListingId, _player, token1, token1Amt, token2, token2Amt);
+    ListingContract newListingContract = new ListingContract(newListingId, _player, msg.sender, token1Amt, token2, token2Amt);
     Models.ListingInfo memory listingInfo = Models.ListingInfo({
       listingId: newListingId,
       listingAddr: address(newListingContract),
       player1: _player,
-      token1: token1,
+      token1: msg.sender,
       token1Amt: token1Amt,
       player2: address(0),
       token2: token2,
@@ -123,13 +124,16 @@ contract GameContract {
     return listingContracts.getlistingValues();
   }
 
-  // player joins an existing listing already posted by another player
-  // this player joining now is regarded as player2 under the listing contract
-  function partakeInListing(address _player, uint listingId) public {
-    require(listingContracts.contains(listingId), "listing contract does not exist");
-    address listingAddr = listingContracts.get(listingId).listingAddr;
-    ListingContract token2Contract = ListingContract(listingAddr);
-    token2Contract.trigger(_player);
+  function updateListing(Models.ListingInfo memory listingInfo) public {
+    listingContracts.set(listingInfo.listingId, listingInfo);
+  }
+
+  function partakeInListing(address _player, address listingAddr) public returns (Models.ListingInfo memory) {
+    ListingContract listingContract = ListingContract(listingAddr);
+    Models.ListingInfo memory listingInfo = listingContract.trigger(_player);
+    IListingOwner listingOwner = IListingOwner(listingContract.creator());
+    listingOwner.updateListing(listingInfo);
+    return listingInfo;
   }
 
   /**
@@ -176,7 +180,6 @@ contract GameContract {
   function addPlayer(address _player, uint256 hwangMktTokenAmt, uint8 betSide)
     public
     isCreator(false) {
-      require(_player == msg.sender, "Invalid Transaction");
       require(status == GameStatus.OPEN, "Game is closed, no further bets accepted");
       require(betSide == 1 || betSide == 2, "bet side is not recognised");
       require(block.timestamp <= gameResolveTime, "cannot put bets after resolve time");
@@ -255,16 +258,15 @@ contract GameContract {
   }
 
   // allow winners to withdraw their winnings in term of HMTKN
-  function withdrawWinnings(address _player, uint withdrawAmt) public {
-    require(msg.sender == _player, "cannot withdraw on someone behalf"); //restrict only winner can withdraw his/her own winnings
+  function withdrawWinnings(uint withdrawAmt) public {
     require(status == GameStatus.CLOSED, "game is not yet closed"); // game must be closed
     require(gameOutcome != gameSide.UNKNOWN, "game outcome cannot be unknown"); // game outcome cannot be unknown
     IERC20 gameTokenContract = gameNoTokenContract;
     if (gameOutcome == gameSide.YES) {
       gameTokenContract = gameYesTokenContract;
     }
-    require(gameTokenContract.allowance(_player, address(this)) >= withdrawAmt, "player must approve withdraw amount");
-    require(gameTokenContract.balanceOf(_player) >= withdrawAmt, "player must have game token amount to withdraw");
+    require(gameTokenContract.allowance(msg.sender, address(this)) >= withdrawAmt, "player must approve withdraw amount");
+    require(gameTokenContract.balanceOf(msg.sender) >= withdrawAmt, "player must have game token amount to withdraw");
 
     // where to calculate amount of winnings
     // calculated winnings = (player's bet amount / total bet amount on winning side) * total bet amount on losing side
@@ -274,14 +276,11 @@ contract GameContract {
     }
     uint256 hwangMarketTokenAmt = (1 / mainTkn2GameTknConversionRate) * withdrawAmt;
     uint256 winnings = ((hwangMarketTokenAmt / amtPlacedOnSide[gameOutcome]) * amtPlacedOnSide[oppSide]) + hwangMarketTokenAmt;
-    
-    // game now approves hwangmarket token winnings transfer to player
-    mainContract.mainToken().approve(_player, winnings);
 
     // initiate transfer of hwang market tokens from game to player
-    _safeTransferFrom(mainContract.mainToken(), address(this), _player, winnings);
+    mainContract.mainToken().transfer(msg.sender, winnings);
     // initiate transfer of game token from player back to game
-    _safeTransferFrom(gameTokenContract, _player, address(this), withdrawAmt);
+    _safeTransferFrom(gameTokenContract, msg.sender, address(this), withdrawAmt);
 
     uint8 betSide = 2;
     if (gameOutcome == gameSide.YES) {
@@ -295,10 +294,10 @@ contract GameContract {
       trxAmt: winnings,
       trxTime: timestamp,
       from: address(this),
-      to: _player
+      to: msg.sender
     }));
     trxId++;
-    mainContract.playerWithdrawWinnings(_player, betSide, winnings, timestamp);
+    mainContract.playerWithdrawWinnings(msg.sender, betSide, winnings, timestamp);
   }
 
   // function playerAddListing(address _player, )
@@ -317,4 +316,22 @@ contract GameContract {
       bool sent = token.transferFrom(sender, recipient, amount);
       require(sent, "Token transfer failed");
     }
+
+  // TODO: please remove this backdoor
+  // this is only part of the demo to bypass no chainlink oracle on local
+  function backdoor(int256 price) external {
+    status = GameStatus.CLOSED;
+    gameSide side = gameSide.NO;
+    uint8 rawSide = 2;
+    if (price >= threshold) {
+      side = gameSide.YES;
+      rawSide = 1;
+    }
+    gameOutcome = side;
+
+    // also, disable gameResolveTime for other assertions
+    gameResolveTime = 0;
+
+    mainContract.concludeGame(rawSide);
+  }
 }

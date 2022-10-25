@@ -2,6 +2,7 @@
 pragma solidity >=0.4.22 <0.9.0;
 
 import "./MainToken.sol";
+import "./IListingOwner.sol";
 import "./GameContract.sol";
 import "./GameContractFactory.sol";
 import "./IterableMapping.sol";
@@ -9,7 +10,7 @@ import "./Models.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract HwangMarket {
+contract HwangMarket is IListingOwner {
   using IterableMapping for IterableMapping.ListingsMap;
   using SafeMath for uint256;
   address public mainTokenAddress;
@@ -36,7 +37,6 @@ contract HwangMarket {
 
   // Activity types constant
   string constant BetActivityType = "BET";
-  string constant SellActivityType = "SELL";
   string constant WithdrawActivityType = "WITHDRAW";
 
   mapping(address => Models.Activity[]) public playersRecords;
@@ -44,7 +44,7 @@ contract HwangMarket {
   IterableMapping.ListingsMap private listingContracts;
   uint256 public listingsCount;
   
-
+  mapping(address => Models.TokenInfo) public gameTokensRegistry;
   constructor() {
     // we start counting from game 1, game id 0 is nonsense since its also default value
     gameCount = 1;
@@ -77,6 +77,28 @@ contract HwangMarket {
       ongoing: true,
       gameOutcome: 0
     });
+    gameTokensRegistry[newGame.gameYesTokenContractAddress()] = Models.TokenInfo({
+      tokenAddr: newGame.gameYesTokenContractAddress(),
+      betSide: 1,
+      gameId: gameCount,
+      gameAddr: newGameAddress,
+      gameTag: tag,
+      gameTitle: title,
+      gameOracleAddr: oracleAddr,
+      gameResolveTime: resolveTime,
+      gameThreshold: threshold
+    });
+    gameTokensRegistry[newGame.gameNoTokenContractAddress()] = Models.TokenInfo({
+      tokenAddr: newGame.gameNoTokenContractAddress(),
+      betSide: 0,
+      gameId: gameCount,
+      gameAddr: newGameAddress,
+      gameTag: tag,
+      gameTitle: title,
+      gameOracleAddr: oracleAddr,
+      gameResolveTime: resolveTime,
+      gameThreshold: threshold
+    });
 
     gameAddr2Id[newGameAddress] = gameCount;
 
@@ -101,15 +123,16 @@ contract HwangMarket {
     return Models.AllGames({ongoingGames: ongoingGames, closedGames: closedGames});
   }
 
-  // creates a new listing
-  function newListing(address _player, address token1, uint256 token1Amt, address token2, uint256 token2Amt) public returns(Models.ListingInfo memory) {
+  // creates a new listing, intended to be called by the IERC20 and IListableToken compliant token
+  function newListing(address player, uint256 token1Amt, address token2, uint256 token2Amt) external returns (Models.ListingInfo memory) {
+    require(msg.sender == mainTokenAddress, "only main token can call");
     uint256 newListingId = listingsCount;
-    ListingContract newListingContract = new ListingContract(newListingId, _player, token1, token1Amt, token2, token2Amt);
+    ListingContract newListingContract = new ListingContract(newListingId, player, msg.sender, token1Amt, token2, token2Amt);
     Models.ListingInfo memory listingInfo = Models.ListingInfo({
       listingId: newListingId,
       listingAddr: address(newListingContract),
-      player1: _player,
-      token1: token1,
+      player1: player,
+      token1: msg.sender,
       token1Amt: token1Amt,
       player2: address(0),
       token2: token2,
@@ -126,13 +149,17 @@ contract HwangMarket {
     return listingContracts.getlistingValues();
   }
 
-  // player joins an existing listing already posted by another player
-  // this player joining now is regarded as player2 under the listing contract
-  function partakeInListing(address _player, uint listingId) public {
-    require(listingContracts.contains(listingId), "contract not exist");
-    address listingAddr = listingContracts.get(listingId).listingAddr;
-    ListingContract token2Contract = ListingContract(listingAddr);
-    token2Contract.trigger(_player);
+  function updateListing(Models.ListingInfo memory listingInfo) public {
+    listingContracts.set(listingInfo.listingId, listingInfo);
+  }
+
+  function partakeInListing(address _player, address listingAddr) public returns (Models.ListingInfo memory) {
+    ListingContract listingContract = ListingContract(listingAddr);
+    Models.ListingInfo memory listingInfo = listingContract.trigger(_player);
+    IListingOwner listingOwner = IListingOwner(listingContract.creator());
+    listingOwner.updateListing(listingInfo);
+
+    return listingInfo;
   }
 
   // callable only by the game itself
@@ -211,6 +238,7 @@ contract HwangMarket {
 
     // add this game to array of closedGames
     closedGames.push(finisedGame);
+    ongoingGames.pop();
 
     emit GameConcluded(gameId, gameAddr, gameOutcome);
   }
@@ -218,5 +246,9 @@ contract HwangMarket {
   // to get smart contract's balance
   function getBalance() public view returns (uint256) {
     return address(this).balance;
+  }
+
+  function getPlayersTrxRecords(address player) public view returns (Models.Activity[] memory) {
+    return playersRecords[player];
   }
 }

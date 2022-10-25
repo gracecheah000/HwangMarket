@@ -49,4 +49,17 @@ library Models {
     GameMetadata[] ongoingGames;
     GameMetadata[] closedGames;
   }
+
+  struct TokenInfo {
+    address tokenAddr;
+    uint8 betSide;
+
+    uint256 gameId;
+    address gameAddr;
+    string gameTag;
+    string gameTitle;
+    address gameOracleAddr;
+    uint256 gameResolveTime;
+    int256 gameThreshold;
+  }
 }

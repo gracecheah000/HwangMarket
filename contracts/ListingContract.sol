@@ -50,12 +50,12 @@ contract ListingContract {
       "Token 1 allowance too low"
     );
     require(
-        token2Contract.allowance(player2, address(this)) >= token2Amt,
-        "Token 2 allowance too low"
+      token2Contract.allowance(_player2, address(this)) >= token2Amt,
+      "Token 2 allowance too low"
     );
 
-    _safeTransferFrom(token1Contract, player1, player2, token1Amt);
-    _safeTransferFrom(token2Contract, player2, player1, token2Amt);
+    _safeTransferFrom(token1Contract, player1, _player2, token1Amt);
+    _safeTransferFrom(token2Contract, _player2, player1, token2Amt);
     player2 = _player2;
     fulfilled = true;
 
