@@ -1,22 +1,6 @@
 import React, { useEffect, useState } from "react";
-import {
-  Box,
-  Heading,
-  Text,
-  Button,
-  NumberInput,
-  NumberInputField,
-  useColorMode,
-} from "@chakra-ui/react";
-import {
-  hwangMarket,
-  createAGame,
-  getGameAddrById,
-  getCurrentWalletConnected,
-  connectWallet,
-  getAllGames,
-  joinGame,
-} from "../util/interact";
+import { Box, Heading, Text, useColorMode } from "@chakra-ui/react";
+import { hwangMarket, getAllGames } from "../util/interact";
 
 import CreateGame from "./CreateGame";
 import GameCard from "./GameCard";
@@ -24,8 +8,8 @@ import GameCard from "./GameCard";
 const GamesGallery = ({ walletAddress, colorMode }) => {
   const [status, setStatus] = useState("");
   const [getGameId, setGetGameId] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [ongoingGames, setOngoingGames] = useState([]);
+  const [isLoading, setLoading] = useState(true);
+  const [ongoingGames, setOngoingGames] = useState(null);
   const [closedGames, setClosedGames] = useState([]);
 
   function addHwangMarketListener() {
@@ -39,20 +23,7 @@ const GamesGallery = ({ walletAddress, colorMode }) => {
           data.returnValues.gameMetadata
         );
         setOngoingGames((prev) => [...prev, data.returnValues.gameMetadata]);
-        setStatus("🎉 Your game was created!");
-      }
-    });
-
-    console.log("hwang market player joined game listener added");
-    hwangMarket.events.PlayerJoinedGameEvent({}, (error, data) => {
-      if (error) {
-        setStatus("😥 " + error.message);
-      } else {
-        console.log("data returned from hwang market listener: ", data);
-        // setGamesAddr((prev) =>
-        //   prev.concat(data.returnValues.gameAddr.toString())
-        // );
-        setStatus("🎉 player joined the game!");
+        // setStatus("🎉 Your game was created!");
       }
     });
   }
@@ -69,16 +40,6 @@ const GamesGallery = ({ walletAddress, colorMode }) => {
     }
     getGames();
   }, []);
-
-  const pressJoinGame = async () => {
-    const { status } = await joinGame(
-      "0xdbd75dd9dcaEf0b5cf6f3FA00A57a719F786a902",
-      walletAddress,
-      1,
-      1
-    );
-    setStatus(status);
-  };
 
   return (
     <Box px="28" py="16">
@@ -117,11 +78,15 @@ const GamesGallery = ({ walletAddress, colorMode }) => {
         columnGap="16"
         my="24"
       >
-        {ongoingGames &&
+        {isLoading ? (
+          <Heading>Loading...</Heading>
+        ) : (
+          ongoingGames &&
           ongoingGames
             .slice()
             .reverse()
-            .map((g) => <GameCard key={g.addr} game={g} />)}
+            .map((g) => <GameCard key={g.addr} game={g} />)
+        )}
       </Box>
     </Box>
   );

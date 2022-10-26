@@ -52,27 +52,12 @@ export const createAGame = async (
 
   //sign the transaction
   try {
-    const txHash = await window.ethereum.request({
+    await window.ethereum.request({
       method: "eth_sendTransaction",
       params: [transactionParameters],
     });
-    return {
-      status: (
-        <span>
-          ✅{" "}
-          <a target="_blank" href={`https://goerli.etherscan.io/tx/${txHash}`}>
-            View the status of your transaction on Etherscan!
-          </a>
-          <br />
-          ℹ️ Once the transaction is verified by the network, the new game addr
-          will be displayed.
-        </span>
-      ),
-    };
   } catch (error) {
-    return {
-      status: "😥 " + error.message,
-    };
+    console.log("something went wrong!", error);
   }
 };
 
@@ -80,6 +65,13 @@ export const getGameById = async (id, setGame) => {
   const game = await hwangMarket.methods.gameContractRegistry(id).call();
   console.log("got game: ", game);
   setGame(game);
+};
+
+export const getGameTrxs = async (gameAddr, setGameTrxs) => {
+  const gameContract = new web3.eth.Contract(gameContractABI, gameAddr);
+  const trxs = await gameContract.methods.getTrxs().call();
+  console.log("received trxs: ", trxs);
+  setGameTrxs(trxs);
 };
 
 export const getCurrentWalletConnected = async () => {
@@ -186,27 +178,11 @@ export const joinGame = async (gameAddr, playerAddr, ethAmt, betSide) => {
 
   //sign the transaction
   try {
-    const txHash = await window.ethereum.request({
+    await window.ethereum.request({
       method: "eth_sendTransaction",
       params: [transactionParameters],
     });
-    return {
-      status: (
-        <span>
-          ✅{" "}
-          <a target="_blank" href={`https://goerli.etherscan.io/tx/${txHash}`}>
-            View the status of your transaction on Etherscan!
-          </a>
-          <br />
-          ℹ️ Once the transaction is verified by the network, the new game addr
-          will be displayed.
-        </span>
-      ),
-    };
   } catch (error) {
     console.log("error thrown:", error);
-    return {
-      status: "😥 " + error.message,
-    };
   }
 };

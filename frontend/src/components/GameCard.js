@@ -1,7 +1,7 @@
 import { Box, Button, Heading, Text, useColorMode } from "@chakra-ui/react";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
-import ProgressBar from "@ramonak/react-progress-bar";
 import "react-circular-progressbar/dist/styles.css";
+import ProgressBar from "@ramonak/react-progress-bar";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -44,8 +44,10 @@ const GameCard = ({ game }) => {
         )
       );
 
-      const timeLeft = Math.max(0, game.resolveTime - Date.now() / 1000);
-
+      const timeLeft = Math.max(
+        0,
+        Math.floor(game.resolveTime - Date.now() / 1000)
+      );
       let s = "";
       if (timeLeft === 0) {
         setDiffText("Closed");
@@ -55,15 +57,17 @@ const GameCard = ({ game }) => {
         }
         setDiffText(`${timeLeft} second${s}`);
       } else if (timeLeft < 60 * 60) {
-        if (timeLeft > 60) {
+        if (Math.max(1, Math.floor(timeLeft / 60)) > 1) {
           s = "s";
         }
-        setDiffText(`${Math.floor(timeLeft / 60)} minute${s}`);
-      } else if ((timeLeft < 24 * 60) & 60) {
-        if (timeLeft > 60 * 60) {
+        setDiffText(`${Math.max(1, Math.floor(timeLeft / 60))} minute${s}`);
+      } else if (timeLeft < 24 * 60 * 60) {
+        if (Math.max(1, Math.floor(timeLeft / (60 * 60))) > 1) {
           s = "s";
         }
-        setDiffText(`${Math.floor(timeLeft / (60 * 60))} hour${s}`);
+        setDiffText(
+          `${Math.max(1, Math.floor(timeLeft / (60 * 60)))} hour${s}`
+        );
       } else {
         setDiffText(">24 hours");
       }
@@ -80,11 +84,12 @@ const GameCard = ({ game }) => {
         w="100%"
         border={colorMode === "light" ? "1px solid black" : "1px solid gray"}
         borderRadius="15px"
-        bgColor={colorMode === "light" ? "facebook.200" : "facebook.900"}
+        bgColor={colorMode === "light" ? "telegram.100" : "facebook.700"}
         _hover={{
-          background: colorMode === "light" ? "facebook.100" : "facebook.800",
+          // background: colorMode === "light" ? "facebook.200" : "facebook.800",
           // cursor: "pointer",
-          borderColor: "facebook.200",
+          // borderColor: "facebook.200",
+          boxShadow: "3px 6px #888888",
         }}
       >
         <Box
@@ -95,14 +100,17 @@ const GameCard = ({ game }) => {
           py="8"
           columnGap="5"
         >
-          <Box w="70px" minW="65px" h="45px" minH="45px" p="0.5" mr="4">
+          <Box w="80px" minW="80px" h="65px" minH="65px" p="0.5" mr="4">
             <CircularProgressbar
               value={percentage}
               text={diffText}
               styles={buildStyles({
                 textSize: "16px",
                 textColor: colorMode === "light" ? "black" : "white",
+                trailColor: colorMode === "light" ? "#718096" : "#d6d6d6",
+                pathColor: colorMode === "light" ? "#38B2AC" : "#3182CE",
               })}
+              strokeWidth={10}
             />
           </Box>
           <Heading size="md">{game.title}</Heading>
@@ -111,6 +119,7 @@ const GameCard = ({ game }) => {
             colorScheme="facebook"
             borderRadius="15px"
             onClick={() => naviate(`/${game.id}`)}
+            minW="80px"
           >
             Predict
           </Button>

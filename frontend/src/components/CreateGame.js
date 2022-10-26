@@ -151,7 +151,7 @@ const CreateGame = ({ walletAddress, setStatus, colorMode }) => {
       BigNumber.from(10).pow(mkt.dec)
     );
     const parsedResolveTime = parseInt(resolveTime.getTime() / 1000);
-    const { status } = await createAGame(
+    await createAGame(
       walletAddress,
       parsedResolveTime,
       mkt.oracleAddr,
@@ -159,7 +159,6 @@ const CreateGame = ({ walletAddress, setStatus, colorMode }) => {
       category,
       title
     );
-    setStatus(status);
   };
 
   return (
