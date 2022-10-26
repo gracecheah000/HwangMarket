@@ -76,10 +76,10 @@ export const createAGame = async (
   }
 };
 
-export const getGameAddrById = async (id) => {
-  const addr = await hwangMarket.methods.gameContractRegistry(id).call();
-  console.log(`game id ${id} addr is ${addr.toString()}`);
-  return addr;
+export const getGameById = async (id, setGame) => {
+  const game = await hwangMarket.methods.gameContractRegistry(id).call();
+  console.log("got game: ", game);
+  setGame(game);
 };
 
 export const getCurrentWalletConnected = async () => {

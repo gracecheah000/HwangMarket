@@ -2,6 +2,11 @@ import GamesGallery from "./components/GamesGallery";
 import { Box, useColorMode } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import CommonTop from "./components/CommonTop";
+import ErrorPage from "./components/ErrorPage";
+import { Routes } from "react-router-dom";
+
+import { createBrowserRouter, RouterProvider, Route } from "react-router-dom";
+import Game from "./components/Game";
 
 function App() {
   const [walletAddress, setWallet] = useState("");
@@ -15,7 +20,17 @@ function App() {
         colorMode={colorMode}
         toggleColorMode={toggleColorMode}
       />
-      <GamesGallery walletAddress={walletAddress} colorMode={colorMode} />
+      <Routes>
+        <Route
+          exact
+          path="/"
+          element={
+            <GamesGallery walletAddress={walletAddress} colorMode={colorMode} />
+          }
+        />
+        <Route exact path="/:id" element={<Game />} />
+        <Route path="*" element={<ErrorPage />} />
+      </Routes>
     </Box>
   );
 }

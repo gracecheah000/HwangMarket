@@ -1,5 +1,6 @@
 import { Box, Heading, Text, Button } from "@chakra-ui/react";
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   hwangMarket,
   createAGame,
@@ -59,9 +60,11 @@ const CommonTop = ({ wallet, setWallet, colorMode, toggleColorMode }) => {
     addWalletListener();
   }, []);
 
+  const navigate = useNavigate();
+
   return (
     <Box display="flex" p="5" alignItems="center" px="5%" flexWrap="wrap">
-      <Box w="300px">
+      <Box _hover={{ cursor: "pointer" }} onClick={() => navigate("/")}>
         <Heading color="blue.600">HWANGMARKET</Heading>
         <Text>The only place to lose your money, fast.</Text>
       </Box>

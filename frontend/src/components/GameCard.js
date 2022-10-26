@@ -1,7 +1,9 @@
 import { Box, Button, Heading, Text, useColorMode } from "@chakra-ui/react";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
+import ProgressBar from "@ramonak/react-progress-bar";
 import "react-circular-progressbar/dist/styles.css";
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const GameCard = ({ game }) => {
   /*
@@ -70,16 +72,18 @@ const GameCard = ({ game }) => {
     return () => clearInterval(intervalId); //This is important
   }, [game.createdTime, game.resolveTime]);
 
+  const naviate = useNavigate();
+  const totalSupply = 1000; // hardcoded 1000 token supply limit
   return (
     <Box w="40%" display="flex" justifyContent="center">
       <Box
         w="100%"
-        border={colorMode === "light" ? "1px solid black" : "1px solid white"}
+        border={colorMode === "light" ? "1px solid black" : "1px solid gray"}
         borderRadius="15px"
-        bgColor={colorMode === "light" ? "facebook.100" : "facebook.900"}
+        bgColor={colorMode === "light" ? "facebook.200" : "facebook.900"}
         _hover={{
-          background: colorMode === "light" ? "facebook.200" : "facebook.800",
-          cursor: "pointer",
+          background: colorMode === "light" ? "facebook.100" : "facebook.800",
+          // cursor: "pointer",
           borderColor: "facebook.200",
         }}
       >
@@ -102,19 +106,71 @@ const GameCard = ({ game }) => {
             />
           </Box>
           <Heading size="md">{game.title}</Heading>
-          <Button ml="auto" colorScheme="facebook" borderRadius="15px">
+          <Button
+            ml="auto"
+            colorScheme="facebook"
+            borderRadius="15px"
+            onClick={() => naviate(`/${game.id}`)}
+          >
             Predict
           </Button>
         </Box>
 
         <Box display="flex">
-          <Box p="5" textAlign="center" mr="1">
+          <Box px="5" py="2" textAlign="center" mr="1">
             <Text fontSize="md">Total bets</Text>
             <Text fontSize="lg" fontWeight="bold">
               {game.totalAmount} HMTKN
             </Text>
           </Box>
-          <Box>Something else</Box>
+          <Box pb="5" pt="1" mx="auto" w="450px" maxW="65%">
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="space-evenly"
+              columnGap="3"
+              py="1.5"
+            >
+              <Heading size="md" w="40px">
+                Yes
+              </Heading>
+              <Box w="100%" maxW="100%">
+                <ProgressBar
+                  completed={Math.floor(game.betYesAmount / totalSupply) * 100}
+                  maxCompleted={100}
+                  bgColor={colorMode === "light" ? "#63B3ED" : "#2B6CB0"}
+                  baseBgColor={colorMode === "light" ? "#4A5568" : "#EBF8FF"}
+                  customLabel={`${game.betYesAmount} HMTKN`}
+                  width="100%"
+                  labelSize="14px"
+                  height="30px"
+                />
+              </Box>
+            </Box>
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="space-evenly"
+              columnGap="3"
+              py="1.5"
+            >
+              <Heading size="md" w="40px">
+                No
+              </Heading>
+              <Box w="100%" maxW="100%">
+                <ProgressBar
+                  completed={Math.floor(game.betNoAmount / totalSupply) * 100}
+                  maxCompleted={100}
+                  bgColor={colorMode === "light" ? "#63B3ED" : "#2B6CB0"}
+                  baseBgColor={colorMode === "light" ? "#4A5568" : "#EBF8FF"}
+                  customLabel={`${game.betNoAmount} HMTKN`}
+                  width="100%"
+                  labelSize="14px"
+                  height="30px"
+                />
+              </Box>
+            </Box>
+          </Box>
         </Box>
       </Box>
     </Box>
