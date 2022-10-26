@@ -118,7 +118,10 @@ const GamesGallery = ({ walletAddress, colorMode }) => {
         my="24"
       >
         {ongoingGames &&
-          ongoingGames.map((g) => <GameCard key={g.addr} game={g} />)}
+          ongoingGames
+            .slice()
+            .reverse()
+            .map((g) => <GameCard key={g.addr} game={g} />)}
       </Box>
     </Box>
   );

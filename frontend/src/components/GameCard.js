@@ -1,4 +1,4 @@
-import { Box, Heading, Text, useColorMode } from "@chakra-ui/react";
+import { Box, Button, Heading, Text, useColorMode } from "@chakra-ui/react";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import React, { useEffect, useState } from "react";
@@ -76,26 +76,45 @@ const GameCard = ({ game }) => {
         w="100%"
         border={colorMode === "light" ? "1px solid black" : "1px solid white"}
         borderRadius="15px"
-        p="12"
+        bgColor={colorMode === "light" ? "facebook.100" : "facebook.900"}
+        _hover={{
+          background: colorMode === "light" ? "facebook.200" : "facebook.800",
+          cursor: "pointer",
+          borderColor: "facebook.200",
+        }}
       >
         <Box
           display="flex"
           justifyContent="flex-start"
           alignItems="center"
           px="5"
+          py="8"
           columnGap="5"
         >
-          <Box w="70px" minW="70px" h="50px" minH="50px">
+          <Box w="70px" minW="65px" h="45px" minH="45px" p="0.5" mr="4">
             <CircularProgressbar
               value={percentage}
               text={diffText}
               styles={buildStyles({
-                textSize: "15px",
+                textSize: "16px",
                 textColor: colorMode === "light" ? "black" : "white",
               })}
             />
           </Box>
           <Heading size="md">{game.title}</Heading>
+          <Button ml="auto" colorScheme="facebook" borderRadius="15px">
+            Predict
+          </Button>
+        </Box>
+
+        <Box display="flex">
+          <Box p="5" textAlign="center" mr="1">
+            <Text fontSize="md">Total bets</Text>
+            <Text fontSize="lg" fontWeight="bold">
+              {game.totalAmount} HMTKN
+            </Text>
+          </Box>
+          <Box>Something else</Box>
         </Box>
       </Box>
     </Box>
