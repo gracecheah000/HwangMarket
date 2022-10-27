@@ -25,6 +25,7 @@ import {
   AlertDialogContent,
   AlertDialogOverlay,
   useDisclosure,
+  StatArrow,
 } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -33,6 +34,7 @@ import {
   hwangMarket,
   mintGameTokenFromMainToken,
   getMainToken2SenderApprovalAmt,
+  getBalance,
 } from "../util/interact";
 import { PieChart } from "react-minimal-pie-chart";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
@@ -62,11 +64,13 @@ export default function Game({ wallet }) {
   const [percentage, setPercentage] = useState(0);
   const [diffText, setDiffText] = useState("");
   const [buyTokenSide, setBuyTokenSide] = useState("0");
-  const [buyTokenAmt, setBuyTokenAmt] = useState(1);
+  const [buyTokenAmt, setBuyTokenAmt] = useState(0);
   const [maxLimit, setMaxLimit] = useState(1000);
   const [purchaseTrxHash, setPurchaseTrxHash] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [main2TknAllowance, setMain2TknAllowance] = useState(0);
+  const [gytBalance, setGytBalance] = useState(0);
+  const [gntBalance, setGntBalance] = useState(0);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = React.useRef();
@@ -121,6 +125,8 @@ export default function Game({ wallet }) {
       setMain2TknAllowance(
         await getMainToken2SenderApprovalAmt(wallet, game && game.addr)
       );
+      setGytBalance(await getBalance(wallet, game && game.addr, 1));
+      setGntBalance(await getBalance(wallet, game && game.addr, 2));
     };
     updateAllowance();
   }, [wallet, game]);
@@ -418,7 +424,7 @@ export default function Game({ wallet }) {
               </Box>
 
               <Box>
-                <Heading size="md" my="3">
+                <Heading size="md" mt="5" mb="3">
                   Mintable token supply
                 </Heading>
                 <StatGroup>
@@ -431,14 +437,31 @@ export default function Game({ wallet }) {
                     <StatLabel>Game Yes Token supply left</StatLabel>
                     <StatNumber>{1000 - game.betYesAmount}</StatNumber>
                   </Stat>
-
                   <Stat>
                     <StatLabel>Game No Token supply left</StatLabel>
                     <StatNumber>{1000 - game.betNoAmount}</StatNumber>
                   </Stat>
                 </StatGroup>
 
-                <Divider my="10" />
+                <Divider my="7" />
+
+                <Heading size="md" mb="3">
+                  Owned tokens
+                </Heading>
+                <StatGroup w="66.666%">
+                  <Stat>
+                    <StatLabel>Game Yes Token</StatLabel>
+                    <StatNumber>{gytBalance}</StatNumber>
+                    <StatHelpText>GYT</StatHelpText>
+                  </Stat>
+                  <Stat>
+                    <StatLabel>Game No Token</StatLabel>
+                    <StatNumber>{gntBalance}</StatNumber>
+                    <StatHelpText>GNT</StatHelpText>
+                  </Stat>
+                </StatGroup>
+
+                <Divider my="7" />
                 <Box>
                   <Heading mb="4" size="md">
                     Mint game tokens
@@ -480,19 +503,39 @@ export default function Game({ wallet }) {
                   </FormControl>
 
                   {!(
+                    (buyTokenSide !== "1" && buyTokenSide !== "2") ||
                     buyTokenAmt <= 0 ||
                     buyTokenAmt > maxLimit ||
                     buyTokenAmt > main2TknAllowance
                   ) && (
                     <Box>
-                      <Heading mt="5" mb="2" size="sm">
-                        Transaction Summary
-                      </Heading>
-                      <Text>
-                        ({shortenAddr(game.addr)}) {buyTokenAmt} game token{" "}
-                        {"<->"} {buyTokenAmt * game2MainConversionRate} HMTKN (
+                      <Heading mt="5" mb="4" size="sm">
+                        Transaction Summary for your wallet (
                         {shortenAddr(wallet)})
-                      </Text>
+                      </Heading>
+                      <StatGroup w="66.666%">
+                        <Stat>
+                          <StatLabel>
+                            {buyTokenSide === "1" ? "GYT" : "GNT"}
+                          </StatLabel>
+                          <StatNumber>{buyTokenAmt}</StatNumber>
+                          <StatHelpText>
+                            <StatArrow type="increase" />
+                            Gain {buyTokenAmt}{" "}
+                            {buyTokenSide === "1" ? "GYT" : "GNT"}
+                          </StatHelpText>
+                        </Stat>
+                        <Stat>
+                          <StatLabel>HMTKN</StatLabel>
+                          <StatNumber>
+                            {buyTokenAmt * game2MainConversionRate}
+                          </StatNumber>
+                          <StatHelpText>
+                            <StatArrow type="decrease" />
+                            Lose {buyTokenAmt} HMTKN
+                          </StatHelpText>
+                        </Stat>
+                      </StatGroup>
                     </Box>
                   )}
 
@@ -515,6 +558,7 @@ export default function Game({ wallet }) {
                     variant="outline"
                     mt="6"
                     disabled={
+                      (buyTokenSide !== "1" && buyTokenSide !== "2") ||
                       buyTokenAmt <= 0 ||
                       buyTokenAmt > maxLimit ||
                       buyTokenAmt > main2TknAllowance

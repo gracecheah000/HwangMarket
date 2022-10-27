@@ -18,6 +18,7 @@ const hwangMarketAddr = process.env.REACT_APP_HwangMarket_Address;
 
 export const gameContractABI = require("../contracts/GameContract-abi.json");
 const mainTokenABI = require("../contracts/MainToken-abi.json");
+const gameTokenABI = require("../contracts/GameERC20Token-abi.json");
 
 export const hwangMarket = new web3.eth.Contract(
   hwangMarketABI,
@@ -282,4 +283,19 @@ export const mintGameTokenFromMainToken = async (
     console.log("error thrown:", error.message);
     return { trxHash: "", err: error.message };
   }
+};
+
+export const getBalance = async (wallet, gameAddr, side) => {
+  if (!wallet || !gameAddr || (side !== 1 && side !== 2)) {
+    return 0;
+  }
+  const gameContract = new web3.eth.Contract(gameContractABI, gameAddr);
+  let gtAddr = "";
+  if (side === 1) {
+    gtAddr = await gameContract.methods.gameYesTokenContractAddress().call();
+  } else {
+    gtAddr = await gameContract.methods.gameNoTokenContractAddress().call();
+  }
+  const gameTokenContract = new web3.eth.Contract(gameTokenABI, gtAddr);
+  return await gameTokenContract.methods.balanceOf(wallet).call();
 };
