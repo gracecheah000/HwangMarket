@@ -22,8 +22,6 @@ contract MainToken is IERC20, IListableToken {
   HwangMarket public mainContract;
 
   uint constant public eth2TknConversionRate = 1;
-  event NewListing(Models.ListingInfo listingInfo);
-  event ListingFulfilled(Models.ListingInfo listingInfo);
 
   constructor() {
     creator = msg.sender;
@@ -107,7 +105,6 @@ contract MainToken is IERC20, IListableToken {
     allowance[msg.sender][listingAddress] = token1Amt;
     // totalAllowanceCommited[msg.sender] += token1Amt;
     emit Approval(msg.sender, listingAddress, token1Amt);
-    emit NewListing(listingInfo);
 
     return listingInfo;
   }
@@ -125,7 +122,6 @@ contract MainToken is IERC20, IListableToken {
 
     // trigger listing via main contract for book keeping
     Models.ListingInfo memory listingInfo = mainContract.partakeInListing(msg.sender, listingAddress);
-    emit ListingFulfilled(listingInfo);
 
     return listingInfo;
   }

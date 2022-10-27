@@ -6,7 +6,7 @@ require("dotenv").config();
 
 // For development on local ganache, on goerli test net, its the above commented out snippet
 const Web3 = require("web3");
-const web3 = new Web3(
+export const web3 = new Web3(
   new Web3.providers.WebsocketProvider("ws://127.0.0.1:7545")
 );
 // End
@@ -14,7 +14,7 @@ const web3 = new Web3(
 const hwangMarketABI = require("../contracts/HwangMarket-abi.json");
 const hwangMarketAddr = process.env.REACT_APP_HwangMarket_Address;
 
-const gameContractABI = require("../contracts/GameContract-abi.json");
+export const gameContractABI = require("../contracts/GameContract-abi.json");
 
 export const hwangMarket = new web3.eth.Contract(
   hwangMarketABI,

@@ -10,6 +10,7 @@ import {
 } from "../util/interact";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSun, faMoon } from "@fortawesome/free-solid-svg-icons";
+import { shortenAddr } from "../util/helper";
 
 const CommonTop = ({ wallet, setWallet, colorMode, toggleColorMode }) => {
   const [status, setStatus] = useState("");
@@ -114,10 +115,7 @@ const CommonTop = ({ wallet, setWallet, colorMode, toggleColorMode }) => {
               colorScheme="linkedin"
             >
               {wallet.length > 0 ? (
-                "Connected: " +
-                String(wallet).substring(0, 6) +
-                "..." +
-                String(wallet).substring(38)
+                "Connected: " + shortenAddr(wallet)
               ) : (
                 <span>Connect Wallet</span>
               )}

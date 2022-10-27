@@ -74,6 +74,9 @@ contract GameContract is IListingOwner {
   IterableMapping.ListingsMap private listingContracts;
   uint256 public listingsCount;
 
+  event NewListing(Models.ListingInfo listingInfo);
+  event ListingFulfilled(Models.ListingInfo listingInfo);
+
   // constructor takes in a resolve time, a oracleAddr (oracle address), and a threshold, 
   // where a gameSide of NO indicates < threshold, and a gameSide of YES indicates >= threshold
   constructor(address _creator, uint256 resolveTime, address oracleAddr, int256 thres) {
@@ -113,6 +116,8 @@ contract GameContract is IListingOwner {
     listingContracts.set(newListingId, listingInfo);
 
     listingsCount++;
+
+    emit NewListing(listingInfo);
     return listingInfo;
   }
 
@@ -133,6 +138,8 @@ contract GameContract is IListingOwner {
     Models.ListingInfo memory listingInfo = listingContract.trigger(_player);
     IListingOwner listingOwner = IListingOwner(listingContract.creator());
     listingOwner.updateListing(listingInfo);
+
+    emit ListingFulfilled(listingInfo);
     return listingInfo;
   }
 

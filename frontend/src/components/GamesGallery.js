@@ -80,12 +80,13 @@ const GamesGallery = ({ walletAddress, colorMode }) => {
       >
         {isLoading ? (
           <Heading>Loading...</Heading>
-        ) : (
-          ongoingGames &&
+        ) : ongoingGames && ongoingGames.length > 0 ? (
           ongoingGames
             .slice()
             .reverse()
             .map((g) => <GameCard key={g.addr} game={g} />)
+        ) : (
+          <Text fontSize="3xl">No open games, create one to get started!</Text>
         )}
       </Box>
     </Box>

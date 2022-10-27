@@ -30,19 +30,18 @@ const GameCard = ({ game }) => {
   useEffect(() => {
     const intervalId = setInterval(() => {
       //assign interval to a variable to clear it.
-      setPercentage(
-        Math.max(
-          1,
-          Math.min(
-            Math.floor(
-              ((Date.now() / 1000 - game.createdTime) /
-                (game.resolveTime - game.createdTime)) *
-                100
-            ),
+      let perc = Math.min(
+        Math.floor(
+          ((Date.now() / 1000 - game.createdTime) /
+            (game.resolveTime - game.createdTime)) *
             100
-          )
-        )
+        ),
+        100
       );
+      if (perc < 0) {
+        perc = 100;
+      }
+      setPercentage(perc);
 
       const timeLeft = Math.max(
         0,

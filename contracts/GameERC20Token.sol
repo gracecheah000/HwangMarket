@@ -17,9 +17,6 @@ contract GameERC20Token is IERC20, IListableToken {
   // mapping(address => uint) public totalAllowanceCommited;
   GameContract gameContract;
 
-  event NewListing(Models.ListingInfo listingInfo);
-  event ListingFulfilled(Models.ListingInfo listingInfo);
-
   constructor(string memory _name, string memory _symbol, uint _supplyLimit) {
     creator = msg.sender;
     name = _name;
@@ -42,13 +39,11 @@ contract GameERC20Token is IERC20, IListableToken {
   function approve(address spender, uint amount) external returns (bool) {
     require(balanceOf[msg.sender] >= amount, "insufficient balance in sender");
     // require(totalAllowanceCommited[msg.sender] + amount <= balanceOf[msg.sender], "total allowance for approver overcommited, you cannot allow more than you own");
-    allowance[msg.sender][spender] += amount;
+    allowance[msg.sender][spender] = amount;
     // totalAllowanceCommited[msg.sender] += amount;
     emit Approval(msg.sender, spender, amount);
     return true;
   }
-
-  // TODO: expose a method to decrement approval
 
   // similar to transfer but difference is that someone else is authorised to
   // trigger the transfer
@@ -97,7 +92,6 @@ contract GameERC20Token is IERC20, IListableToken {
     allowance[msg.sender][listingAddress] += token1Amt;
     // totalAllowanceCommited[msg.sender] += token1Amt;
     emit Approval(msg.sender, listingAddress, token1Amt);
-    emit NewListing(listingInfo);
 
     return listingInfo;
   }
@@ -115,7 +109,6 @@ contract GameERC20Token is IERC20, IListableToken {
 
     // trigger listing via main contract for book keeping
     Models.ListingInfo memory listingInfo = gameContract.partakeInListing(msg.sender, listingAddress);
-    emit ListingFulfilled(listingInfo);
 
     return listingInfo;
   }

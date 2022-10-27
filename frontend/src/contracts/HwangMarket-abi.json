@@ -113,6 +113,126 @@
         "anonymous": false,
         "inputs": [
             {
+                "components": [
+                    {
+                        "internalType": "uint256",
+                        "name": "listingId",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "listingAddr",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "player1",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "token1",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "token1Amt",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "player2",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "token2",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "token2Amt",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "fulfilled",
+                        "type": "bool"
+                    }
+                ],
+                "indexed": false,
+                "internalType": "struct Models.ListingInfo",
+                "name": "listingInfo",
+                "type": "tuple"
+            }
+        ],
+        "name": "ListingFulfilled",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "uint256",
+                        "name": "listingId",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "listingAddr",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "player1",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "token1",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "token1Amt",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "player2",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "token2",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "token2Amt",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "fulfilled",
+                        "type": "bool"
+                    }
+                ],
+                "indexed": false,
+                "internalType": "struct Models.ListingInfo",
+                "name": "listingInfo",
+                "type": "tuple"
+            }
+        ],
+        "name": "NewListing",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
                 "indexed": false,
                 "internalType": "address",
                 "name": "player",

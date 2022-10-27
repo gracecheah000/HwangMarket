@@ -58,6 +58,8 @@ contract HwangMarket is IListingOwner {
   event PlayerJoinedGameEvent(address player, uint256 gameId, address gameAddr, uint8 betSide, uint256 amount);
   event PlayerWithdrawedWinnings(address player, uint256 gameId, address gameAddr, uint8 betSide, uint256 withdrawedAmt);
   event GameConcluded(uint256 gameId, address gameAddr, uint8 gameOutcome);
+  event NewListing(Models.ListingInfo listingInfo);
+  event ListingFulfilled(Models.ListingInfo listingInfo);
 
   // create game contract instance
   function createGame(uint256 resolveTime, address oracleAddr, int256 threshold, string memory tag, string memory title) public returns (address) {
@@ -143,6 +145,7 @@ contract HwangMarket is IListingOwner {
     listingContracts.set(newListingId, listingInfo);
 
     listingsCount++;
+    emit NewListing(listingInfo);
     return listingInfo;
   }
 
@@ -160,6 +163,7 @@ contract HwangMarket is IListingOwner {
     IListingOwner listingOwner = IListingOwner(listingContract.creator());
     listingOwner.updateListing(listingInfo);
 
+    emit ListingFulfilled(listingInfo);
     return listingInfo;
   }
 

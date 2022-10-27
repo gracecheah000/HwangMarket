@@ -23,6 +23,7 @@ import {
   faQuestionCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import GameTransactionsHistory from "./GameTransactionsHistory";
+import GameActiveListings from "./GameActiveListings";
 
 export default function Game() {
   const { id } = useParams();
@@ -136,7 +137,7 @@ export default function Game() {
       {game ? (
         <Box
           pt="8"
-          pb="36"
+          pb="16"
           px="5"
           border={colorMode === "light" ? "1px solid gray" : "1px solid white"}
           borderRadius="30px"
@@ -309,20 +310,13 @@ export default function Game() {
                 <GameTransactionsHistory game={game} />
               </Box>
             </Box>
-            <Box
-              display="flex"
-              flexDir="column"
-              alignItems="center"
-              border="1px solid red"
-              w="30%"
-              textAlign="center"
-            >
+            <Box display="flex" flexDir="column">
               <Box w="full" textAlign="center">
                 <Box
                   display="flex"
                   justifyContent="center"
                   alignItems="center"
-                  columnGap="1"
+                  columnGap="2.5"
                   mt="3"
                   mb="7"
                   flexWrap="wrap"
@@ -330,7 +324,12 @@ export default function Game() {
                   <Text fontSize="xl" whiteSpace="nowrap">
                     Resolution Time:
                   </Text>
-                  <Text fontSize="lg" fontWeight="bold" whiteSpace="nowrap">
+                  <Text
+                    fontSize="lg"
+                    fontWeight="bold"
+                    whiteSpace="nowrap"
+                    textDecor="underline"
+                  >
                     {new Intl.DateTimeFormat("en-US", {
                       year: "numeric",
                       month: "2-digit",
@@ -355,6 +354,17 @@ export default function Game() {
                     />
                   </Box>
                 </Box>
+              </Box>
+
+              <Box>
+                <Heading>Purchase here</Heading>
+                <Text>Supply left</Text>
+              </Box>
+
+              <Divider my="12" />
+
+              <Box>
+                <GameActiveListings game={game} />
               </Box>
             </Box>
           </Box>

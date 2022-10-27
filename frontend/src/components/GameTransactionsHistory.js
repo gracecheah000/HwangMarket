@@ -16,6 +16,7 @@ import {
   Tag,
 } from "@chakra-ui/react";
 import { getGameTrxs } from "../util/interact";
+import { shortenAddr } from "../util/helper";
 
 export default function GameTransactionsHistory({ game }) {
   const [gameTrxs, setGameTrxs] = useState([]);
@@ -44,7 +45,7 @@ export default function GameTransactionsHistory({ game }) {
 
   return (
     <Box>
-      <Heading my="5" fontSize="3xl">
+      <Heading my="5" fontSize="xl">
         Latest Transactions
       </Heading>
       <TableContainer overflowY="scroll" maxH="50vh">
@@ -58,15 +59,12 @@ export default function GameTransactionsHistory({ game }) {
             </Tr>
           </Thead>
           <Tbody>
-            {gameTrxs &&
+            {gameTrxs && gameTrxs.length > 0 ? (
               gameTrxs.map((trx) => (
                 <Tr key={trx.trxId}>
                   <Td>
                     <Tooltip label={trx.to} fontSize="8pt">
-                      <Tag>
-                        {trx.to.substring(0, 6)}...
-                        {trx.to.substring(trx.to.length - 4, trx.to.length)}
-                      </Tag>
+                      <Tag>{shortenAddr(trx.to)}</Tag>
                     </Tooltip>
                   </Td>
                   <Td>{trx.trxAmt}</Td>
@@ -82,7 +80,14 @@ export default function GameTransactionsHistory({ game }) {
                     )}
                   </Td>
                 </Tr>
-              ))}
+              ))
+            ) : (
+              <Tr>
+                <Td>-</Td>
+                <Td>-</Td>
+                <Td>-</Td>
+              </Tr>
+            )}
           </Tbody>
         </Table>
       </TableContainer>
