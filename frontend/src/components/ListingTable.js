@@ -33,7 +33,7 @@ export default function ListingTable({ listings }) {
     token2Amt: "150"
   */
   return (
-    <TableContainer>
+    <TableContainer overflowY="scroll" maxH="60vh">
       <Table variant="simple" size="sm">
         <TableCaption>Open listings logged in game contract</TableCaption>
         <Thead>

@@ -296,7 +296,7 @@ export default function Game({ wallet }) {
                 justifyContent="flex-start"
                 alignItems="center"
                 columnGap="5"
-                bgColor={colorMode === "light" ? "cyan.100" : "blue.900"}
+                bgColor={colorMode === "light" ? "cyan.100" : "blue.700"}
                 borderRadius="25px"
                 // p="8"
                 px="5"
@@ -414,9 +414,14 @@ export default function Game({ wallet }) {
                     <CircularProgressbar
                       value={percentage}
                       text={diffText}
+                      strokeWidth={4}
                       styles={buildStyles({
                         textSize: "14px",
                         textColor: colorMode === "light" ? "black" : "white",
+                        trailColor:
+                          colorMode === "light" ? "#4A5568" : "#718096",
+                        pathColor:
+                          colorMode === "light" ? "#0BC5EA" : "#76E4F7",
                       })}
                     />
                   </Box>

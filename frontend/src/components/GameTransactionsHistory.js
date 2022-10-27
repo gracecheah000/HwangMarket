@@ -56,7 +56,7 @@ export default function GameTransactionsHistory({ game }) {
       <Heading my="5" fontSize="xl">
         Latest Transactions
       </Heading>
-      <TableContainer overflowY="scroll" maxH="50vh">
+      <TableContainer overflowY="scroll" maxH="60vh">
         <Table variant="simple">
           <TableCaption>Transactions logged in game contract</TableCaption>
           <Thead>
