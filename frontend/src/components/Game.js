@@ -7,6 +7,21 @@ import {
   Tooltip,
   Badge,
   Divider,
+  StatGroup,
+  Stat,
+  StatLabel,
+  StatNumber,
+  StatHelpText,
+  StatArrow,
+  Select,
+  FormLabel,
+  NumberInput,
+  NumberInputField,
+  NumberInputStepper,
+  NumberIncrementStepper,
+  NumberDecrementStepper,
+  FormControl,
+  Button,
 } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -34,6 +49,9 @@ export default function Game() {
 
   const [percentage, setPercentage] = useState(0);
   const [diffText, setDiffText] = useState("");
+  const [buyTokenSide, setBuyTokenSide] = useState(0);
+  const [buyTokenAmt, setBuyTokenAmt] = useState(0);
+  const [maxLimit, setMaxLimit] = useState(1000);
 
   const { colorMode } = useColorMode();
 
@@ -161,10 +179,10 @@ export default function Game() {
               >
                 <Box>
                   <Box textAlign="center">
-                    <Text>Total Amount</Text>
-                    <Text fontSize="lg" fontWeight="bold">
-                      {game.totalAmount} HMTKN
-                    </Text>
+                    <Stat size="sm">
+                      <StatLabel>Total Amount</StatLabel>
+                      <StatNumber>{game.totalAmount} HMTKN</StatNumber>
+                    </Stat>
                   </Box>
                   <Box
                     my="5"
@@ -174,16 +192,16 @@ export default function Game() {
                     columnGap="8"
                   >
                     <Box>
-                      <Text>Total Yes Amount</Text>
-                      <Text fontSize="md" fontWeight="bold">
-                        {game.betYesAmount} HMTKN
-                      </Text>
+                      <Stat size="sm">
+                        <StatLabel>Total Yes Amount</StatLabel>
+                        <StatNumber>{game.betYesAmount} HMTKN</StatNumber>
+                      </Stat>
                     </Box>
                     <Box>
-                      <Text>Total No Amount</Text>
-                      <Text fontSize="md" fontWeight="bold">
-                        {game.betNoAmount} HMTKN
-                      </Text>
+                      <Stat size="sm">
+                        <StatLabel>Total No Amount</StatLabel>
+                        <StatNumber>{game.betNoAmount} HMTKN</StatNumber>
+                      </Stat>
                     </Box>
                   </Box>
                 </Box>
@@ -357,8 +375,89 @@ export default function Game() {
               </Box>
 
               <Box>
-                <Heading>Purchase here</Heading>
-                <Text>Supply left</Text>
+                <Heading size="md" my="3">
+                  Mintable token supply
+                </Heading>
+                <StatGroup>
+                  <Stat>
+                    <StatLabel>Exchange rate for 1 Game Token</StatLabel>
+                    <StatNumber>1 HMTKN</StatNumber>
+                    <StatHelpText>Fixed</StatHelpText>
+                  </Stat>
+                  <Stat>
+                    <StatLabel>Game Yes Token supply left</StatLabel>
+                    <StatNumber>{1000 - game.betYesAmount}</StatNumber>
+                  </Stat>
+
+                  <Stat>
+                    <StatLabel>Game No Token supply left</StatLabel>
+                    <StatNumber>{1000 - game.betNoAmount}</StatNumber>
+                  </Stat>
+                </StatGroup>
+
+                <Divider my="6" />
+                <Box>
+                  <Heading mb="4" size="md">
+                    Purchase game token
+                  </Heading>
+                  <FormControl isRequired>
+                    <FormLabel>Game token side</FormLabel>
+                    <Select
+                      placeholder="Select game token side"
+                      onChange={(e) => {
+                        setBuyTokenSide(e.target.value);
+                        setMaxLimit(
+                          1000 -
+                            (e.target.value === "1"
+                              ? game.betYesAmount
+                              : game.betNoAmount)
+                        );
+                        setBuyTokenAmt(0);
+                      }}
+                    >
+                      <option value="1">Yes</option>
+                      <option value="2">No</option>
+                    </Select>
+                  </FormControl>
+                  <FormControl isRequired>
+                    <FormLabel>Amount of tokens</FormLabel>
+                    <NumberInput
+                      value={buyTokenAmt}
+                      min={0}
+                      max={maxLimit}
+                      onChange={(v) => setBuyTokenAmt(v)}
+                    >
+                      <NumberInputField />
+                      <NumberInputStepper>
+                        <NumberIncrementStepper />
+                        <NumberDecrementStepper />
+                      </NumberInputStepper>
+                    </NumberInput>
+                  </FormControl>
+
+                  {buyTokenAmt > maxLimit && (
+                    <Box
+                      border="1px solid red"
+                      textAlign="center"
+                      p="1"
+                      borderRadius="20px"
+                      my="2"
+                    >
+                      <Text>
+                        Cannot mint the requested token amount, try purchasing
+                        from a player's listing.
+                      </Text>
+                    </Box>
+                  )}
+                  <Button
+                    colorScheme="green"
+                    variant="outline"
+                    mt="6"
+                    disabled={buyTokenAmt > maxLimit}
+                  >
+                    Purchase
+                  </Button>
+                </Box>
               </Box>
 
               <Divider my="12" />

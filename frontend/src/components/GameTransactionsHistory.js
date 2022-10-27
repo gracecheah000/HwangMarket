@@ -14,6 +14,14 @@ import {
   Badge,
   Tooltip,
   Tag,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverArrow,
+  PopoverCloseButton,
+  PopoverHeader,
+  PopoverBody,
+  Text,
 } from "@chakra-ui/react";
 import { getGameTrxs } from "../util/interact";
 import { shortenAddr } from "../util/helper";
@@ -60,27 +68,46 @@ export default function GameTransactionsHistory({ game }) {
           </Thead>
           <Tbody>
             {gameTrxs && gameTrxs.length > 0 ? (
-              gameTrxs.map((trx) => (
-                <Tr key={trx.trxId}>
-                  <Td>
-                    <Tooltip label={trx.to} fontSize="8pt">
-                      <Tag>{shortenAddr(trx.to)}</Tag>
-                    </Tooltip>
-                  </Td>
-                  <Td>{trx.trxAmt}</Td>
-                  <Td>
-                    {trx.gameSide === "1" ? (
-                      <Badge colorScheme="green" variant="outline">
-                        Yes
-                      </Badge>
-                    ) : (
-                      <Badge colorScheme="red" variant="outline">
-                        No
-                      </Badge>
-                    )}
-                  </Td>
-                </Tr>
-              ))
+              gameTrxs
+                .slice()
+                .reverse()
+                .map((trx) => (
+                  <Tr key={trx.trxId}>
+                    <Td>
+                      <Popover>
+                        <PopoverTrigger>
+                          <Tag _hover={{ cursor: "pointer" }}>
+                            {shortenAddr(trx.to)}
+                          </Tag>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          minW={{ base: "100%", lg: "max-content" }}
+                        >
+                          <PopoverArrow />
+                          <PopoverCloseButton />
+                          <PopoverHeader>Player Address</PopoverHeader>
+                          <PopoverBody>
+                            <Box>
+                              <Text fontSize="sm">{trx.to}</Text>
+                            </Box>
+                          </PopoverBody>
+                        </PopoverContent>
+                      </Popover>
+                    </Td>
+                    <Td>{trx.trxAmt}</Td>
+                    <Td>
+                      {trx.gameSide === "1" ? (
+                        <Badge colorScheme="green" variant="outline">
+                          Yes
+                        </Badge>
+                      ) : (
+                        <Badge colorScheme="red" variant="outline">
+                          No
+                        </Badge>
+                      )}
+                    </Td>
+                  </Tr>
+                ))
             ) : (
               <Tr>
                 <Td>-</Td>

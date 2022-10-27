@@ -59,7 +59,7 @@ export default function GameActiveListings({ game }) {
     // borderColor={colorMode === "light" ? "gray" : "white"}
     // borderRadius="21px"
     >
-      <Heading my="5" fontSize="xl">
+      <Heading mb="5" fontSize="xl">
         Open Listings
       </Heading>
       <ListingTable listings={openListings} />

@@ -35,9 +35,7 @@ export default function ListingTable({ listings }) {
   return (
     <TableContainer>
       <Table variant="simple" size="sm">
-        <TableCaption>
-          Latest open listings logged in game contract
-        </TableCaption>
+        <TableCaption>Open listings logged in game contract</TableCaption>
         <Thead>
           <Tr>
             <Th>Offered Token</Th>
@@ -56,7 +54,7 @@ export default function ListingTable({ listings }) {
                 <Td>{shortenAddr(ol.token2)}</Td>
                 <Td>{ol.token2Amt}</Td>
                 <Td>
-                  <Button size="sm" colorScheme="telegram">
+                  <Button size="sm" colorScheme="telegram" variant="outline">
                     Details
                   </Button>
                 </Td>
