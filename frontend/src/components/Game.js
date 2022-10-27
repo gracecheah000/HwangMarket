@@ -12,7 +12,6 @@ import {
   StatLabel,
   StatNumber,
   StatHelpText,
-  StatArrow,
   Select,
   FormLabel,
   NumberInput,
@@ -22,10 +21,19 @@ import {
   NumberDecrementStepper,
   FormControl,
   Button,
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogOverlay,
+  useDisclosure,
 } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getGameById, hwangMarket } from "../util/interact";
+import {
+  getGameById,
+  hwangMarket,
+  mintGameTokenFromMainToken,
+  getMainToken2SenderApprovalAmt,
+} from "../util/interact";
 import { PieChart } from "react-minimal-pie-chart";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
@@ -33,14 +41,18 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCircleQuestion,
   faExternalLink,
-  faPlus,
   faQuestion,
   faQuestionCircle,
+  faX,
 } from "@fortawesome/free-solid-svg-icons";
 import GameTransactionsHistory from "./GameTransactionsHistory";
 import GameActiveListings from "./GameActiveListings";
+import GameErrorDialog from "./GameDialogs/GameErrorDialog";
+import PurchaseConfirmationDialog from "./GameDialogs/PurchaseConfirmationDialog";
+import IncreaseAllowanceDialog from "./GameDialogs/IncreaseAllowanceDialog";
+import { game2MainConversionRate, shortenAddr } from "../util/helper";
 
-export default function Game() {
+export default function Game({ wallet }) {
   const { id } = useParams();
   const [game, setGame] = useState(null);
   useEffect(() => {
@@ -49,11 +61,34 @@ export default function Game() {
 
   const [percentage, setPercentage] = useState(0);
   const [diffText, setDiffText] = useState("");
-  const [buyTokenSide, setBuyTokenSide] = useState(0);
-  const [buyTokenAmt, setBuyTokenAmt] = useState(0);
+  const [buyTokenSide, setBuyTokenSide] = useState("0");
+  const [buyTokenAmt, setBuyTokenAmt] = useState(1);
   const [maxLimit, setMaxLimit] = useState(1000);
+  const [purchaseTrxHash, setPurchaseTrxHash] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [main2TknAllowance, setMain2TknAllowance] = useState(0);
 
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const cancelRef = React.useRef();
   const { colorMode } = useColorMode();
+
+  const triggerPurchase = async () => {
+    const { trxHash, err } = await mintGameTokenFromMainToken(
+      wallet,
+      game ? game.addr : "",
+      buyTokenSide,
+      buyTokenAmt,
+      maxLimit
+    );
+    if (trxHash) {
+      setPurchaseTrxHash(trxHash);
+    } else {
+      setErrorMsg(err);
+    }
+    setBuyTokenSide("0");
+    setBuyTokenAmt(0);
+    onOpen();
+  };
 
   const addPlayerJoinedGameListener = () => {
     console.log("hwang market player joined game listener added");
@@ -62,7 +97,6 @@ export default function Game() {
         console.log("listener error:", error);
       } else {
         const details = data.returnValues;
-        console.log("triggered", details);
         if (details.betSide === "1") {
           setGame((prev) => {
             const copy = JSON.parse(JSON.stringify(prev));
@@ -81,6 +115,15 @@ export default function Game() {
       }
     });
   };
+
+  useEffect(() => {
+    const updateAllowance = async () => {
+      setMain2TknAllowance(
+        await getMainToken2SenderApprovalAmt(wallet, game && game.addr)
+      );
+    };
+    updateAllowance();
+  }, [wallet, game]);
 
   useEffect(() => {
     addPlayerJoinedGameListener();
@@ -130,7 +173,7 @@ export default function Game() {
     }, 1000);
 
     return () => clearInterval(intervalId); //This is important
-  }, [game && game.createdTime, game && game.resolveTime]);
+  }, [game]);
 
   /*
     addr: "0x64C3bb915Dd98231B3b2649A350B28d746a087Af"
@@ -317,13 +360,13 @@ export default function Game() {
                     >
                       <FontAwesomeIcon
                         style={{ marginLeft: "6px" }}
-                        icon={faQuestionCircle}
+                        icon={faQuestion}
                       />
                     </Tooltip>
                   </Box>
                 </Box>
               </Box>
-              <Divider my="12" />
+              <Divider my="10" />
               <Box>
                 <GameTransactionsHistory game={game} />
               </Box>
@@ -395,10 +438,10 @@ export default function Game() {
                   </Stat>
                 </StatGroup>
 
-                <Divider my="6" />
+                <Divider my="10" />
                 <Box>
                   <Heading mb="4" size="md">
-                    Purchase game token
+                    Mint game tokens
                   </Heading>
                   <FormControl isRequired>
                     <FormLabel>Game token side</FormLabel>
@@ -414,16 +457,17 @@ export default function Game() {
                         );
                         setBuyTokenAmt(0);
                       }}
+                      value={buyTokenSide}
                     >
                       <option value="1">Yes</option>
                       <option value="2">No</option>
                     </Select>
                   </FormControl>
                   <FormControl isRequired>
-                    <FormLabel>Amount of tokens</FormLabel>
+                    <FormLabel>Amount of game token</FormLabel>
                     <NumberInput
                       value={buyTokenAmt}
-                      min={0}
+                      min={1}
                       max={maxLimit}
                       onChange={(v) => setBuyTokenAmt(v)}
                     >
@@ -434,6 +478,23 @@ export default function Game() {
                       </NumberInputStepper>
                     </NumberInput>
                   </FormControl>
+
+                  {!(
+                    buyTokenAmt <= 0 ||
+                    buyTokenAmt > maxLimit ||
+                    buyTokenAmt > main2TknAllowance
+                  ) && (
+                    <Box>
+                      <Heading mt="5" mb="2" size="sm">
+                        Transaction Summary
+                      </Heading>
+                      <Text>
+                        ({shortenAddr(game.addr)}) {buyTokenAmt} game token{" "}
+                        {"<->"} {buyTokenAmt * game2MainConversionRate} HMTKN (
+                        {shortenAddr(wallet)})
+                      </Text>
+                    </Box>
+                  )}
 
                   {buyTokenAmt > maxLimit && (
                     <Box
@@ -453,14 +514,75 @@ export default function Game() {
                     colorScheme="green"
                     variant="outline"
                     mt="6"
-                    disabled={buyTokenAmt > maxLimit}
+                    disabled={
+                      buyTokenAmt <= 0 ||
+                      buyTokenAmt > maxLimit ||
+                      buyTokenAmt > main2TknAllowance
+                    }
+                    onClick={triggerPurchase}
                   >
                     Purchase
                   </Button>
+                  {buyTokenAmt > main2TknAllowance && (
+                    <Box display="flex" alignItems="center" mt="2">
+                      <FontAwesomeIcon
+                        icon={faX}
+                        color="red"
+                        style={{ marginRight: "5px" }}
+                      />
+                      <Text>
+                        You cannot complete the purchase as your allowance is
+                        too low.
+                      </Text>
+                      <Button
+                        mx="3"
+                        colorScheme="green"
+                        variant="outline"
+                        size="sm"
+                        onClick={onOpen}
+                      >
+                        Increase allowance
+                      </Button>
+                    </Box>
+                  )}
+
+                  <AlertDialog
+                    motionPreset="slideInBottom"
+                    leastDestructiveRef={cancelRef}
+                    onClose={onClose}
+                    isOpen={isOpen}
+                    isCentered
+                  >
+                    <AlertDialogOverlay />
+
+                    <AlertDialogContent
+                      minW={{ base: "100%", lg: "max-content" }}
+                    >
+                      {errorMsg ? (
+                        <GameErrorDialog
+                          errorMsg={errorMsg}
+                          onClose={onClose}
+                        />
+                      ) : buyTokenAmt > main2TknAllowance ? (
+                        <IncreaseAllowanceDialog
+                          wallet={wallet}
+                          gameAddr={game && game.addr}
+                          onClose={onClose}
+                          allowAmt={buyTokenAmt * game2MainConversionRate}
+                          setMain2TknAllowance={setMain2TknAllowance}
+                        />
+                      ) : (
+                        <PurchaseConfirmationDialog
+                          trxHash={purchaseTrxHash}
+                          onClose={onClose}
+                        />
+                      )}
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </Box>
               </Box>
 
-              <Divider my="12" />
+              <Divider my="10" />
 
               <Box>
                 <GameActiveListings game={game} />

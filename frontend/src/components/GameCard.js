@@ -115,12 +115,13 @@ const GameCard = ({ game }) => {
           <Heading size="md">{game.title}</Heading>
           <Button
             ml="auto"
-            colorScheme="facebook"
+            colorScheme="telegram"
             borderRadius="15px"
             onClick={() => naviate(`/${game.id}`)}
             minW="80px"
+            variant="outline"
           >
-            Predict
+            Details
           </Button>
         </Box>
 

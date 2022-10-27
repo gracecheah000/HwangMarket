@@ -9,7 +9,7 @@ import {
   connectWallet,
 } from "../util/interact";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSun, faMoon } from "@fortawesome/free-solid-svg-icons";
+import { faSun, faMoon, faHeart } from "@fortawesome/free-solid-svg-icons";
 import { shortenAddr } from "../util/helper";
 
 const CommonTop = ({ wallet, setWallet, colorMode, toggleColorMode }) => {
@@ -65,7 +65,7 @@ const CommonTop = ({ wallet, setWallet, colorMode, toggleColorMode }) => {
 
   return (
     <Box display="flex" p="5" alignItems="center" px="5%" flexWrap="wrap">
-      <Box _hover={{ cursor: "pointer" }} onClick={() => navigate("/")}>
+      <Box _hover={{ cursor: "pointer" }} onClick={() => navigate("/")} w="30%">
         <Heading color="blue.600">HWANGMARKET</Heading>
         <Text>The only place to lose your money, fast.</Text>
       </Box>
@@ -93,9 +93,27 @@ const CommonTop = ({ wallet, setWallet, colorMode, toggleColorMode }) => {
           Portfolio
         </Button>
       </Box>
-      <Box w="300px">
-        <Box display="flex" justifyContent="space-evenly" alignItems="center">
-          <Button onClick={toggleColorMode} ml="-16">
+      <Box w="30%">
+        <Box
+          display="flex"
+          justifyContent="space-evenly"
+          alignItems="center"
+          flexWrap="wrap"
+          rowGap="5"
+          columnGap="4"
+        >
+          <Button
+            variant="outline"
+            colorScheme="yellow"
+            leftIcon={<FontAwesomeIcon icon={faHeart} />}
+          >
+            Get HMTKN
+          </Button>
+          <Button
+            onClick={toggleColorMode}
+            variant="outline"
+            colorScheme={colorMode === "dark" ? "orange" : "black"}
+          >
             {colorMode === "light" ? (
               <FontAwesomeIcon icon={faMoon} />
             ) : (
@@ -110,6 +128,7 @@ const CommonTop = ({ wallet, setWallet, colorMode, toggleColorMode }) => {
             rowGap="2"
           >
             <Button
+              mt="2"
               onClick={connectWalletPressed}
               variant="outline"
               colorScheme="linkedin"

@@ -1,3 +1,5 @@
+import { game2MainConversionRate } from "./helper";
+
 /* Abstractions to deal with all functions interacting with the blockchain */
 require("dotenv").config();
 // const alchemyKey = process.env.REACT_APP_ALCHEMY_KEY;
@@ -15,6 +17,7 @@ const hwangMarketABI = require("../contracts/HwangMarket-abi.json");
 const hwangMarketAddr = process.env.REACT_APP_HwangMarket_Address;
 
 export const gameContractABI = require("../contracts/GameContract-abi.json");
+const mainTokenABI = require("../contracts/MainToken-abi.json");
 
 export const hwangMarket = new web3.eth.Contract(
   hwangMarketABI,
@@ -184,5 +187,99 @@ export const joinGame = async (gameAddr, playerAddr, ethAmt, betSide) => {
     });
   } catch (error) {
     console.log("error thrown:", error);
+  }
+};
+
+export const getMainTokenBalance = async (ownerAddr) => {
+  if (!window.ethereum || !ownerAddr) {
+    return 0;
+  }
+  const mainTokenAddr = await hwangMarket.methods.mainTokenAddress().call();
+  const mainTokenContract = new web3.eth.Contract(mainTokenABI, mainTokenAddr);
+
+  return await mainTokenContract.methods.balanceOf(ownerAddr).call();
+};
+
+export const getMainToken2SenderApprovalAmt = async (ownerAddr, senderAddr) => {
+  if (!window.ethereum || !ownerAddr || !senderAddr) {
+    return 0;
+  }
+  const mainTokenAddr = await hwangMarket.methods.mainTokenAddress().call();
+  const mainTokenContract = new web3.eth.Contract(mainTokenABI, mainTokenAddr);
+
+  return await mainTokenContract.methods
+    .allowance(ownerAddr, senderAddr)
+    .call();
+};
+
+export const approveMainTokenSender = async (
+  wallet,
+  senderAddr,
+  mainTokenAmt
+) => {
+  if (!window.ethereum || !wallet || !senderAddr) {
+    return "";
+  }
+  const mainTokenAddr = await hwangMarket.methods.mainTokenAddress().call();
+  const mainTokenContract = new web3.eth.Contract(mainTokenABI, mainTokenAddr);
+  const transactionParameters = {
+    to: mainTokenAddr, // Required except during contract publications.
+    from: wallet, // must match user's active address.
+    data: mainTokenContract.methods
+      .approve(senderAddr, mainTokenAmt)
+      .encodeABI(),
+  };
+
+  //sign the transaction
+  try {
+    const trxHash = await window.ethereum.request({
+      method: "eth_sendTransaction",
+      params: [transactionParameters],
+    });
+
+    return trxHash;
+  } catch (error) {
+    console.log("error thrown:", error.message);
+  }
+  return "";
+};
+
+export const mintGameTokenFromMainToken = async (
+  wallet,
+  gameAddr,
+  buyTokenSide,
+  buyTokenAmt,
+  maxLimit
+) => {
+  if (
+    !window.ethereum ||
+    !wallet ||
+    (buyTokenSide !== "1" && buyTokenSide !== "2") ||
+    buyTokenAmt < 0 ||
+    buyTokenAmt > maxLimit
+  ) {
+    return { trxHash: "", err: "" };
+  }
+  const gameContract = new web3.eth.Contract(gameContractABI, gameAddr);
+
+  const transactionParameters = {
+    to: gameAddr, // Required except during contract publications.
+    from: wallet, // must match user's active address.
+    data: gameContract.methods
+      .addPlayer(wallet, game2MainConversionRate * buyTokenAmt, buyTokenSide)
+      .encodeABI(),
+  };
+
+  //sign the transaction
+  try {
+    const trxHash = await window.ethereum.request({
+      method: "eth_sendTransaction",
+      params: [transactionParameters],
+    });
+
+    return { trxHash: trxHash, err: "" };
+  } catch (error) {
+    console.log("error thrown:", error.message);
+    return { trxHash: "", err: error.message };
   }
 };

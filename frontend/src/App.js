@@ -28,7 +28,7 @@ function App() {
             <GamesGallery walletAddress={walletAddress} colorMode={colorMode} />
           }
         />
-        <Route exact path="/:id" element={<Game />} />
+        <Route exact path="/:id" element={<Game wallet={walletAddress} />} />
         <Route path="*" element={<ErrorPage />} />
       </Routes>
     </Box>
