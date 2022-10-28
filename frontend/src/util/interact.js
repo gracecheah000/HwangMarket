@@ -14,7 +14,7 @@ export const web3 = new Web3(
 // End
 
 const hwangMarketABI = require("../contracts/HwangMarket-abi.json");
-const hwangMarketAddr = process.env.REACT_APP_HwangMarket_Address;
+export const hwangMarketAddr = process.env.REACT_APP_HwangMarket_Address;
 
 export const gameContractABI = require("../contracts/GameContract-abi.json");
 const mainTokenABI = require("../contracts/MainToken-abi.json");
@@ -71,11 +71,11 @@ export const getGameById = async (id, setGame) => {
   setGame(game);
 };
 
-export const getGameTrxs = async (gameAddr, setGameTrxs) => {
+export const getGameTrxsByAddr = async (gameAddr) => {
   const gameContract = new web3.eth.Contract(gameContractABI, gameAddr);
   const trxs = await gameContract.methods.getTrxs().call();
   console.log("received trxs: ", trxs);
-  setGameTrxs(trxs);
+  return trxs;
 };
 
 export const getCurrentWalletConnected = async () => {
@@ -211,6 +211,22 @@ export const getMainToken2SenderApprovalAmt = async (ownerAddr, senderAddr) => {
   return await mainTokenContract.methods
     .allowance(ownerAddr, senderAddr)
     .call();
+};
+
+export const getGameTokenAddrByGameAddr = async (gameAddr, side) => {
+  if (!window.ethereum || !gameAddr || (side !== 1 && side !== 2)) {
+    return "";
+  }
+
+  const gameContract = new web3.eth.Contract(gameContractABI, gameAddr);
+  let gtAddr = "";
+  if (side === 1) {
+    gtAddr = await gameContract.methods.gameYesTokenContractAddress().call();
+  } else {
+    gtAddr = await gameContract.methods.gameNoTokenContractAddress().call();
+  }
+  console.log("DEBUG: ", gtAddr);
+  return gtAddr;
 };
 
 export const approveMainTokenSender = async (

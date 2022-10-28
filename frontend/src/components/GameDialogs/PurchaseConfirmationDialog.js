@@ -16,7 +16,7 @@ import { faExternalLink } from "@fortawesome/free-solid-svg-icons";
 export default function PurchaseConfirmationDialog({ trxHash, onClose }) {
   return (
     <>
-      <AlertDialogHeader>Transaction confirmation</AlertDialogHeader>
+      <AlertDialogHeader>Transaction confirmation 🚀</AlertDialogHeader>
       <AlertDialogCloseButton />
       <AlertDialogBody>
         <Text>You can monitor your transaction at:</Text>

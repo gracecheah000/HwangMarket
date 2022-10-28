@@ -3,3 +3,5 @@ export const shortenAddr = (addr) => {
 };
 
 export const game2MainConversionRate = 1; // this is a fixed constant
+
+export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

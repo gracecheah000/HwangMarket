@@ -48,7 +48,7 @@ export default function ListingTable({ listings }) {
         <Tbody>
           {listings && listings.length > 0 ? (
             listings.map((ol) => (
-              <Tr>
+              <Tr key={ol.listingId}>
                 <Td>{shortenAddr(ol.token1)}</Td>
                 <Td>{ol.token1Amt}</Td>
                 <Td>{shortenAddr(ol.token2)}</Td>

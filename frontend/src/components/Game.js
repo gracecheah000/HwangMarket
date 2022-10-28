@@ -35,6 +35,8 @@ import {
   mintGameTokenFromMainToken,
   getMainToken2SenderApprovalAmt,
   getBalance,
+  getGameTokenAddrByGameAddr,
+  getGameTrxsByAddr,
 } from "../util/interact";
 import { PieChart } from "react-minimal-pie-chart";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
@@ -52,7 +54,7 @@ import GameActiveListings from "./GameActiveListings";
 import GameErrorDialog from "./GameDialogs/GameErrorDialog";
 import PurchaseConfirmationDialog from "./GameDialogs/PurchaseConfirmationDialog";
 import IncreaseAllowanceDialog from "./GameDialogs/IncreaseAllowanceDialog";
-import { game2MainConversionRate, shortenAddr } from "../util/helper";
+import { game2MainConversionRate, shortenAddr, sleep } from "../util/helper";
 
 export default function Game({ wallet }) {
   const { id } = useParams();
@@ -72,6 +74,9 @@ export default function Game({ wallet }) {
   const [gytBalance, setGytBalance] = useState(0);
   const [gntBalance, setGntBalance] = useState(0);
 
+  const [gytAddr, setGytAddr] = useState("");
+  const [gntAddr, setGntAddr] = useState("");
+
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = React.useRef();
   const { colorMode } = useColorMode();
@@ -85,6 +90,7 @@ export default function Game({ wallet }) {
       maxLimit
     );
     if (trxHash) {
+      setErrorMsg("");
       setPurchaseTrxHash(trxHash);
     } else {
       setErrorMsg(err);
@@ -96,7 +102,7 @@ export default function Game({ wallet }) {
 
   const addPlayerJoinedGameListener = () => {
     console.log("hwang market player joined game listener added");
-    hwangMarket.events.PlayerJoinedGameEvent({}, (error, data) => {
+    hwangMarket.events.PlayerJoinedGameEvent({}, async (error, data) => {
       if (error) {
         console.log("listener error:", error);
       } else {
@@ -125,10 +131,19 @@ export default function Game({ wallet }) {
       setMain2TknAllowance(
         await getMainToken2SenderApprovalAmt(wallet, game && game.addr)
       );
+    };
+    const setBalance = async () => {
       setGytBalance(await getBalance(wallet, game && game.addr, 1));
       setGntBalance(await getBalance(wallet, game && game.addr, 2));
     };
+    const setGameTokenAddr = async () => {
+      setGytAddr(await getGameTokenAddrByGameAddr(game && game.addr, 1));
+      setGntAddr(await getGameTokenAddrByGameAddr(game && game.addr, 2));
+    };
+
     updateAllowance();
+    setBalance();
+    setGameTokenAddr();
   }, [wallet, game]);
 
   useEffect(() => {
@@ -217,7 +232,7 @@ export default function Game({ wallet }) {
           >
             <Box maxW="650px">
               <Heading>{game.title}</Heading>
-              <Badge mt="2" colorScheme="green" variant="solid">
+              <Badge mt="2" colorScheme="green" variant="outline">
                 {game.tag}
               </Badge>
               <Box
@@ -265,12 +280,12 @@ export default function Game({ wallet }) {
                       {
                         title: "No",
                         value: Math.max(1, parseInt(game.betNoAmount)),
-                        color: "#E53E3E",
+                        color: "#FF1E1E",
                       },
                       {
                         title: "Yes",
                         value: Math.max(1, parseInt(game.betYesAmount)),
-                        color: "#48BB78",
+                        color: "#3CCF4E",
                       },
                     ]}
                     radius={50}
@@ -283,8 +298,7 @@ export default function Game({ wallet }) {
                     label={({ dataEntry }) => dataEntry.title}
                     labelPosition={100 - lineWidth / 2}
                     labelStyle={{
-                      fill: "#fff",
-                      opacity: 0.75,
+                      fill: colorMode === "light" ? "#1A202C" : "#EDF2F7",
                       pointerEvents: "none",
                     }}
                   />
@@ -296,7 +310,7 @@ export default function Game({ wallet }) {
                 justifyContent="flex-start"
                 alignItems="center"
                 columnGap="5"
-                bgColor={colorMode === "light" ? "cyan.100" : "blue.700"}
+                bgColor={colorMode === "light" ? "cyan.100" : ""}
                 borderRadius="25px"
                 // p="8"
                 px="5"
@@ -453,16 +467,22 @@ export default function Game({ wallet }) {
                 <Heading size="md" mb="3">
                   Owned tokens
                 </Heading>
-                <StatGroup w="66.666%">
+                <StatGroup w="100%">
                   <Stat>
                     <StatLabel>Game Yes Token</StatLabel>
                     <StatNumber>{gytBalance}</StatNumber>
-                    <StatHelpText>GYT</StatHelpText>
+                    <StatHelpText>GYT (GameYesToken)</StatHelpText>
+                    <StatHelpText>
+                      <Text fontSize="xs">{gytAddr}</Text>
+                    </StatHelpText>
                   </Stat>
                   <Stat>
                     <StatLabel>Game No Token</StatLabel>
                     <StatNumber>{gntBalance}</StatNumber>
-                    <StatHelpText>GNT</StatHelpText>
+                    <StatHelpText>GNT (GameNoToken)</StatHelpText>
+                    <StatHelpText>
+                      <Text fontSize="xs">{gntAddr}</Text>
+                    </StatHelpText>
                   </Stat>
                 </StatGroup>
 
@@ -570,7 +590,7 @@ export default function Game({ wallet }) {
                     }
                     onClick={triggerPurchase}
                   >
-                    Purchase
+                    Mint Game Tokens
                   </Button>
                   {buyTokenAmt > main2TknAllowance && (
                     <Box display="flex" alignItems="center" mt="2">

@@ -22,12 +22,14 @@ import {
   PopoverHeader,
   PopoverBody,
   Text,
+  useColorMode,
 } from "@chakra-ui/react";
-import { getGameTrxs } from "../util/interact";
-import { shortenAddr } from "../util/helper";
+import { getGameTrxsByAddr } from "../util/interact";
+import { shortenAddr, sleep } from "../util/helper";
 
 export default function GameTransactionsHistory({ game }) {
   const [gameTrxs, setGameTrxs] = useState([]);
+  const [bgColor, setBgColor] = useState("");
   /*
     [
       '7',
@@ -47,8 +49,27 @@ export default function GameTransactionsHistory({ game }) {
     ]
   */
 
+  const { colorMode } = useColorMode();
+
   useEffect(() => {
-    getGameTrxs(game.addr, setGameTrxs);
+    const updateTrxs = async () => {
+      const trxs = await getGameTrxsByAddr(game.addr);
+      setGameTrxs(trxs);
+      if (trxs && trxs.length > 0) {
+        const last = trxs[trxs.length - 1];
+        let color = "";
+        if (last.gameSide === "1") {
+          color = colorMode === "light" ? "#9AE6B4" : "#22543D";
+        } else {
+          color = colorMode === "light" ? "#FED7D7" : "#822727";
+        }
+        setBgColor(color);
+      }
+      await sleep(1500);
+      // reset back to normal color
+      setBgColor("");
+    };
+    updateTrxs();
   }, [game]);
 
   return (
@@ -71,8 +92,8 @@ export default function GameTransactionsHistory({ game }) {
               gameTrxs
                 .slice()
                 .reverse()
-                .map((trx) => (
-                  <Tr key={trx.trxId}>
+                .map((trx, i) => (
+                  <Tr key={trx.trxId} bgColor={i === 0 ? bgColor : ""}>
                     <Td>
                       <Popover>
                         <PopoverTrigger>
