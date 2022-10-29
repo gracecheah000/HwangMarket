@@ -71,6 +71,10 @@ export const getGameById = async (id, setGame) => {
   setGame(game);
 };
 
+export const getMainTokenAddr = async () => {
+  return await hwangMarket.methods.mainTokenAddress().call();
+};
+
 export const getGameTrxsByAddr = async (gameAddr) => {
   const gameContract = new web3.eth.Contract(gameContractABI, gameAddr);
   const trxs = await gameContract.methods.getTrxs().call();

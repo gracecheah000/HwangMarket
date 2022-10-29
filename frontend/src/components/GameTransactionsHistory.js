@@ -24,53 +24,63 @@ import {
   Text,
   useColorMode,
 } from "@chakra-ui/react";
-import { getGameTrxsByAddr } from "../util/interact";
+import { getGameTrxsByAddr, hwangMarket } from "../util/interact";
 import { shortenAddr, sleep } from "../util/helper";
 
-export default function GameTransactionsHistory({ game }) {
+export default function GameTransactionsHistory({ gameAddr }) {
   const [gameTrxs, setGameTrxs] = useState([]);
   const [bgColor, setBgColor] = useState("");
   /*
     [
-      '7',
-      'BET',
-      '60',
-      '1666798762',
-      '1',
-      '0x24b75f97c20Fa56753FE70CfAD530113a3d0BdA7',
-      '0xd3cb011Ab2F1D45610e5e3da1D6372bC7C787923',
-      trxId: '7',
-      activityType: 'BET',
-      trxAmt: '60',
-      trxTime: '1666798762',
-      gameSide: '1',
-      from: '0x24b75f97c20Fa56753FE70CfAD530113a3d0BdA7',
-      to: '0xd3cb011Ab2F1D45610e5e3da1D6372bC7C787923'
+      amount: "1"
+      betSide: "1"
+      gameAddr: "0x439AB69D18De2aDEdBdde92146FDC14a155F3f8b"
+      gameId: "1"
+      player: "0xb50b7E6629901979580a440B8C066122506Ed"
     ]
   */
 
-  const { colorMode } = useColorMode();
-
-  useEffect(() => {
-    const updateTrxs = async () => {
-      const trxs = await getGameTrxsByAddr(game.addr);
-      setGameTrxs(trxs);
-      if (trxs && trxs.length > 0) {
-        const last = trxs[trxs.length - 1];
+  const addPlayerJoinedGameListener = () => {
+    console.log("hwang market player joined game listener added");
+    hwangMarket.events.PlayerJoinedGameEvent({}, async (error, data) => {
+      if (error) {
+        console.log("listener error:", error);
+      } else {
+        const details = data.returnValues;
+        console.log("->", details);
+        setGameTrxs((prev) => [
+          ...prev,
+          {
+            ...details,
+            to: details.player,
+            from: gameAddr,
+            trxAmt: details.amount,
+          },
+        ]);
         let color = "";
-        if (last.gameSide === "1") {
+        if (details.gameSide === "1") {
           color = colorMode === "light" ? "#9AE6B4" : "#22543D";
         } else {
           color = colorMode === "light" ? "#FED7D7" : "#822727";
         }
         setBgColor(color);
+        await sleep(1500);
+        // reset back to normal color
+        setBgColor("");
       }
-      await sleep(1500);
-      // reset back to normal color
-      setBgColor("");
+    });
+  };
+
+  const { colorMode } = useColorMode();
+
+  useEffect(() => {
+    const updateTrxs = async () => {
+      const trxs = await getGameTrxsByAddr(gameAddr);
+      setGameTrxs(trxs);
     };
     updateTrxs();
-  }, [game]);
+    addPlayerJoinedGameListener();
+  }, [colorMode, gameAddr]);
 
   return (
     <Box>

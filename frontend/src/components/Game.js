@@ -26,6 +26,14 @@ import {
   AlertDialogOverlay,
   useDisclosure,
   StatArrow,
+  Spinner,
+  Drawer,
+  DrawerBody,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerCloseButton,
 } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -37,6 +45,7 @@ import {
   getBalance,
   getGameTokenAddrByGameAddr,
   getGameTrxsByAddr,
+  getMainTokenAddr,
 } from "../util/interact";
 import { PieChart } from "react-minimal-pie-chart";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
@@ -74,9 +83,11 @@ export default function Game({ wallet }) {
   const [gytBalance, setGytBalance] = useState(0);
   const [gntBalance, setGntBalance] = useState(0);
 
+  const [hmtknAddr, setHmtknAddr] = useState("");
   const [gytAddr, setGytAddr] = useState("");
   const [gntAddr, setGntAddr] = useState("");
 
+  const [isDialog, setIsDialog] = useState(true);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = React.useRef();
   const { colorMode } = useColorMode();
@@ -97,6 +108,7 @@ export default function Game({ wallet }) {
     }
     setBuyTokenSide("0");
     setBuyTokenAmt(0);
+    setIsDialog(true);
     onOpen();
   };
 
@@ -140,10 +152,14 @@ export default function Game({ wallet }) {
       setGytAddr(await getGameTokenAddrByGameAddr(game && game.addr, 1));
       setGntAddr(await getGameTokenAddrByGameAddr(game && game.addr, 2));
     };
+    const setMainTokenAddr = async () => {
+      setHmtknAddr(await getMainTokenAddr());
+    };
 
     updateAllowance();
     setBalance();
     setGameTokenAddr();
+    setMainTokenAddr();
   }, [wallet, game]);
 
   useEffect(() => {
@@ -388,7 +404,7 @@ export default function Game({ wallet }) {
               </Box>
               <Divider my="10" />
               <Box>
-                <GameTransactionsHistory game={game} />
+                <GameTransactionsHistory gameAddr={game && game.addr} />
               </Box>
             </Box>
             <Box display="flex" flexDir="column">
@@ -608,7 +624,10 @@ export default function Game({ wallet }) {
                         colorScheme="green"
                         variant="outline"
                         size="sm"
-                        onClick={onOpen}
+                        onClick={() => {
+                          setIsDialog(true);
+                          onOpen();
+                        }}
                       >
                         Increase allowance
                       </Button>
@@ -619,7 +638,7 @@ export default function Game({ wallet }) {
                     motionPreset="slideInBottom"
                     leastDestructiveRef={cancelRef}
                     onClose={onClose}
-                    isOpen={isOpen}
+                    isOpen={isDialog && isOpen}
                     isCentered
                   >
                     <AlertDialogOverlay />
@@ -654,13 +673,51 @@ export default function Game({ wallet }) {
               <Divider my="10" />
 
               <Box>
-                <GameActiveListings game={game} />
+                <GameActiveListings
+                  game={game}
+                  setIsDialog={setIsDialog}
+                  onOpen={onOpen}
+                />
+
+                <Drawer
+                  size="lg"
+                  isOpen={!isDialog && isOpen}
+                  placement="right"
+                  onClose={onClose}
+                  finalFocusRef={cancelRef}
+                >
+                  <DrawerOverlay />
+                  <DrawerContent>
+                    <DrawerCloseButton />
+                    <DrawerHeader>Create a new listing 🚀</DrawerHeader>
+
+                    <DrawerBody>
+                      <FormControl isRequired>
+                        <FormLabel>Offered Token</FormLabel>
+                        <Select placeholder="Select option">
+                          <option value="option1">GYT ({gytAddr})</option>
+                          <option value="option2">GNT ({gntAddr})</option>
+                          <option value="option3">HMTKN ({hmtknAddr}) </option>
+                          <option value="option3">Custom</option>
+                        </Select>
+                      </FormControl>
+                      <Heading>Hello world!</Heading>
+                    </DrawerBody>
+
+                    <DrawerFooter>
+                      <Button variant="outline" mr={3} onClick={onClose}>
+                        Cancel
+                      </Button>
+                      <Button colorScheme="blue">Save</Button>
+                    </DrawerFooter>
+                  </DrawerContent>
+                </Drawer>
               </Box>
             </Box>
           </Box>
         </Box>
       ) : (
-        <Text>Loading..</Text>
+        <Spinner color="red.500" />
       )}
     </Box>
   );

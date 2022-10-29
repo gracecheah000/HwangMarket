@@ -1,9 +1,16 @@
-import { Box, Heading, useColorMode } from "@chakra-ui/react";
+import { Box, Button, Heading, useColorMode } from "@chakra-ui/react";
+import {
+  faPlus,
+  faPlusCircle,
+  faPlusSquare,
+  faQuestion,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useEffect, useState } from "react";
 import { gameContractABI, web3 } from "../util/interact";
 import ListingTable from "./ListingTable";
 
-export default function GameActiveListings({ game }) {
+export default function GameActiveListings({ game, setIsDialog, onOpen }) {
   // useEffect(() => {
   //   getGameTrxs(gameAddr, setGameTrxs);
   // }, [gameAddr]);
@@ -59,9 +66,28 @@ export default function GameActiveListings({ game }) {
     // borderColor={colorMode === "light" ? "gray" : "white"}
     // borderRadius="21px"
     >
-      <Heading mb="5" fontSize="xl">
-        Open Listings
-      </Heading>
+      <Box
+        mb="5"
+        display="flex"
+        alignItems="center"
+        justifyContent="space-between"
+      >
+        <Heading fontSize="xl">Open Listings</Heading>
+        <Button
+          leftIcon={
+            <FontAwesomeIcon style={{ marginLeft: "6px" }} icon={faPlus} />
+          }
+          size="sm"
+          colorScheme="teal"
+          variant="outline"
+          onClick={() => {
+            setIsDialog(false);
+            onOpen();
+          }}
+        >
+          Create Listing
+        </Button>
+      </Box>
       <ListingTable listings={openListings} />
     </Box>
   );

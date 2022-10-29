@@ -72,7 +72,7 @@ There are a few milestones we want to demonstrate for the main contract, and gam
 
 Since the above goals cannot really be shown as independent steps, it will make more sense to show them sequentially, mimicking how the interactions are supposed to be called in real life.
 
-The demonstration here is ran on the goerli network, and so the games are created with no intention to resolve them as we do not have a fork of chainlink oracle running on our local network. However, I will still show the steps dependent on a resolved game by implementing a backdoor function, which is not part of the deployed code, allowing me to resolve the game. Again, this function is removed after this demonstration, and is not part of the actual deployed contract.
+The demonstration here is ran on a local ganache network, and so the games are created with no intention to resolve them as we do not have a fork of chainlink oracle running on our local network. However, I will still show the steps dependent on a resolved game by implementing a backdoor function, which is not part of the deployed code, allowing me to resolve the game. Again, this function is removed after this demonstration, and is not part of the actual deployed contract.
 
 Also, unless otherwise, all below functions are ran in the truffle development console.
 
@@ -106,12 +106,12 @@ truffle(development)> (await web3.eth.getBalance(Sandy)).toString();
 truffle(development)> let m = await HwangMarket.deployed();
 ```
 
-2. Create a new fake game with the following settings:
-   Game Resolve Time: 1919136291 (Friday, October 25, 2030 1:24:51 PM GMT+08:00)
-   Oracle Address: (We lazily assign it to accounts[2], obviously its not an oracle, but we have no intention to resolve this game via chainlink oracle.)
-   Threshold: 1000
-   Game Tag: Price Feeds
-   Title: Testing game 123
+1. Create a new fake game with the following settings:<br/>
+   Game Resolve Time: 1919136291 (Friday, October 25, 2030 1:24:51 PM GMT+08:00)<br/>
+   Oracle Address: (We lazily assign it to accounts[2], obviously its not an oracle, but we have no intention to resolve this game via chainlink oracle.)<br/>
+   Threshold: 1000<br/>
+   Game Tag: Price Feeds<br/>
+   Title: Testing game 123<br/>
 
 ```
 truffle(development)> m.createGame(1919136291, accounts[2], 1000, "Price Feeds", "Testing game 123");
@@ -183,7 +183,7 @@ truffle(development)> m.getAllGames();
 ]
 ```
 
-3. Let John and Sandy purchase some HMTKN using ETH, to join the above game.
+1. Let John and Sandy purchase some HMTKN using ETH, to join the above game.
 
 Obtain the main token contract.
 
