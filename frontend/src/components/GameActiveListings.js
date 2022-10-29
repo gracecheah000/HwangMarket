@@ -18,7 +18,7 @@ export default function GameActiveListings({ game, setIsDialog, onOpen }) {
   const [closedListings, setClosedListings] = useState([]);
   const gameContract = new web3.eth.Contract(gameContractABI, game.addr);
 
-  const addPlayerJoinedGameListener = () => {
+  const addNewListingListener = () => {
     console.log("game new listing listener added");
 
     gameContract.events.NewListing({}, (error, data) => {
@@ -48,7 +48,7 @@ export default function GameActiveListings({ game, setIsDialog, onOpen }) {
   };
 
   useEffect(() => {
-    addPlayerJoinedGameListener();
+    addNewListingListener();
     async function getAllListings() {
       const listings = await gameContract.methods.getAllListings().call();
       console.log("listings loaded in", listings);

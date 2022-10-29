@@ -55,10 +55,11 @@ export default function GameTransactionsHistory({ gameAddr }) {
             to: details.player,
             from: gameAddr,
             trxAmt: details.amount,
+            gameSide: details.betSide,
           },
         ]);
         let color = "";
-        if (details.gameSide === "1") {
+        if (details.betSide === "1") {
           color = colorMode === "light" ? "#9AE6B4" : "#22543D";
         } else {
           color = colorMode === "light" ? "#FED7D7" : "#822727";
@@ -103,7 +104,7 @@ export default function GameTransactionsHistory({ gameAddr }) {
                 .slice()
                 .reverse()
                 .map((trx, i) => (
-                  <Tr key={trx.trxId} bgColor={i === 0 ? bgColor : ""}>
+                  <Tr key={i} bgColor={i === 0 ? bgColor : ""}>
                     <Td>
                       <Popover>
                         <PopoverTrigger>

@@ -34,6 +34,8 @@ import {
   DrawerOverlay,
   DrawerContent,
   DrawerCloseButton,
+  Input,
+  useToast,
 } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -46,6 +48,10 @@ import {
   getGameTokenAddrByGameAddr,
   getGameTrxsByAddr,
   getMainTokenAddr,
+  getMainTokenBalance,
+  listTokensUp,
+  gameContractABI,
+  web3,
 } from "../util/interact";
 import { PieChart } from "react-minimal-pie-chart";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
@@ -75,11 +81,12 @@ export default function Game({ wallet }) {
   const [percentage, setPercentage] = useState(0);
   const [diffText, setDiffText] = useState("");
   const [buyTokenSide, setBuyTokenSide] = useState("0");
-  const [buyTokenAmt, setBuyTokenAmt] = useState(0);
+  const [buyTokenAmt, setBuyTokenAmt] = useState("");
   const [maxLimit, setMaxLimit] = useState(1000);
   const [purchaseTrxHash, setPurchaseTrxHash] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [main2TknAllowance, setMain2TknAllowance] = useState(0);
+  const [hmtknBalance, setHmtknBalance] = useState(0);
   const [gytBalance, setGytBalance] = useState(0);
   const [gntBalance, setGntBalance] = useState(0);
 
@@ -91,6 +98,18 @@ export default function Game({ wallet }) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = React.useRef();
   const { colorMode } = useColorMode();
+
+  const toast = useToast();
+
+  /*
+    create listing states
+  */
+  const [offeredTokenAddr, setOfferedTokenAddr] = useState("");
+  const [offeredTokenAmt, setOfferedTokenAmt] = useState("");
+
+  const [expectedTokenAddr, setExpectedTokenAddr] = useState("");
+  const [customExpectedTokenAddr, setCustomExpectedTokenAddr] = useState("");
+  const [expectedTokenAmt, setExpectedTokenAmt] = useState("");
 
   const triggerPurchase = async () => {
     const { trxHash, err } = await mintGameTokenFromMainToken(
@@ -110,6 +129,39 @@ export default function Game({ wallet }) {
     setBuyTokenAmt(0);
     setIsDialog(true);
     onOpen();
+  };
+
+  const pressCreateListing = async () => {
+    const { trxHash, err } = await listTokensUp(
+      wallet,
+      offeredTokenAddr,
+      offeredTokenAmt,
+      customExpectedTokenAddr ? customExpectedTokenAddr : expectedTokenAddr,
+      expectedTokenAmt
+    );
+    if (err) {
+      toast({
+        title: "Something went wrong!",
+        description: err,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } else {
+      toast({
+        title: "Listing creation processing.",
+        description: `Your transaction hash is: ${trxHash}`,
+        status: "info",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+    setOfferedTokenAddr("");
+    setOfferedTokenAmt("");
+    setExpectedTokenAddr("");
+    setCustomExpectedTokenAddr("");
+    setExpectedTokenAmt("");
+    onClose();
   };
 
   const addPlayerJoinedGameListener = () => {
@@ -138,6 +190,31 @@ export default function Game({ wallet }) {
     });
   };
 
+  const addNewListingListener = async () => {
+    if (!game) {
+      return;
+    }
+    console.log("new listing listener listener added");
+    const gameContract = await new web3.eth.Contract(
+      gameContractABI,
+      game.addr
+    );
+    gameContract.events.NewListing({}, async (error, data) => {
+      if (error) {
+        console.log("listener error:", error);
+      } else {
+        // const details = data.returnValues;
+        toast({
+          title: "Listing created!",
+          description: "A new listing has been created!",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    });
+  };
+
   useEffect(() => {
     const updateAllowance = async () => {
       setMain2TknAllowance(
@@ -145,6 +222,7 @@ export default function Game({ wallet }) {
       );
     };
     const setBalance = async () => {
+      setHmtknBalance(await getMainTokenBalance(wallet));
       setGytBalance(await getBalance(wallet, game && game.addr, 1));
       setGntBalance(await getBalance(wallet, game && game.addr, 2));
     };
@@ -161,6 +239,10 @@ export default function Game({ wallet }) {
     setGameTokenAddr();
     setMainTokenAddr();
   }, [wallet, game]);
+
+  useEffect(() => {
+    addNewListingListener();
+  }, [game]);
 
   useEffect(() => {
     addPlayerJoinedGameListener();
@@ -527,7 +609,7 @@ export default function Game({ wallet }) {
                       <option value="2">No</option>
                     </Select>
                   </FormControl>
-                  <FormControl isRequired>
+                  <FormControl isRequired mt="3">
                     <FormLabel>Amount of game token</FormLabel>
                     <NumberInput
                       value={buyTokenAmt}
@@ -550,11 +632,10 @@ export default function Game({ wallet }) {
                     buyTokenAmt > main2TknAllowance
                   ) && (
                     <Box>
-                      <Heading mt="5" mb="4" size="sm">
-                        Transaction Summary for your wallet (
-                        {shortenAddr(wallet)})
+                      <Heading mt="8" mb="4" size="sm">
+                        Transaction Summary
                       </Heading>
-                      <StatGroup w="66.666%">
+                      <StatGroup w="100%">
                         <Stat>
                           <StatLabel>
                             {buyTokenSide === "1" ? "GYT" : "GNT"}
@@ -565,6 +646,11 @@ export default function Game({ wallet }) {
                             Gain {buyTokenAmt}{" "}
                             {buyTokenSide === "1" ? "GYT" : "GNT"}
                           </StatHelpText>
+                          <StatHelpText>
+                            <Text fontSize="xs">
+                              {buyTokenSide === "1" ? gytAddr : gntAddr}
+                            </Text>
+                          </StatHelpText>
                         </Stat>
                         <Stat>
                           <StatLabel>HMTKN</StatLabel>
@@ -574,6 +660,9 @@ export default function Game({ wallet }) {
                           <StatHelpText>
                             <StatArrow type="decrease" />
                             Lose {buyTokenAmt} HMTKN
+                          </StatHelpText>
+                          <StatHelpText>
+                            <Text fontSize="xs">{hmtknAddr}</Text>
                           </StatHelpText>
                         </Stat>
                       </StatGroup>
@@ -691,24 +780,121 @@ export default function Game({ wallet }) {
                     <DrawerCloseButton />
                     <DrawerHeader>Create a new listing 🚀</DrawerHeader>
 
-                    <DrawerBody>
+                    <DrawerBody display="flex" flexDir="column" rowGap="8">
                       <FormControl isRequired>
-                        <FormLabel>Offered Token</FormLabel>
-                        <Select placeholder="Select option">
-                          <option value="option1">GYT ({gytAddr})</option>
-                          <option value="option2">GNT ({gntAddr})</option>
-                          <option value="option3">HMTKN ({hmtknAddr}) </option>
-                          <option value="option3">Custom</option>
+                        <FormLabel>Bid Token</FormLabel>
+                        <Select
+                          placeholder="Select bid token"
+                          onChange={(e) => {
+                            setOfferedTokenAddr(e.target.value);
+                            setOfferedTokenAmt("");
+                          }}
+                        >
+                          <option value={gytAddr}>GYT ({gytAddr})</option>
+                          <option value={gntAddr}>GNT ({gntAddr})</option>
                         </Select>
                       </FormControl>
-                      <Heading>Hello world!</Heading>
-                    </DrawerBody>
+                      <FormControl isRequired>
+                        <FormLabel>Bid Token Amount</FormLabel>
+                        <Text fontWeight="bold" mb="3">
+                          Available balance:
+                          <span style={{ marginLeft: "5px" }}>
+                            {offeredTokenAddr === gytAddr
+                              ? gytBalance
+                              : gntBalance}
+                          </span>
+                        </Text>
+                        <NumberInput
+                          value={offeredTokenAmt}
+                          min={1}
+                          max={
+                            offeredTokenAddr === gytAddr
+                              ? gytBalance
+                              : gntBalance
+                          }
+                          onChange={(v) => setOfferedTokenAmt(v)}
+                        >
+                          <NumberInputField />
+                          <NumberInputStepper>
+                            <NumberIncrementStepper />
+                            <NumberDecrementStepper />
+                          </NumberInputStepper>
+                        </NumberInput>
+                      </FormControl>
 
+                      <FormControl isRequired>
+                        <FormLabel>Ask Token</FormLabel>
+                        <Select
+                          placeholder="Select ask token"
+                          onChange={(e) => {
+                            if (e.target.value !== "custom") {
+                              setCustomExpectedTokenAddr("");
+                            }
+                            setExpectedTokenAddr(e.target.value);
+                            setExpectedTokenAmt("");
+                          }}
+                        >
+                          <option value={gytAddr}>GYT ({gytAddr})</option>
+                          <option value={gntAddr}>GNT ({gntAddr})</option>
+                          <option value={hmtknAddr}>HMTKN ({hmtknAddr})</option>
+                          <option value="custom">Custom Token</option>
+                        </Select>
+                      </FormControl>
+                      {expectedTokenAddr === "custom" && (
+                        <FormControl isRequired>
+                          <FormLabel>Custom token address</FormLabel>
+                          <Input
+                            onChange={(e) => {
+                              setCustomExpectedTokenAddr(e.target.value);
+                            }}
+                            value={customExpectedTokenAddr}
+                          />
+                        </FormControl>
+                      )}
+
+                      <FormControl isRequired>
+                        <FormLabel>Ask Token Amount</FormLabel>
+                        <NumberInput
+                          value={expectedTokenAmt}
+                          min={1}
+                          onChange={(v) => setExpectedTokenAmt(v)}
+                        >
+                          <NumberInputField />
+                          <NumberInputStepper>
+                            <NumberIncrementStepper />
+                            <NumberDecrementStepper />
+                          </NumberInputStepper>
+                        </NumberInput>
+                      </FormControl>
+
+                      <Box ml="auto" my="6">
+                        <Button
+                          variant="outline"
+                          mr={3}
+                          onClick={onClose}
+                          colorScheme="telegram"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          colorScheme="whatsapp"
+                          variant="outline"
+                          onClick={pressCreateListing}
+                        >
+                          Create
+                        </Button>
+                      </Box>
+                    </DrawerBody>
                     <DrawerFooter>
-                      <Button variant="outline" mr={3} onClick={onClose}>
-                        Cancel
-                      </Button>
-                      <Button colorScheme="blue">Save</Button>
+                      <Text
+                        as="cite"
+                        fontSize="lg"
+                        fontWeight="bold"
+                        mt="10"
+                        mx="auto"
+                      >
+                        ⭐ "Fortune Favours The Brave" - Virgil
+                      </Text>
                     </DrawerFooter>
                   </DrawerContent>
                 </Drawer>

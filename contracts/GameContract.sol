@@ -131,16 +131,8 @@ contract GameContract is IListingOwner {
 
   function updateListing(Models.ListingInfo memory listingInfo) public {
     listingContracts.set(listingInfo.listingId, listingInfo);
-  }
-
-  function partakeInListing(address _player, address listingAddr) public returns (Models.ListingInfo memory) {
-    ListingContract listingContract = ListingContract(listingAddr);
-    Models.ListingInfo memory listingInfo = listingContract.trigger(_player);
-    IListingOwner listingOwner = IListingOwner(listingContract.creator());
-    listingOwner.updateListing(listingInfo);
 
     emit ListingFulfilled(listingInfo);
-    return listingInfo;
   }
 
   /**

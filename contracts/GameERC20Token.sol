@@ -2,6 +2,7 @@
 pragma solidity >=0.4.22 <0.9.0;
 
 import "./IListableToken.sol";
+import "./IListingOwner.sol";
 import "./GameContract.sol";
 import "./ListingContract.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -108,7 +109,9 @@ contract GameERC20Token is IERC20, IListableToken {
     emit Approval(msg.sender, listingAddress, listingContract.token2Amt());
 
     // trigger listing via main contract for book keeping
-    Models.ListingInfo memory listingInfo = gameContract.partakeInListing(msg.sender, listingAddress);
+    Models.ListingInfo memory listingInfo = listingContract.trigger(msg.sender);
+    IListingOwner listingOwner = IListingOwner(listingContract.creator());
+    listingOwner.updateListing(listingInfo);
 
     return listingInfo;
   }
