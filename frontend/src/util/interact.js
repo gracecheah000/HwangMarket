@@ -329,23 +329,23 @@ export const listTokensUp = async (
   token2Amt
 ) => {
   if (!wallet || !token1Addr || !token1Amt || !token2Addr || !token2Amt) {
-    return { trxHash: "", err: "bad parameters" };
+    return { trxHash: "", err: "Invalid fields to create listing." };
   }
-  const iListableTokenContract = new web3.eth.Contract(
-    iListableTokenABI,
-    token1Addr
-  );
-
-  const transactionParameters = {
-    to: token1Addr, // Required except during contract publications.
-    from: wallet, // must match user's active address.
-    data: iListableTokenContract.methods
-      .listUpTokensForExchange(token1Amt, token2Addr, token2Amt)
-      .encodeABI(),
-  };
 
   //sign the transaction
   try {
+    const iListableTokenContract = new web3.eth.Contract(
+      iListableTokenABI,
+      token1Addr
+    );
+
+    const transactionParameters = {
+      to: token1Addr, // Required except during contract publications.
+      from: wallet, // must match user's active address.
+      data: iListableTokenContract.methods
+        .listUpTokensForExchange(token1Amt, token2Addr, token2Amt)
+        .encodeABI(),
+    };
     const trxHash = await window.ethereum.request({
       method: "eth_sendTransaction",
       params: [transactionParameters],

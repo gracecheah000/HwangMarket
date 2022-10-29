@@ -75,7 +75,7 @@ const GameCard = ({ game }) => {
     return () => clearInterval(intervalId); //This is important
   }, [game.createdTime, game.resolveTime]);
 
-  const naviate = useNavigate();
+  const navigate = useNavigate();
   const totalSupply = 1000; // hardcoded 1000 token supply limit
   return (
     <Box w="40%" display="flex" justifyContent="center">
@@ -117,7 +117,7 @@ const GameCard = ({ game }) => {
             ml="auto"
             colorScheme="telegram"
             borderRadius="15px"
-            onClick={() => naviate(`/${game.id}`)}
+            onClick={() => navigate(`/game/${game.id}`)}
             minW="80px"
             variant="outline"
           >

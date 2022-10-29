@@ -1,4 +1,22 @@
-import { Box, Button, Heading, useColorMode } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Heading,
+  useColorMode,
+  Text,
+  TableContainer,
+  Table,
+  TableCaption,
+  Thead,
+  Tr,
+  Td,
+  Th,
+  Tbody,
+  Tfoot,
+  Badge,
+  Tooltip,
+  Tag,
+} from "@chakra-ui/react";
 import {
   faPlus,
   faPlusCircle,
@@ -7,21 +25,29 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useEffect, useState } from "react";
+import { shortenAddr, sleep } from "../util/helper";
 import { gameContractABI, web3 } from "../util/interact";
-import ListingTable from "./ListingTable";
 
-export default function GameActiveListings({ game, setIsDialog, onOpen }) {
+export default function GameActiveListings({
+  game,
+  setIsDialog,
+  onOpen,
+  gytAddr,
+  gntAddr,
+  hmtknAddr,
+}) {
   // useEffect(() => {
   //   getGameTrxs(gameAddr, setGameTrxs);
   // }, [gameAddr]);
   const [openListings, setOpenListings] = useState([]);
+  const [bgColor, setBgColor] = useState("");
   const [closedListings, setClosedListings] = useState([]);
   const gameContract = new web3.eth.Contract(gameContractABI, game.addr);
 
   const addNewListingListener = () => {
     console.log("game new listing listener added");
 
-    gameContract.events.NewListing({}, (error, data) => {
+    gameContract.events.NewListing({}, async (error, data) => {
       if (error) {
         console.log("listener error:", error);
       } else {
@@ -43,6 +69,10 @@ export default function GameActiveListings({ game, setIsDialog, onOpen }) {
         } else {
           setClosedListings((prev) => [...prev, details]);
         }
+        setBgColor(colorMode === "light" ? "#9AE6B4" : "#22543D");
+        await sleep(1500);
+        // reset back to normal color
+        setBgColor("");
       }
     });
   };
@@ -59,6 +89,16 @@ export default function GameActiveListings({ game, setIsDialog, onOpen }) {
   }, []);
 
   const { colorMode } = useColorMode();
+
+  const parseAddr = (addr) => {
+    return addr === gntAddr
+      ? "GNT"
+      : addr === gytAddr
+      ? "GYT"
+      : addr === hmtknAddr
+      ? "HMTKN"
+      : shortenAddr(addr);
+  };
 
   return (
     <Box
@@ -88,7 +128,52 @@ export default function GameActiveListings({ game, setIsDialog, onOpen }) {
           Create Listing
         </Button>
       </Box>
-      <ListingTable listings={openListings} />
+      <TableContainer overflowY="scroll" maxH="60vh">
+        <Table variant="simple" size="sm">
+          <TableCaption>Open listings logged in game contract</TableCaption>
+          <Thead>
+            <Tr>
+              <Th>Offered Token</Th>
+              <Th>Offered Amount</Th>
+              <Th>Expecting Token</Th>
+              <Th>Expecting Amount</Th>
+              <Th>Info</Th>
+            </Tr>
+          </Thead>
+          <Tbody>
+            {openListings && openListings.length > 0 ? (
+              openListings
+                .slice()
+                .reverse()
+                .map((ol, i) => (
+                  <Tr key={ol.listingId} bgColor={i === 0 ? bgColor : ""}>
+                    <Td fontWeight="bold">{parseAddr(ol.token1)}</Td>
+                    <Td>{ol.token1Amt}</Td>
+                    <Td fontWeight="bold">{parseAddr(ol.token2)}</Td>
+                    <Td>{ol.token2Amt}</Td>
+                    <Td>
+                      <Button
+                        size="sm"
+                        colorScheme="telegram"
+                        variant="outline"
+                      >
+                        Details
+                      </Button>
+                    </Td>
+                  </Tr>
+                ))
+            ) : (
+              <Tr>
+                <Td>-</Td>
+                <Td>-</Td>
+                <Td>-</Td>
+                <Td>-</Td>
+                <Td>-</Td>
+              </Tr>
+            )}
+          </Tbody>
+        </Table>
+      </TableContainer>
     </Box>
   );
 }

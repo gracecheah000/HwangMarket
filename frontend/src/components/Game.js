@@ -28,13 +28,7 @@ import {
   StatArrow,
   Spinner,
   Drawer,
-  DrawerBody,
-  DrawerFooter,
-  DrawerHeader,
   DrawerOverlay,
-  DrawerContent,
-  DrawerCloseButton,
-  Input,
   useToast,
 } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
@@ -70,6 +64,7 @@ import GameErrorDialog from "./GameDialogs/GameErrorDialog";
 import PurchaseConfirmationDialog from "./GameDialogs/PurchaseConfirmationDialog";
 import IncreaseAllowanceDialog from "./GameDialogs/IncreaseAllowanceDialog";
 import { game2MainConversionRate, shortenAddr, sleep } from "../util/helper";
+import CreateListingDrawer from "./GameDrawers/CreateListingDrawer";
 
 export default function Game({ wallet }) {
   const { id } = useParams();
@@ -101,16 +96,6 @@ export default function Game({ wallet }) {
 
   const toast = useToast();
 
-  /*
-    create listing states
-  */
-  const [offeredTokenAddr, setOfferedTokenAddr] = useState("");
-  const [offeredTokenAmt, setOfferedTokenAmt] = useState("");
-
-  const [expectedTokenAddr, setExpectedTokenAddr] = useState("");
-  const [customExpectedTokenAddr, setCustomExpectedTokenAddr] = useState("");
-  const [expectedTokenAmt, setExpectedTokenAmt] = useState("");
-
   const triggerPurchase = async () => {
     const { trxHash, err } = await mintGameTokenFromMainToken(
       wallet,
@@ -129,39 +114,6 @@ export default function Game({ wallet }) {
     setBuyTokenAmt(0);
     setIsDialog(true);
     onOpen();
-  };
-
-  const pressCreateListing = async () => {
-    const { trxHash, err } = await listTokensUp(
-      wallet,
-      offeredTokenAddr,
-      offeredTokenAmt,
-      customExpectedTokenAddr ? customExpectedTokenAddr : expectedTokenAddr,
-      expectedTokenAmt
-    );
-    if (err) {
-      toast({
-        title: "Something went wrong!",
-        description: err,
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-      });
-    } else {
-      toast({
-        title: "Listing creation processing.",
-        description: `Your transaction hash is: ${trxHash}`,
-        status: "info",
-        duration: 5000,
-        isClosable: true,
-      });
-    }
-    setOfferedTokenAddr("");
-    setOfferedTokenAmt("");
-    setExpectedTokenAddr("");
-    setCustomExpectedTokenAddr("");
-    setExpectedTokenAmt("");
-    onClose();
   };
 
   const addPlayerJoinedGameListener = () => {
@@ -408,7 +360,7 @@ export default function Game({ wallet }) {
                 justifyContent="flex-start"
                 alignItems="center"
                 columnGap="5"
-                bgColor={colorMode === "light" ? "cyan.100" : ""}
+                // bgColor={colorMode === "light" ? "cyan.100" : ""}
                 borderRadius="25px"
                 // p="8"
                 px="5"
@@ -449,6 +401,7 @@ export default function Game({ wallet }) {
                     href={`https://goerli.etherscan.io/address/${game.addr}`}
                     display="flex"
                     alignItems="center"
+                    color={colorMode === "light" ? "teal.700" : "teal.300"}
                   >
                     {game.addr}
                     <FontAwesomeIcon
@@ -462,6 +415,7 @@ export default function Game({ wallet }) {
                     href={`https://goerli.etherscan.io/address/${game.oracleAddr}`}
                     display="flex"
                     alignItems="center"
+                    color={colorMode === "light" ? "teal.700" : "teal.300"}
                   >
                     {game.oracleAddr}
                     <FontAwesomeIcon
@@ -766,6 +720,9 @@ export default function Game({ wallet }) {
                   game={game}
                   setIsDialog={setIsDialog}
                   onOpen={onOpen}
+                  gytAddr={gytAddr}
+                  gntAddr={gntAddr}
+                  hmtknAddr={hmtknAddr}
                 />
 
                 <Drawer
@@ -776,127 +733,16 @@ export default function Game({ wallet }) {
                   finalFocusRef={cancelRef}
                 >
                   <DrawerOverlay />
-                  <DrawerContent>
-                    <DrawerCloseButton />
-                    <DrawerHeader>Create a new listing 🚀</DrawerHeader>
-
-                    <DrawerBody display="flex" flexDir="column" rowGap="8">
-                      <FormControl isRequired>
-                        <FormLabel>Bid Token</FormLabel>
-                        <Select
-                          placeholder="Select bid token"
-                          onChange={(e) => {
-                            setOfferedTokenAddr(e.target.value);
-                            setOfferedTokenAmt("");
-                          }}
-                        >
-                          <option value={gytAddr}>GYT ({gytAddr})</option>
-                          <option value={gntAddr}>GNT ({gntAddr})</option>
-                        </Select>
-                      </FormControl>
-                      <FormControl isRequired>
-                        <FormLabel>Bid Token Amount</FormLabel>
-                        <Text fontWeight="bold" mb="3">
-                          Available balance:
-                          <span style={{ marginLeft: "5px" }}>
-                            {offeredTokenAddr === gytAddr
-                              ? gytBalance
-                              : gntBalance}
-                          </span>
-                        </Text>
-                        <NumberInput
-                          value={offeredTokenAmt}
-                          min={1}
-                          max={
-                            offeredTokenAddr === gytAddr
-                              ? gytBalance
-                              : gntBalance
-                          }
-                          onChange={(v) => setOfferedTokenAmt(v)}
-                        >
-                          <NumberInputField />
-                          <NumberInputStepper>
-                            <NumberIncrementStepper />
-                            <NumberDecrementStepper />
-                          </NumberInputStepper>
-                        </NumberInput>
-                      </FormControl>
-
-                      <FormControl isRequired>
-                        <FormLabel>Ask Token</FormLabel>
-                        <Select
-                          placeholder="Select ask token"
-                          onChange={(e) => {
-                            if (e.target.value !== "custom") {
-                              setCustomExpectedTokenAddr("");
-                            }
-                            setExpectedTokenAddr(e.target.value);
-                            setExpectedTokenAmt("");
-                          }}
-                        >
-                          <option value={gytAddr}>GYT ({gytAddr})</option>
-                          <option value={gntAddr}>GNT ({gntAddr})</option>
-                          <option value={hmtknAddr}>HMTKN ({hmtknAddr})</option>
-                          <option value="custom">Custom Token</option>
-                        </Select>
-                      </FormControl>
-                      {expectedTokenAddr === "custom" && (
-                        <FormControl isRequired>
-                          <FormLabel>Custom token address</FormLabel>
-                          <Input
-                            onChange={(e) => {
-                              setCustomExpectedTokenAddr(e.target.value);
-                            }}
-                            value={customExpectedTokenAddr}
-                          />
-                        </FormControl>
-                      )}
-
-                      <FormControl isRequired>
-                        <FormLabel>Ask Token Amount</FormLabel>
-                        <NumberInput
-                          value={expectedTokenAmt}
-                          min={1}
-                          onChange={(v) => setExpectedTokenAmt(v)}
-                        >
-                          <NumberInputField />
-                          <NumberInputStepper>
-                            <NumberIncrementStepper />
-                            <NumberDecrementStepper />
-                          </NumberInputStepper>
-                        </NumberInput>
-                      </FormControl>
-
-                      <Box ml="auto" my="6">
-                        <Button
-                          variant="outline"
-                          mr={3}
-                          onClick={onClose}
-                          colorScheme="telegram"
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          colorScheme="whatsapp"
-                          variant="outline"
-                          onClick={pressCreateListing}
-                        >
-                          Create
-                        </Button>
-                      </Box>
-                    </DrawerBody>
-                    <DrawerFooter>
-                      <Text
-                        as="cite"
-                        fontSize="lg"
-                        fontWeight="bold"
-                        mt="10"
-                        mx="auto"
-                      >
-                        ⭐ "Fortune Favours The Brave" - Virgil
-                      </Text>
-                    </DrawerFooter>
-                  </DrawerContent>
+                  <CreateListingDrawer
+                    wallet={wallet}
+                    gytAddr={gytAddr}
+                    gytBalance={gytBalance}
+                    gntAddr={gntAddr}
+                    gntBalance={gntBalance}
+                    hmtknAddr={hmtknAddr}
+                    toast={toast}
+                    onClose={onClose}
+                  />
                 </Drawer>
               </Box>
             </Box>
