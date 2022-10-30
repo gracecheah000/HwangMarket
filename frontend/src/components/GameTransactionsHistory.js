@@ -30,6 +30,7 @@ import { shortenAddr, sleep } from "../util/helper";
 export default function GameTransactionsHistory({ gameAddr }) {
   const [gameTrxs, setGameTrxs] = useState([]);
   const [bgColor, setBgColor] = useState("");
+  const { colorMode } = useColorMode();
   /*
     [
       amount: "1"
@@ -47,7 +48,6 @@ export default function GameTransactionsHistory({ gameAddr }) {
         console.log("listener error:", error);
       } else {
         const details = data.returnValues;
-        console.log("->", details);
         setGameTrxs((prev) => [
           ...prev,
           {
@@ -71,8 +71,6 @@ export default function GameTransactionsHistory({ gameAddr }) {
       }
     });
   };
-
-  const { colorMode } = useColorMode();
 
   useEffect(() => {
     const updateTrxs = async () => {

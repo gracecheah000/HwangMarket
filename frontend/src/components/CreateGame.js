@@ -20,6 +20,7 @@ import {
   NumberInput,
   NumberInputField,
   Input,
+  useColorMode,
 } from "@chakra-ui/react";
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -40,11 +41,13 @@ import {
   connectWallet,
 } from "../util/interact";
 
-const CreateGame = ({ walletAddress, setStatus, colorMode }) => {
+const CreateGame = ({ walletAddress, setStatus }) => {
   const [resolveTime, setResolveTime] = useState(new Date());
   const [threshold, setThreshold] = useState(0);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [title, setTitle] = useState("");
+
+  const { colorMode } = useColorMode();
 
   const [category, setCategory] = useState("");
   const allowedCategories = [
@@ -227,7 +230,7 @@ const CreateGame = ({ walletAddress, setStatus, colorMode }) => {
                   border="2px solid teal"
                   borderRadius="15px"
                   p="5"
-                  bgColor={colorMode === "light" ? "teal.100" : "cyan.700"}
+                  // bgColor={colorMode === "light" ? "teal.100" : "cyan.700"}
                   my="2"
                 >
                   <Box display="flex" alignItems="center" mb="2" columnGap="3">
@@ -253,6 +256,7 @@ const CreateGame = ({ walletAddress, setStatus, colorMode }) => {
                     <Link
                       isExternal
                       href={`https://goerli.etherscan.io/address/${mkt.oracleAddr}`}
+                      color={colorMode === "light" ? "teal.700" : "teal.300"}
                     >
                       {mkt.oracleAddr} <FontAwesomeIcon icon={faExternalLink} />
                     </Link>

@@ -65,6 +65,7 @@ import PurchaseConfirmationDialog from "./GameDialogs/PurchaseConfirmationDialog
 import IncreaseAllowanceDialog from "./GameDialogs/IncreaseAllowanceDialog";
 import { game2MainConversionRate, shortenAddr, sleep } from "../util/helper";
 import CreateListingDrawer from "./GameDrawers/CreateListingDrawer";
+import ListingDetailDrawer from "./GameDrawers/ListingDetailDrawer";
 
 export default function Game({ wallet }) {
   const { id } = useParams();
@@ -72,6 +73,8 @@ export default function Game({ wallet }) {
   useEffect(() => {
     getGameById(id, setGame);
   }, [id]);
+
+  const { colorMode } = useColorMode();
 
   const [percentage, setPercentage] = useState(0);
   const [diffText, setDiffText] = useState("");
@@ -90,9 +93,12 @@ export default function Game({ wallet }) {
   const [gntAddr, setGntAddr] = useState("");
 
   const [isDialog, setIsDialog] = useState(true);
+  const [isCreate, setIsCreate] = useState(true);
+
+  const [listingSelected, setListingSelected] = useState(null);
+
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = React.useRef();
-  const { colorMode } = useColorMode();
 
   const toast = useToast();
 
@@ -146,7 +152,7 @@ export default function Game({ wallet }) {
     if (!game) {
       return;
     }
-    console.log("new listing listener listener added");
+    console.log("new listing listener added");
     const gameContract = await new web3.eth.Contract(
       gameContractABI,
       game.addr
@@ -159,6 +165,31 @@ export default function Game({ wallet }) {
         toast({
           title: "Listing created!",
           description: "A new listing has been created!",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    });
+  };
+
+  const addListingFulfilledListener = async () => {
+    if (!game) {
+      return;
+    }
+    console.log("listing fulfilled listener added");
+    const gameContract = await new web3.eth.Contract(
+      gameContractABI,
+      game.addr
+    );
+    gameContract.events.ListingFulfilled({}, async (error, data) => {
+      if (error) {
+        console.log("listener error:", error);
+      } else {
+        // const details = data.returnValues;
+        toast({
+          title: "Listing Fulfilled!",
+          description: "A listing has been fulfilled!",
           status: "success",
           duration: 5000,
           isClosable: true,
@@ -194,6 +225,7 @@ export default function Game({ wallet }) {
 
   useEffect(() => {
     addNewListingListener();
+    addListingFulfilledListener();
   }, [game]);
 
   useEffect(() => {
@@ -723,6 +755,8 @@ export default function Game({ wallet }) {
                   gytAddr={gytAddr}
                   gntAddr={gntAddr}
                   hmtknAddr={hmtknAddr}
+                  setIsCreate={setIsCreate}
+                  setListingSelected={setListingSelected}
                 />
 
                 <Drawer
@@ -733,16 +767,25 @@ export default function Game({ wallet }) {
                   finalFocusRef={cancelRef}
                 >
                   <DrawerOverlay />
-                  <CreateListingDrawer
-                    wallet={wallet}
-                    gytAddr={gytAddr}
-                    gytBalance={gytBalance}
-                    gntAddr={gntAddr}
-                    gntBalance={gntBalance}
-                    hmtknAddr={hmtknAddr}
-                    toast={toast}
-                    onClose={onClose}
-                  />
+                  {isCreate ? (
+                    <CreateListingDrawer
+                      wallet={wallet}
+                      gytAddr={gytAddr}
+                      gytBalance={gytBalance}
+                      gntAddr={gntAddr}
+                      gntBalance={gntBalance}
+                      hmtknAddr={hmtknAddr}
+                      toast={toast}
+                      onClose={onClose}
+                    />
+                  ) : (
+                    <ListingDetailDrawer
+                      wallet={wallet}
+                      listingSelected={listingSelected}
+                      onClose={onClose}
+                      toast={toast}
+                    />
+                  )}
                 </Drawer>
               </Box>
             </Box>

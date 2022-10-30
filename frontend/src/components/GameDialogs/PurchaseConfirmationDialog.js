@@ -9,11 +9,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogCloseButton,
+  useColorMode,
 } from "@chakra-ui/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faExternalLink } from "@fortawesome/free-solid-svg-icons";
 
 export default function PurchaseConfirmationDialog({ trxHash, onClose }) {
+  const { colorMode } = useColorMode();
+
   return (
     <>
       <AlertDialogHeader>Transaction confirmation 🚀</AlertDialogHeader>
@@ -22,6 +25,7 @@ export default function PurchaseConfirmationDialog({ trxHash, onClose }) {
         <Text>You can monitor your transaction at:</Text>
         <Link
           fontWeight="bold"
+          color={colorMode === "light" ? "teal.700" : "teal.300"}
           isExternal
           href={`https://goerli.etherscan.io/address/${trxHash}`}
         >

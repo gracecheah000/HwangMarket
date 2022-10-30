@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box, Heading, Text, useColorMode } from "@chakra-ui/react";
+import { Box, Heading, Spinner, Text, useColorMode } from "@chakra-ui/react";
 import { hwangMarket, getAllGames } from "../util/interact";
 
 import CreateGame from "./CreateGame";
@@ -16,7 +16,9 @@ const GamesGallery = ({ walletAddress, colorMode }) => {
     console.log("hwang market game created listener added");
     hwangMarket.events.GameCreated({}, (error, data) => {
       if (error) {
-        setStatus("😥 " + error.message);
+        setStatus("😥 Cannot connect to the network");
+        console.log(error.message);
+        setLoading(false);
       } else if (data && data.returnValues && data.returnValues.gameMetadata) {
         console.log(
           "received game created event",
@@ -32,10 +34,14 @@ const GamesGallery = ({ walletAddress, colorMode }) => {
     addHwangMarketListener();
     setLoading(true);
     async function getGames() {
-      const games = await getAllGames();
-      console.log("games loaded in", games);
-      setOngoingGames(games.ongoingGames);
-      setClosedGames(games.closedGames);
+      try {
+        const games = await getAllGames();
+        console.log("games loaded in", games);
+        setOngoingGames(games.ongoingGames);
+        setClosedGames(games.closedGames);
+      } catch {
+        setStatus("😥 Cannot connect to the network");
+      }
       setLoading(false);
     }
     getGames();
@@ -61,13 +67,8 @@ const GamesGallery = ({ walletAddress, colorMode }) => {
         >
           Number of open games: {ongoingGames ? ongoingGames.length : 0}
         </Text>
-        <CreateGame
-          walletAddress={walletAddress}
-          setStatus={setStatus}
-          colorMode={colorMode}
-        />
+        <CreateGame walletAddress={walletAddress} setStatus={setStatus} />
       </Box>
-      <Text>{status}</Text>
 
       <Box
         display="flex"
@@ -79,7 +80,9 @@ const GamesGallery = ({ walletAddress, colorMode }) => {
         my="24"
       >
         {isLoading ? (
-          <Heading>Loading...</Heading>
+          <Spinner size="lg" color="red.500" />
+        ) : status ? (
+          <Heading>{status}</Heading>
         ) : ongoingGames && ongoingGames.length > 0 ? (
           ongoingGames
             .slice()

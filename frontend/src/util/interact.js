@@ -20,6 +20,7 @@ export const gameContractABI = require("../contracts/GameContract-abi.json");
 const mainTokenABI = require("../contracts/MainToken-abi.json");
 const gameTokenABI = require("../contracts/GameERC20Token-abi.json");
 const iListableTokenABI = require("../contracts/IListableToken-abi.json");
+const erc20TokenABI = require("../contracts/IERC20-abi.json");
 
 export const hwangMarket = new web3.eth.Contract(
   hwangMarketABI,
@@ -230,7 +231,6 @@ export const getGameTokenAddrByGameAddr = async (gameAddr, side) => {
   } else {
     gtAddr = await gameContract.methods.gameNoTokenContractAddress().call();
   }
-  console.log("DEBUG: ", gtAddr);
   return gtAddr;
 };
 
@@ -282,18 +282,19 @@ export const mintGameTokenFromMainToken = async (
   ) {
     return { trxHash: "", err: "" };
   }
-  const gameContract = new web3.eth.Contract(gameContractABI, gameAddr);
-
-  const transactionParameters = {
-    to: gameAddr, // Required except during contract publications.
-    from: wallet, // must match user's active address.
-    data: gameContract.methods
-      .addPlayer(wallet, game2MainConversionRate * buyTokenAmt, buyTokenSide)
-      .encodeABI(),
-  };
 
   //sign the transaction
   try {
+    const gameContract = new web3.eth.Contract(gameContractABI, gameAddr);
+
+    const transactionParameters = {
+      to: gameAddr, // Required except during contract publications.
+      from: wallet, // must match user's active address.
+      data: gameContract.methods
+        .addPlayer(wallet, game2MainConversionRate * buyTokenAmt, buyTokenSide)
+        .encodeABI(),
+    };
+
     const trxHash = await window.ethereum.request({
       method: "eth_sendTransaction",
       params: [transactionParameters],
@@ -321,6 +322,14 @@ export const getBalance = async (wallet, gameAddr, side) => {
   return await gameTokenContract.methods.balanceOf(wallet).call();
 };
 
+export const getERC20Tokenbalance = async (wallet, tokenAddr) => {
+  if (!wallet || !tokenAddr) {
+    return 0;
+  }
+  const erc20TokenContract = new web3.eth.Contract(erc20TokenABI, tokenAddr);
+  return await erc20TokenContract.methods.balanceOf(wallet).call();
+};
+
 export const listTokensUp = async (
   wallet,
   token1Addr,
@@ -344,6 +353,37 @@ export const listTokensUp = async (
       from: wallet, // must match user's active address.
       data: iListableTokenContract.methods
         .listUpTokensForExchange(token1Amt, token2Addr, token2Amt)
+        .encodeABI(),
+    };
+    const trxHash = await window.ethereum.request({
+      method: "eth_sendTransaction",
+      params: [transactionParameters],
+    });
+
+    return { trxHash: trxHash, err: "" };
+  } catch (error) {
+    console.log("error thrown:", error.message);
+    return { trxHash: "", err: error.message };
+  }
+};
+
+export const acceptTokenExchange = async (wallet, listing) => {
+  if (!wallet || !listing.token2 || !listing.listingAddr) {
+    return { trxHash: "", err: "Invalid fields to accept listing exchange." };
+  }
+
+  //sign the transaction
+  try {
+    const iListableTokenContract = new web3.eth.Contract(
+      iListableTokenABI,
+      listing.token2
+    );
+
+    const transactionParameters = {
+      to: listing.token2, // Required except during contract publications.
+      from: wallet, // must match user's active address.
+      data: iListableTokenContract.methods
+        .acceptTokenExchange(listing.listingAddr)
         .encodeABI(),
     };
     const trxHash = await window.ethereum.request({

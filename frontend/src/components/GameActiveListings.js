@@ -35,6 +35,8 @@ export default function GameActiveListings({
   gytAddr,
   gntAddr,
   hmtknAddr,
+  setIsCreate,
+  setListingSelected,
 }) {
   // useEffect(() => {
   //   getGameTrxs(gameAddr, setGameTrxs);
@@ -43,6 +45,9 @@ export default function GameActiveListings({
   const [bgColor, setBgColor] = useState("");
   const [closedListings, setClosedListings] = useState([]);
   const gameContract = new web3.eth.Contract(gameContractABI, game.addr);
+  const [delListing, setDelListing] = useState(null);
+
+  const { colorMode } = useColorMode();
 
   const addNewListingListener = () => {
     console.log("game new listing listener added");
@@ -63,7 +68,6 @@ export default function GameActiveListings({
           token2: "0x1AB8b37A77DC9563190f1058AD72f00aa2698d96"
           token2Amt: "150"
         */
-        console.log("details from game token listing listener", details);
         if (!details.fulfilled) {
           setOpenListings((prev) => [...prev, details]);
         } else {
@@ -77,8 +81,41 @@ export default function GameActiveListings({
     });
   };
 
+  const addListingFulfilledListener = async () => {
+    if (!game) {
+      return;
+    }
+    console.log("listing fulfilled listener added");
+    const gameContract = await new web3.eth.Contract(
+      gameContractABI,
+      game.addr
+    );
+    gameContract.events.ListingFulfilled({}, async (error, data) => {
+      if (error) {
+        console.log("listener error:", error);
+      } else {
+        const details = data.returnValues.listingInfo;
+        // let it shine red for 1.5s
+        setDelListing(details);
+        // trigger rerender
+        setOpenListings((prev) =>
+          prev.map((ol) => (ol.listingId === details.listingId ? details : ol))
+        );
+        await sleep(1500);
+
+        setOpenListings((prev) =>
+          prev.filter((ol) => ol.listingId !== details.listingId)
+        );
+        setClosedListings((prev) => [...prev, details]);
+        setDelListing(null);
+      }
+    });
+  };
+
   useEffect(() => {
     addNewListingListener();
+    addListingFulfilledListener();
+
     async function getAllListings() {
       const listings = await gameContract.methods.getAllListings().call();
       console.log("listings loaded in", listings);
@@ -87,8 +124,6 @@ export default function GameActiveListings({
     }
     getAllListings();
   }, []);
-
-  const { colorMode } = useColorMode();
 
   const parseAddr = (addr) => {
     return addr === gntAddr
@@ -122,6 +157,7 @@ export default function GameActiveListings({
           variant="outline"
           onClick={() => {
             setIsDialog(false);
+            setIsCreate(true);
             onOpen();
           }}
         >
@@ -146,7 +182,18 @@ export default function GameActiveListings({
                 .slice()
                 .reverse()
                 .map((ol, i) => (
-                  <Tr key={ol.listingId} bgColor={i === 0 ? bgColor : ""}>
+                  <Tr
+                    key={`${ol.listingId}|${ol.player2}|${ol.fulfilled}`}
+                    bgColor={
+                      delListing && delListing.listingId === ol.listingId
+                        ? colorMode === "light"
+                          ? "#FED7D7"
+                          : "#822727"
+                        : i === 0
+                        ? bgColor
+                        : ""
+                    }
+                  >
                     <Td fontWeight="bold">{parseAddr(ol.token1)}</Td>
                     <Td>{ol.token1Amt}</Td>
                     <Td fontWeight="bold">{parseAddr(ol.token2)}</Td>
@@ -156,6 +203,12 @@ export default function GameActiveListings({
                         size="sm"
                         colorScheme="telegram"
                         variant="outline"
+                        onClick={() => {
+                          setIsCreate(false);
+                          setIsDialog(false);
+                          setListingSelected(ol);
+                          onOpen();
+                        }}
                       >
                         Details
                       </Button>

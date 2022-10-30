@@ -10,23 +10,20 @@ import Game from "./components/Game";
 
 function App() {
   const [walletAddress, setWallet] = useState("");
-  const { colorMode, toggleColorMode } = useColorMode();
+  const { toggleColorMode } = useColorMode();
 
   return (
     <Box>
       <CommonTop
         wallet={walletAddress}
         setWallet={setWallet}
-        colorMode={colorMode}
         toggleColorMode={toggleColorMode}
       />
       <Routes>
         <Route
           exact
           path="/"
-          element={
-            <GamesGallery walletAddress={walletAddress} colorMode={colorMode} />
-          }
+          element={<GamesGallery walletAddress={walletAddress} />}
         />
         <Route
           exact

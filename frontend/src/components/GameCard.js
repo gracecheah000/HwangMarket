@@ -22,10 +22,10 @@ const GameCard = ({ game }) => {
   totalAmount: "0"
   */
 
+  const { colorMode } = useColorMode();
+
   const [percentage, setPercentage] = useState(0);
   const [diffText, setDiffText] = useState("");
-
-  const { colorMode } = useColorMode();
 
   useEffect(() => {
     const intervalId = setInterval(() => {

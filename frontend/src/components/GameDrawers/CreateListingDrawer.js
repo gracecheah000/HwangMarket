@@ -3,16 +3,7 @@ import {
   Box,
   Heading,
   Text,
-  useColorMode,
   Link,
-  Tooltip,
-  Badge,
-  Divider,
-  StatGroup,
-  Stat,
-  StatLabel,
-  StatNumber,
-  StatHelpText,
   Select,
   FormLabel,
   NumberInput,
@@ -22,22 +13,14 @@ import {
   NumberDecrementStepper,
   FormControl,
   Button,
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogOverlay,
-  useDisclosure,
-  StatArrow,
-  Spinner,
-  Drawer,
   DrawerBody,
   DrawerFooter,
   DrawerHeader,
-  DrawerOverlay,
   DrawerContent,
   DrawerCloseButton,
   Input,
-  useToast,
   Code,
+  useColorMode,
 } from "@chakra-ui/react";
 import { listTokensUp } from "../../util/interact";
 import { Link as routerLink } from "react-router-dom";
@@ -62,6 +45,8 @@ export default function CreateListingDrawer({
   const [customExpectedTokenAddr, setCustomExpectedTokenAddr] = useState("");
   const [expectedTokenAmt, setExpectedTokenAmt] = useState("");
 
+  const { colorMode } = useColorMode();
+
   const pressCreateListing = async () => {
     const { trxHash, err } = await listTokensUp(
       wallet,
@@ -72,7 +57,7 @@ export default function CreateListingDrawer({
     );
     if (err) {
       toast({
-        title: "Something went wrong!",
+        title: "Transaction failed!",
         description: err,
         status: "error",
         duration: 5000,
@@ -81,9 +66,9 @@ export default function CreateListingDrawer({
     } else {
       toast({
         title: "Creating listing...",
-        description: `Your transaction hash is: ${trxHash}`,
+        description: `Your transaction hash is: ${trxHash}. This message will be removed in 20 seconds and lost permanently, save the transaction hash if you wish.`,
         status: "info",
-        duration: 5000,
+        duration: 20000,
         isClosable: true,
       });
     }
@@ -98,7 +83,9 @@ export default function CreateListingDrawer({
   return (
     <DrawerContent>
       <DrawerCloseButton />
-      <DrawerHeader>Create a new listing 🚀</DrawerHeader>
+      <DrawerHeader mt="2" fontSize="2xl" mb="4">
+        Create a new listing 🚀
+      </DrawerHeader>
 
       <DrawerBody display="flex" flexDir="column" rowGap="8">
         <FormControl isRequired>
@@ -191,7 +178,11 @@ export default function CreateListingDrawer({
                 <Code fontSize="sm" children="ERC20" colorScheme="yellow" />{" "}
                 compliant, just not via the UI we have built out. We answer this
                 in more detail under our{" "}
-                <Link color="teal.500" as={routerLink} to="/faq">
+                <Link
+                  color={colorMode === "light" ? "teal.700" : "teal.300"}
+                  as={routerLink}
+                  to="/faq"
+                >
                   FAQ
                 </Link>
                 .
@@ -215,10 +206,10 @@ export default function CreateListingDrawer({
           </NumberInput>
         </FormControl>
 
-        <Box ml="auto" my="6">
+        <Box ml="auto" my="6" mx="auto">
           <Button
             variant="outline"
-            mr={3}
+            mr="16"
             onClick={onClose}
             colorScheme="telegram"
           >

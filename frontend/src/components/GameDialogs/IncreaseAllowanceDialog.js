@@ -15,6 +15,7 @@ import {
   AccordionPanel,
   AccordionIcon,
   Link,
+  useColorMode,
 } from "@chakra-ui/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faX } from "@fortawesome/free-solid-svg-icons";
@@ -34,6 +35,8 @@ export default function IncreaseAllowanceDialog({
 }) {
   const [mainTknBalance, setMainTknBalance] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+
+  const { colorMode } = useColorMode();
 
   useEffect(() => {
     const getBalance = async () => {
@@ -124,7 +127,7 @@ export default function IncreaseAllowanceDialog({
                       href={
                         "https://docs.openzeppelin.com/contracts/2.x/api/token/erc20#IERC20"
                       }
-                      color="teal.500"
+                      color={colorMode === "light" ? "teal.700" : "teal.300"}
                     >
                       IERC20 token standard
                     </Link>
@@ -154,7 +157,7 @@ export default function IncreaseAllowanceDialog({
                     contracts are available to be reviewed in full{" "}
                     <Link
                       isExternal
-                      color="teal.500"
+                      color={colorMode === "light" ? "teal.700" : "teal.300"}
                       href={`https://goerli.etherscan.io/address/${hwangMarketAddr}`}
                     >
                       here
