@@ -12,7 +12,6 @@ import GetHMTKN from "./components/hmtknModals/GetHMTKN";
 function App() {
   const [walletAddress, setWallet] = useState("");
   const { toggleColorMode } = useColorMode();
-  const { isOpen, onOpen, onClose } = useDisclosure();
 
   return (
     <Box>
@@ -20,7 +19,6 @@ function App() {
         wallet={walletAddress}
         setWallet={setWallet}
         toggleColorMode={toggleColorMode}
-        onOpen={onOpen}
       />
       <Routes>
         <Route
@@ -35,8 +33,6 @@ function App() {
         />
         <Route path="*" element={<ErrorPage />} />
       </Routes>
-
-      <GetHMTKN wallet={walletAddress} isOpen={isOpen} onClose={onClose} />
     </Box>
   );
 }

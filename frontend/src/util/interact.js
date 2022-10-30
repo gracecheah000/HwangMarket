@@ -1,5 +1,9 @@
 import { BigNumber } from "ethers";
-import { eth2MainConversionRate, game2MainConversionRate } from "./helper";
+import {
+  eth2MainConversionRate,
+  game2MainConversionRate,
+  identfyToken,
+} from "./helper";
 
 /* Abstractions to deal with all functions interacting with the blockchain */
 require("dotenv").config();
@@ -373,7 +377,12 @@ export const getNetworkTokenBalance = async (wallet) => {
   if (!wallet) {
     return 0;
   }
-  return parseInt(await web3.eth.getBalance(wallet));
+  return await web3.eth.getBalance(wallet);
+};
+
+export const getNetworkTokenInfo = async () => {
+  const chainId = await web3.eth.getChainId();
+  return identfyToken(chainId);
 };
 
 export const getNetworkID = async () => {
@@ -401,6 +410,35 @@ export const mintMainToken = async (wallet, mintAmt) => {
       data: mainTokenContract.methods
         .mint(wallet, BigNumber.from(mintAmt).toString())
         .encodeABI(),
+    };
+    const trxHash = await window.ethereum.request({
+      method: "eth_sendTransaction",
+      params: [transactionParameters],
+    });
+
+    return { trxHash: trxHash, err: "" };
+  } catch (error) {
+    console.log("error thrown:", error.message);
+    return { trxHash: "", err: error.message };
+  }
+};
+
+export const cashoutMainToken = async (wallet, cashoutAmt) => {
+  if (!wallet || !cashoutAmt) {
+    return { trxHash: "", err: "Invalid fields to cashout HMTKN." };
+  }
+
+  //sign the transaction
+  try {
+    const mainTokenAddr = await hwangMarket.methods.mainTokenAddress().call();
+    const mainTokenContract = new web3.eth.Contract(
+      mainTokenABI,
+      mainTokenAddr
+    );
+    const transactionParameters = {
+      to: mainTokenAddr, // Required except during contract publications.
+      from: wallet, // must match user's active address.
+      data: mainTokenContract.methods.cashout(cashoutAmt).encodeABI(),
     };
     const trxHash = await window.ethereum.request({
       method: "eth_sendTransaction",

@@ -86,6 +86,7 @@ contract MainToken is IERC20, IListableToken {
     uint ethAmt = tokenAmt * (1 / eth2TknConversionRate);
     payable(msg.sender).transfer(ethAmt);
     balanceOf[msg.sender] -= tokenAmt;
+    emit Transfer(msg.sender, address(this), tokenAmt);
     totalSupply -= tokenAmt;
     totalEthSupply -= ethAmt;
   }

@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Box, Heading, Spinner, Text, useColorMode } from "@chakra-ui/react";
+import {
+  Box,
+  Heading,
+  Spinner,
+  Text,
+  useColorMode,
+  useToast,
+} from "@chakra-ui/react";
 import { hwangMarket, getAllGames } from "../util/interact";
 
 import CreateGame from "./CreateGame";
@@ -13,6 +20,7 @@ const GamesGallery = ({ walletAddress }) => {
   const [closedGames, setClosedGames] = useState([]);
 
   const { colorMode } = useColorMode();
+  const toast = useToast();
 
   function addHwangMarketListener() {
     console.log("hwang market game created listener added");
@@ -22,10 +30,13 @@ const GamesGallery = ({ walletAddress }) => {
         console.log(error.message);
         setLoading(false);
       } else if (data && data.returnValues && data.returnValues.gameMetadata) {
-        console.log(
-          "received game created event",
-          data.returnValues.gameMetadata
-        );
+        toast({
+          title: "New game created!",
+          description: `${data.returnValues.gameMetadata.title}`,
+          status: "success",
+          duration: 8000,
+          isClosable: true,
+        });
         setOngoingGames((prev) => [...prev, data.returnValues.gameMetadata]);
         // setStatus("🎉 Your game was created!");
       }

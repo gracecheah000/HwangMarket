@@ -30,21 +30,27 @@ import {
   StatArrow,
 } from "@chakra-ui/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faHeart } from "@fortawesome/free-solid-svg-icons";
 import {
+  faHeart,
+  faMoneyBillTransfer,
+} from "@fortawesome/free-solid-svg-icons";
+import {
+  cashoutMainToken,
   getMainTokenAddr,
+  getMainTokenBalance,
   getNetworkID,
-  getNetworkTokenBalance,
   getNetworkTokenInfo,
+  mainTokenABI,
   mintMainToken,
+  web3,
 } from "../../util/interact";
 import { eth2MainConversionRate, shortenAddr } from "../../util/helper";
 import { BigNumber } from "ethers";
 
-export default function GetHMTKN({ wallet, isOpen, onClose }) {
-  const [networkTknBalance, setNetworkTknBalance] = useState(0);
+export default function CashoutHMTKN({ wallet, isOpen, onClose }) {
+  const [mainTknBalance, setMainTknBalance] = useState(0);
   const [networkId, setNetworkId] = useState("");
-  const [mintAmt, setMintAmt] = useState("");
+  const [cashoutAmt, setCashoutAmt] = useState("");
   const [mainTokenAddr, setMainTokenAddr] = useState("");
   const [networkInfo, setNetworkInfo] = useState(null);
 
@@ -52,7 +58,7 @@ export default function GetHMTKN({ wallet, isOpen, onClose }) {
 
   useEffect(() => {
     const update = async () => {
-      setNetworkTknBalance(await getNetworkTokenBalance(wallet));
+      setMainTknBalance(await getMainTokenBalance(wallet));
       setNetworkId(await getNetworkID());
       setMainTokenAddr(await getMainTokenAddr());
       setNetworkInfo(await getNetworkTokenInfo());
@@ -60,8 +66,8 @@ export default function GetHMTKN({ wallet, isOpen, onClose }) {
     update();
   }, [wallet]);
 
-  const mintHMTKN = async () => {
-    const { trxHash, err } = await mintMainToken(wallet, mintAmt);
+  const cashoutHMTKN = async () => {
+    const { trxHash, err } = await cashoutMainToken(wallet, cashoutAmt);
     if (err) {
       toast({
         title: "Transaction failed!",
@@ -79,7 +85,7 @@ export default function GetHMTKN({ wallet, isOpen, onClose }) {
         isClosable: true,
       });
     }
-    setMintAmt("");
+    setCashoutAmt("");
     onClose();
   };
 
@@ -89,11 +95,11 @@ export default function GetHMTKN({ wallet, isOpen, onClose }) {
       <ModalContent borderRadius="17px">
         <ModalHeader>
           <FontAwesomeIcon
-            color="#ECC94B"
-            icon={faHeart}
+            color="#48BB78"
+            icon={faMoneyBillTransfer}
             style={{ marginRight: "10px" }}
           />
-          Get HMTKN
+          Cash out HMTKN
         </ModalHeader>
         <ModalCloseButton />
         <ModalBody>
@@ -105,7 +111,7 @@ export default function GetHMTKN({ wallet, isOpen, onClose }) {
               </Text>
             </Box>
             <Heading size="sm" my="5">
-              Network Token balance: {networkTknBalance}
+              HMTKN balance: {mainTknBalance}
             </Heading>
           </Box>
           <Heading size="sm">HMTKN address: </Heading>{" "}
@@ -114,12 +120,12 @@ export default function GetHMTKN({ wallet, isOpen, onClose }) {
           </Text>
           <Divider my="5" />
           <FormControl>
-            <FormLabel>Amount of HMTKN to mint</FormLabel>
+            <FormLabel>Amount of HMTKN to cash out</FormLabel>
             <NumberInput
-              value={mintAmt}
+              value={cashoutAmt}
               min={1}
-              max={networkTknBalance}
-              onChange={(v) => setMintAmt(v)}
+              max={getMainTokenBalance}
+              onChange={(v) => setCashoutAmt(v)}
             >
               <NumberInputField />
               <NumberInputStepper>
@@ -128,11 +134,11 @@ export default function GetHMTKN({ wallet, isOpen, onClose }) {
               </NumberInputStepper>
             </NumberInput>
             <FormHelperText>
-              Mints HMTKN from an uncapped supply, in exchange for the network's
-              main token. Your maximum mintable amount: {networkTknBalance}
+              Withdraws HMTKN from your account and deposits the equivalent
+              amount into your wallet in the form of the network's native token.
             </FormHelperText>
           </FormControl>
-          {mintAmt !== "" && (
+          {cashoutAmt !== "" && (
             <>
               <Box mt="8" mb="4">
                 <Heading size="sm">Transaction Summary</Heading>
@@ -160,11 +166,11 @@ export default function GetHMTKN({ wallet, isOpen, onClose }) {
                       : "Network native currency"}
                   </StatLabel>
                   <StatNumber>
-                    {mintAmt * (1 / eth2MainConversionRate)}
+                    {cashoutAmt * (1 / eth2MainConversionRate)}
                   </StatNumber>
                   <StatHelpText>
-                    <StatArrow type="decrease" />
-                    Lose {mintAmt * (1 / eth2MainConversionRate)}{" "}
+                    <StatArrow type="increase" />
+                    Gain {cashoutAmt * (1 / eth2MainConversionRate)}{" "}
                     {networkInfo && networkInfo.nativeCurrency
                       ? networkInfo.nativeCurrency.name
                       : "Network native currency"}
@@ -179,10 +185,10 @@ export default function GetHMTKN({ wallet, isOpen, onClose }) {
                 </Stat>
                 <Stat>
                   <StatLabel>HMTKN</StatLabel>
-                  <StatNumber>{mintAmt}</StatNumber>
+                  <StatNumber>{cashoutAmt}</StatNumber>
                   <StatHelpText>
-                    <StatArrow type="increase" />
-                    Gain {mintAmt} HMTKN
+                    <StatArrow type="decrease" />
+                    Lose {cashoutAmt} HMTKN
                   </StatHelpText>
                   <StatHelpText>
                     <Text fontSize="xs">{mainTokenAddr}</Text>
@@ -201,23 +207,23 @@ export default function GetHMTKN({ wallet, isOpen, onClose }) {
             variant="outline"
             colorScheme="whatsapp"
             disabled={
-              mintAmt !== "" &&
-              BigNumber.from(mintAmt).gt(BigNumber.from(networkTknBalance))
+              cashoutAmt !== "" &&
+              BigNumber.from(cashoutAmt).gt(BigNumber.from(mainTknBalance))
             }
-            onClick={mintHMTKN}
+            onClick={cashoutHMTKN}
           >
-            Mint
+            Cash out
           </Button>
         </ModalFooter>
 
         <Box display="flex" alignItems="center" justifyContent="center">
           <FontAwesomeIcon
-            color="#ECC94B"
-            icon={faHeart}
+            color="#48BB78"
+            icon={faMoneyBillTransfer}
             style={{ marginRight: "10px" }}
           />
           <Text as="cite" my="5">
-            If it works, do not touch it!
+            Cash me outside howbow dah
           </Text>
         </Box>
       </ModalContent>

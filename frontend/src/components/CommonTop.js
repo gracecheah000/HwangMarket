@@ -10,6 +10,7 @@ import {
   StatHelpText,
   StatArrow,
   StatGroup,
+  useDisclosure,
 } from "@chakra-ui/react";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -25,22 +26,29 @@ import {
   getMainTokenBalance,
 } from "../util/interact";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSun, faMoon, faHeart } from "@fortawesome/free-solid-svg-icons";
+import {
+  faSun,
+  faMoon,
+  faHeart,
+  faEthernet,
+  faCashRegister,
+  faMoneyBill,
+  faMoneyBillTransfer,
+} from "@fortawesome/free-solid-svg-icons";
 import { shortenAddr } from "../util/helper";
 import { BigNumber } from "ethers";
+import GetHMTKN from "./hmtknModals/GetHMTKN";
+import CashoutHMTKN from "./hmtknModals/CashoutHMTKN";
 
-const CommonTop = ({
-  wallet,
-  setWallet,
-  colorMode,
-  toggleColorMode,
-  onOpen,
-}) => {
+const CommonTop = ({ wallet, setWallet, colorMode, toggleColorMode }) => {
   const [status, setStatus] = useState("");
   const [hmtknAddr, setHmtknAddr] = useState("");
   const [hmtknBalance, setHmtknBalance] = useState("-");
+  const [isGetHMTKN, setIsGetHMTKN] = useState(true);
 
   const toast = useToast();
+
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const addHMTKNTransferListener = async () => {
     console.log("HMTKN transfer listener added");
@@ -149,7 +157,7 @@ const CommonTop = ({
 
   return (
     <Box display="flex" p="5" alignItems="center" px="5%" flexWrap="wrap">
-      <Box _hover={{ cursor: "pointer" }} onClick={() => navigate("/")} w="30%">
+      <Box _hover={{ cursor: "pointer" }} onClick={() => navigate("/")}>
         <Heading color="blue.600">HWANGMARKET</Heading>
         <Text>The only place to lose your money, fast.</Text>
       </Box>
@@ -178,7 +186,7 @@ const CommonTop = ({
           Portfolio
         </Button>
       </Box>
-      <Box w="30%">
+      <Box>
         <Box
           display="flex"
           flexDir="column"
@@ -233,7 +241,7 @@ const CommonTop = ({
             alignItems="center"
             flexWrap="wrap"
             rowGap="5"
-            columnGap="16"
+            columnGap="10"
           >
             <Stat>
               <StatLabel>HMTKN Balance</StatLabel>
@@ -244,13 +252,33 @@ const CommonTop = ({
               variant="outline"
               colorScheme="yellow"
               leftIcon={<FontAwesomeIcon icon={faHeart} />}
-              onClick={onOpen}
+              onClick={() => {
+                onOpen();
+                setIsGetHMTKN(true);
+              }}
             >
               Get HMTKN
+            </Button>
+            <Button
+              variant="outline"
+              colorScheme="whatsapp"
+              leftIcon={<FontAwesomeIcon icon={faMoneyBillTransfer} />}
+              onClick={() => {
+                onOpen();
+                setIsGetHMTKN(false);
+              }}
+            >
+              Cash out HMTKN
             </Button>
           </Box>
         </Box>
       </Box>
+
+      {isGetHMTKN ? (
+        <GetHMTKN wallet={wallet} isOpen={isOpen} onClose={onClose} />
+      ) : (
+        <CashoutHMTKN wallet={wallet} isOpen={isOpen} onClose={onClose} />
+      )}
     </Box>
   );
 };
