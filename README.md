@@ -191,16 +191,19 @@ Obtain the main token contract.
 truffle(development)> let t = await MainToken.at((await m.mainTokenAddress()));
 ```
 
-Mint 1000 HMTKN for John and Sandy, the exchange rate is 1 HKMTN = 1 wei, vice versa.
+Mint 1000 HMTKN for John and Sandy, the demo exchange rate is 1 HKMTN = 1 wei, vice versa.
 
 ```
-truffle(development)> t.mint(John, 1000, 1000, {from: John, value: 1000});
-truffle(development)> t.mint(Sandy, 1000, 1000, {from: Sandy, value: 1000});
+truffle(development)> t.mint(John, 1000, {from: John, value: 1000});
+truffle(development)> t.mint(Sandy, 1000, {from: Sandy, value: 1000});
 
 truffle(development)> (await t.balanceOf(John)).toString();
 '1000'
 truffle(development)> (await t.balanceOf(Sandy)).toString();
 '1000'
+
+// Also note that John is able to mint for Sandy, the below is acceptable.
+// truffle(development)> t.mint(Sandy, 1000, {from: John, value: 1000});
 ```
 
 4. Referencing the game created in step 2, John purchases 500 token of GameYesToken, Sandy purchases 500 token of GameNoToken.

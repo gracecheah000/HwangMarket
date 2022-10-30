@@ -6,8 +6,11 @@ import "./IListingOwner.sol";
 import "./GameContract.sol";
 import "./ListingContract.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract GameERC20Token is IERC20, IListableToken {
+  using SafeMath for uint256;
+  
   uint public supplyLimit;
   uint public totalSupply;
   mapping(address => uint) public balanceOf;

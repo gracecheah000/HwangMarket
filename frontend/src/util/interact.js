@@ -1,4 +1,5 @@
-import { game2MainConversionRate } from "./helper";
+import { BigNumber } from "ethers";
+import { eth2MainConversionRate, game2MainConversionRate } from "./helper";
 
 /* Abstractions to deal with all functions interacting with the blockchain */
 require("dotenv").config();
@@ -17,7 +18,7 @@ const hwangMarketABI = require("../contracts/HwangMarket-abi.json");
 export const hwangMarketAddr = process.env.REACT_APP_HwangMarket_Address;
 
 export const gameContractABI = require("../contracts/GameContract-abi.json");
-const mainTokenABI = require("../contracts/MainToken-abi.json");
+export const mainTokenABI = require("../contracts/MainToken-abi.json");
 const gameTokenABI = require("../contracts/GameERC20Token-abi.json");
 const iListableTokenABI = require("../contracts/IListableToken-abi.json");
 const erc20TokenABI = require("../contracts/IERC20-abi.json");
@@ -384,6 +385,51 @@ export const acceptTokenExchange = async (wallet, listing) => {
       from: wallet, // must match user's active address.
       data: iListableTokenContract.methods
         .acceptTokenExchange(listing.listingAddr)
+        .encodeABI(),
+    };
+    const trxHash = await window.ethereum.request({
+      method: "eth_sendTransaction",
+      params: [transactionParameters],
+    });
+
+    return { trxHash: trxHash, err: "" };
+  } catch (error) {
+    console.log("error thrown:", error.message);
+    return { trxHash: "", err: error.message };
+  }
+};
+
+export const getNetworkTokenBalance = async (wallet) => {
+  if (!wallet) {
+    return 0;
+  }
+  return parseInt(await web3.eth.getBalance(wallet));
+};
+
+export const getNetworkID = async () => {
+  return await web3.eth.net.getNetworkType();
+};
+
+export const mintMainToken = async (wallet, mintAmt) => {
+  if (!wallet || !mintAmt) {
+    return { trxHash: "", err: "Invalid fields to mint HMTKN." };
+  }
+
+  //sign the transaction
+  try {
+    const mainTokenAddr = await hwangMarket.methods.mainTokenAddress().call();
+    const mainTokenContract = new web3.eth.Contract(
+      mainTokenABI,
+      mainTokenAddr
+    );
+    const transactionParameters = {
+      to: mainTokenAddr, // Required except during contract publications.
+      from: wallet, // must match user's active address.
+      value: BigNumber.from(mintAmt)
+        .mul(1 / eth2MainConversionRate)
+        .toString(),
+      data: mainTokenContract.methods
+        .mint(wallet, BigNumber.from(mintAmt).toString())
         .encodeABI(),
     };
     const trxHash = await window.ethereum.request({

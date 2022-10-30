@@ -166,11 +166,16 @@ contract HwangMarket is IListingOwner {
     require(gameAddr2Id[msg.sender] != 0);
     address gameAddr = msg.sender;
     uint256 gameId = gameAddr2Id[gameAddr];
-    gameContractRegistry[gameId].totalAmount += amount;
+    Models.GameMetadata storage game = gameContractRegistry[gameId];
+    Models.GameMetadata storage ongoingGameRef = ongoingGames[ongoingGamesId2Idx[gameId]];
+    game.totalAmount += amount;
+    ongoingGameRef.totalAmount += amount;
     if (betSide == 2) {
-      gameContractRegistry[gameId].betNoAmount += amount;
+      game.betNoAmount += amount;
+      ongoingGameRef.betNoAmount += amount;
     } else {
-      gameContractRegistry[gameId].betYesAmount += amount;
+      game.betYesAmount += amount;
+      ongoingGameRef.betYesAmount += amount;
     }
 
     // record this activity as well

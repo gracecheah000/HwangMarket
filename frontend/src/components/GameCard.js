@@ -83,7 +83,7 @@ const GameCard = ({ game }) => {
         w="100%"
         border={colorMode === "light" ? "1px solid black" : "1px solid gray"}
         borderRadius="15px"
-        bgColor={colorMode === "light" ? "telegram.100" : "facebook.700"}
+        bgColor={colorMode === "light" ? "gray.100" : "gray.900"}
         _hover={{
           // background: colorMode === "light" ? "facebook.200" : "facebook.800",
           // cursor: "pointer",
@@ -127,7 +127,7 @@ const GameCard = ({ game }) => {
 
         <Box display="flex">
           <Box px="5" py="2" textAlign="center" mr="1">
-            <Text fontSize="md">Total bets</Text>
+            <Text fontSize="md">Total Amount</Text>
             <Text fontSize="lg" fontWeight="bold">
               {game.totalAmount} HMTKN
             </Text>
@@ -145,11 +145,13 @@ const GameCard = ({ game }) => {
               </Heading>
               <Box w="100%" maxW="100%">
                 <ProgressBar
-                  completed={Math.floor(game.betYesAmount / totalSupply) * 100}
+                  completed={Math.floor(
+                    (parseInt(game.betYesAmount) / totalSupply) * 100
+                  )}
                   maxCompleted={100}
-                  bgColor={colorMode === "light" ? "#63B3ED" : "#2B6CB0"}
+                  bgColor="#3CCF4E"
                   baseBgColor={colorMode === "light" ? "#4A5568" : "#EBF8FF"}
-                  customLabel={`${game.betYesAmount} HMTKN`}
+                  customLabel={`${game.betYesAmount}`}
                   width="100%"
                   labelSize="14px"
                   height="30px"
@@ -168,11 +170,13 @@ const GameCard = ({ game }) => {
               </Heading>
               <Box w="100%" maxW="100%">
                 <ProgressBar
-                  completed={Math.floor(game.betNoAmount / totalSupply) * 100}
+                  completed={Math.floor(
+                    (parseInt(game.betNoAmount) / totalSupply) * 100
+                  )}
                   maxCompleted={100}
-                  bgColor={colorMode === "light" ? "#63B3ED" : "#2B6CB0"}
+                  bgColor="#FF1E1E"
                   baseBgColor={colorMode === "light" ? "#4A5568" : "#EBF8FF"}
-                  customLabel={`${game.betNoAmount} HMTKN`}
+                  customLabel={`${game.betNoAmount}`}
                   width="100%"
                   labelSize="14px"
                   height="30px"

@@ -9,8 +9,10 @@ import "./IterableMapping.sol";
 import "./GameERC20Token.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract GameContract is IListingOwner {
+  using SafeMath for uint256;
   using IterableMapping for IterableMapping.ListingsMap;
 
   enum GameStatus {

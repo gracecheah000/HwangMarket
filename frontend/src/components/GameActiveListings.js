@@ -166,7 +166,10 @@ export default function GameActiveListings({
       </Box>
       <TableContainer overflowY="scroll" maxH="60vh">
         <Table variant="simple" size="sm">
-          <TableCaption>Open listings logged in game contract</TableCaption>
+          <TableCaption>
+            For convenience, GYT and GNT tokens refer to this game's tokens.
+            Other game's tokens are referred to by their address.
+          </TableCaption>
           <Thead>
             <Tr>
               <Th>Offered Token</Th>

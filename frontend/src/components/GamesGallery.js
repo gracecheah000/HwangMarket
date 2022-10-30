@@ -5,12 +5,14 @@ import { hwangMarket, getAllGames } from "../util/interact";
 import CreateGame from "./CreateGame";
 import GameCard from "./GameCard";
 
-const GamesGallery = ({ walletAddress, colorMode }) => {
+const GamesGallery = ({ walletAddress }) => {
   const [status, setStatus] = useState("");
   const [getGameId, setGetGameId] = useState(0);
   const [isLoading, setLoading] = useState(true);
   const [ongoingGames, setOngoingGames] = useState(null);
   const [closedGames, setClosedGames] = useState([]);
+
+  const { colorMode } = useColorMode();
 
   function addHwangMarketListener() {
     console.log("hwang market game created listener added");
@@ -48,9 +50,9 @@ const GamesGallery = ({ walletAddress, colorMode }) => {
   }, []);
 
   return (
-    <Box px="28" py="16">
+    <Box px="28" py="7">
       <Heading size="2xl" textAlign="center">
-        Games Gallery
+        Markets Gallery
       </Heading>
       <Box
         display="flex"

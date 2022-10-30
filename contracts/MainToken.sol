@@ -6,8 +6,10 @@ import "./IListableToken.sol";
 import "./IListingOwner.sol";
 import "./ListingContract.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract MainToken is IERC20, IListableToken {
+  using SafeMath for uint256;
   /*
     IERC20 implementation
   */
@@ -65,15 +67,15 @@ contract MainToken is IERC20, IListableToken {
 
   // a player has to provide some eth in exchange for hwang market token,
   // 1 wei = 1 HMTKN
-  function mint(address _player, uint amount, uint256 _ethAmount) external payable {
-    require(msg.value <= _player.balance, "You do not have enough balance");
-    require(msg.value == _ethAmount, "eth amount specified not equal to msg value");
-    require(amount == _ethAmount * eth2TknConversionRate, "eth amount offered does not match amount of HMTKN token requested"); 
+  function mint(address _player, uint256 amount) external payable {
+    uint256 _ethAmt = amount * (1 / eth2TknConversionRate);
+    require(msg.value >= _ethAmt, "Insufficient msg value to cover eth amount");
+    require(_ethAmt <= msg.sender.balance, "You do not have enough balance");
 
     balanceOf[_player] += amount;
     totalSupply += amount;
-    totalEthSupply += amount;
-    emit Transfer(address(0), _player, amount);
+    totalEthSupply += msg.value;
+    emit Transfer(address(this), _player, amount);
   }
 
   // player can exchange in HwangMarket tokens for eth
