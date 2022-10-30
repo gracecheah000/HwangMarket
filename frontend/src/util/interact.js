@@ -168,36 +168,6 @@ export const getAllGames = async () => {
   return games;
 };
 
-export const joinGame = async (gameAddr, playerAddr, ethAmt, betSide) => {
-  if (!window.ethereum || !playerAddr || !gameAddr) {
-    return {
-      status:
-        "💡 Connect your Metamask wallet to update the message on the blockchain.",
-    };
-  }
-
-  const gameContract = new web3.eth.Contract(gameContractABI, gameAddr);
-
-  const transactionParameters = {
-    to: gameAddr, // Required except during contract publications.
-    from: playerAddr, // must match user's active address.
-    value: ethAmt.toString(),
-    data: gameContract.methods
-      .addPlayer(playerAddr, ethAmt, betSide)
-      .encodeABI(),
-  };
-
-  //sign the transaction
-  try {
-    await window.ethereum.request({
-      method: "eth_sendTransaction",
-      params: [transactionParameters],
-    });
-  } catch (error) {
-    console.log("error thrown:", error);
-  }
-};
-
 export const getMainTokenBalance = async (ownerAddr) => {
   if (!window.ethereum || !ownerAddr) {
     return 0;
@@ -427,7 +397,7 @@ export const mintMainToken = async (wallet, mintAmt) => {
       from: wallet, // must match user's active address.
       value: BigNumber.from(mintAmt)
         .mul(1 / eth2MainConversionRate)
-        .toString(),
+        .toHexString(),
       data: mainTokenContract.methods
         .mint(wallet, BigNumber.from(mintAmt).toString())
         .encodeABI(),
