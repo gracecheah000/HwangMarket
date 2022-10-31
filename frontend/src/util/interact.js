@@ -25,7 +25,7 @@ export const gameContractABI = require("../contracts/GameContract-abi.json");
 export const mainTokenABI = require("../contracts/MainToken-abi.json");
 const gameTokenABI = require("../contracts/GameERC20Token-abi.json");
 const iListableTokenABI = require("../contracts/IListableToken-abi.json");
-const erc20TokenABI = require("../contracts/IERC20-abi.json");
+export const erc20TokenABI = require("../contracts/IERC20-abi.json");
 
 export const hwangMarket = new web3.eth.Contract(
   hwangMarketABI,
@@ -72,10 +72,9 @@ export const createAGame = async (
   }
 };
 
-export const getGameById = async (id, setGame) => {
+export const getGameById = async (id) => {
   const game = await hwangMarket.methods.gameContractRegistry(id).call();
-  console.log("got game: ", game);
-  setGame(game);
+  return game;
 };
 
 export const getMainTokenAddr = async () => {
@@ -194,6 +193,41 @@ export const getMainToken2SenderApprovalAmt = async (ownerAddr, senderAddr) => {
     .call();
 };
 
+export const withdrawWinnings = async (ownerAddr, gameAddr, withdrawAmt) => {
+  if (!ownerAddr || !gameAddr || !withdrawAmt) {
+    return { trxHash: "", err: "Bad fields to withdraw" };
+  }
+  //sign the transaction
+  try {
+    const gameContract = new web3.eth.Contract(gameContractABI, gameAddr);
+
+    const transactionParameters = {
+      to: gameAddr, // Required except during contract publications.
+      from: ownerAddr, // must match user's active address.
+      data: gameContract.methods.withdrawWinnings(withdrawAmt).encodeABI(),
+    };
+    const trxHash = await window.ethereum.request({
+      method: "eth_sendTransaction",
+      params: [transactionParameters],
+    });
+
+    return { trxHash: trxHash, err: "" };
+  } catch (error) {
+    console.log("error thrown:", error.message);
+    return { trxHash: "", err: error.message };
+  }
+};
+
+export const getTokenAllowance = async (ownerAddr, senderAddr, tokenAddr) => {
+  if (!window.ethereum || !ownerAddr || !senderAddr || !tokenAddr) {
+    return 0;
+  }
+
+  const tokenContract = new web3.eth.Contract(erc20TokenABI, tokenAddr);
+
+  return await tokenContract.methods.allowance(ownerAddr, senderAddr).call();
+};
+
 export const getGameTokenAddrByGameAddr = async (gameAddr, side) => {
   if (!window.ethereum || !gameAddr || (side !== 1 && side !== 2)) {
     return "";
@@ -225,6 +259,36 @@ export const approveMainTokenSender = async (
     data: mainTokenContract.methods
       .approve(senderAddr, mainTokenAmt)
       .encodeABI(),
+  };
+
+  //sign the transaction
+  try {
+    const trxHash = await window.ethereum.request({
+      method: "eth_sendTransaction",
+      params: [transactionParameters],
+    });
+
+    return trxHash;
+  } catch (error) {
+    console.log("error thrown:", error.message);
+  }
+  return "";
+};
+
+export const approveTokenSender = async (
+  tokenAddr,
+  owner,
+  sender,
+  approvalAmt
+) => {
+  if (!window.ethereum || !tokenAddr || !owner || !sender || !approvalAmt) {
+    return "";
+  }
+  const tokenContract = new web3.eth.Contract(erc20TokenABI, tokenAddr);
+  const transactionParameters = {
+    to: tokenAddr, // Required except during contract publications.
+    from: owner, // must match user's active address.
+    data: tokenContract.methods.approve(sender, approvalAmt).encodeABI(),
   };
 
   //sign the transaction

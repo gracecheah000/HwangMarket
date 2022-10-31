@@ -31,7 +31,6 @@ export default function IncreaseAllowanceDialog({
   gameAddr,
   onClose,
   allowAmt,
-  setMain2TknAllowance,
 }) {
   const [mainTknBalance, setMainTknBalance] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -49,9 +48,6 @@ export default function IncreaseAllowanceDialog({
 
   const doApprove = async () => {
     await approveMainTokenSender(wallet, gameAddr, allowAmt);
-    setMain2TknAllowance(
-      await getMainToken2SenderApprovalAmt(wallet, gameAddr)
-    );
     onClose();
   };
 

@@ -30,7 +30,7 @@ contract HwangMarket is IListingOwner {
   // for all ongoing games
   uint256 private ongoingGamesCnt; // record end of ongoing games array
   Models.GameMetadata[] public ongoingGames;
-  mapping(uint256 => uint256) ongoingGamesId2Idx;
+  mapping(uint256 => int256) ongoingGamesId2Idx;
 
   // for all closed games
   Models.GameMetadata[] public closedGames;
@@ -105,7 +105,7 @@ contract HwangMarket is IListingOwner {
 
     gameAddr2Id[newGameAddress] = gameCount;
 
-    ongoingGamesId2Idx[gameCount] = ongoingGamesCnt;
+    ongoingGamesId2Idx[gameCount] = int256(ongoingGamesCnt);
     ongoingGames.push(gameContractRegistry[gameCount]);
 
     ongoingGamesCnt = SafeMath.add(ongoingGamesCnt, 1);
@@ -163,11 +163,11 @@ contract HwangMarket is IListingOwner {
   // callable only by the game itself
   // A player joined the game on a particular side
   function playerJoinedSide(address player, uint8 betSide, uint256 amount, uint256 timestamp) external {
-    require(gameAddr2Id[msg.sender] != 0);
+    require(gameAddr2Id[msg.sender] != 0 && ongoingGamesId2Idx[gameAddr2Id[msg.sender]] != -1);
     address gameAddr = msg.sender;
     uint256 gameId = gameAddr2Id[gameAddr];
     Models.GameMetadata storage game = gameContractRegistry[gameId];
-    Models.GameMetadata storage ongoingGameRef = ongoingGames[ongoingGamesId2Idx[gameId]];
+    Models.GameMetadata storage ongoingGameRef = ongoingGames[uint256(ongoingGamesId2Idx[gameId])];
     game.totalAmount += amount;
     ongoingGameRef.totalAmount += amount;
     if (betSide == 2) {
@@ -223,11 +223,15 @@ contract HwangMarket is IListingOwner {
     uint256 gameId = gameAddr2Id[gameAddr];
 
     // move game out of existing ongoing games
-    uint256 existingGameIdx = ongoingGamesId2Idx[gameId];
-    Models.GameMetadata memory finisedGame = ongoingGames[existingGameIdx];
-    Models.GameMetadata memory lastOngoingGame = ongoingGames[SafeMath.sub(ongoingGamesCnt, 1)];
-    ongoingGamesId2Idx[lastOngoingGame.id] = existingGameIdx;
-    delete ongoingGamesId2Idx[gameId];
+    int256 temp = ongoingGamesId2Idx[gameId];
+    if (temp == -1) { // already concluded
+      return;
+    }
+    uint256 existingGameIdx = uint256(temp);
+    Models.GameMetadata storage finisedGame = ongoingGames[existingGameIdx];
+    Models.GameMetadata storage lastOngoingGame = ongoingGames[SafeMath.sub(ongoingGamesCnt, 1)];
+    ongoingGamesId2Idx[lastOngoingGame.id] = int256(existingGameIdx);
+    ongoingGamesId2Idx[gameId] = -1;
     ongoingGames[existingGameIdx] = lastOngoingGame;
     ongoingGamesCnt = SafeMath.sub(ongoingGamesCnt, 1);
 
@@ -235,8 +239,9 @@ contract HwangMarket is IListingOwner {
     finisedGame.ongoing = false;
     finisedGame.gameOutcome = gameOutcome;
 
-    gameContractRegistry[finisedGame.id].ongoing = false;
-    gameContractRegistry[finisedGame.id].gameOutcome = gameOutcome;
+    Models.GameMetadata storage g = gameContractRegistry[finisedGame.id];
+    g.ongoing = false;
+    g.gameOutcome = gameOutcome;
 
     // add this game to array of closedGames
     closedGames.push(finisedGame);

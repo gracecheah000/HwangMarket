@@ -46,6 +46,9 @@ import {
   listTokensUp,
   gameContractABI,
   web3,
+  getTokenAllowance,
+  hwangMarketAddr,
+  erc20TokenABI,
 } from "../util/interact";
 import { PieChart } from "react-minimal-pie-chart";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
@@ -66,14 +69,13 @@ import IncreaseAllowanceDialog from "./GameDialogs/IncreaseAllowanceDialog";
 import { game2MainConversionRate, shortenAddr, sleep } from "../util/helper";
 import CreateListingDrawer from "./GameDrawers/CreateListingDrawer";
 import ListingDetailDrawer from "./GameDrawers/ListingDetailDrawer";
+import ClaimWinningIncAllowanceDialog from "./GameDialogs/ClaimWinningIncAllowanceDialog";
+import ClaimWinningDialog from "./GameDialogs/ClaimWinningDialog";
+import { BigNumber } from "ethers";
 
 export default function Game({ wallet }) {
   const { id } = useParams();
   const [game, setGame] = useState(null);
-  useEffect(() => {
-    getGameById(id, setGame);
-  }, [id]);
-
   const { colorMode } = useColorMode();
 
   const [percentage, setPercentage] = useState(0);
@@ -94,6 +96,8 @@ export default function Game({ wallet }) {
 
   const [isDialog, setIsDialog] = useState(true);
   const [isCreate, setIsCreate] = useState(true);
+  const [winningTokenAllowance, setWinningTokenAllowance] = useState(0);
+  const [winningTokenBalance, setWinningTokenBalance] = useState(0);
 
   const [listingSelected, setListingSelected] = useState(null);
 
@@ -101,6 +105,29 @@ export default function Game({ wallet }) {
   const cancelRef = React.useRef();
 
   const toast = useToast();
+
+  useEffect(() => {
+    const getGame = async () => {
+      const game = await getGameById(id);
+      setGame(game);
+      const outcome = game.gameOutcome;
+      setGameOutcome(outcome);
+
+      if (outcome !== "0") {
+        setWinningTokenBalance(
+          await getBalance(wallet, game.addr, parseInt(outcome))
+        );
+        setWinningTokenAllowance(
+          await getTokenAllowance(
+            wallet,
+            game.addr,
+            outcome === "1" ? gytAddr : gntAddr
+          )
+        );
+      }
+    };
+    getGame();
+  }, [gntAddr, gytAddr, id, wallet]);
 
   const triggerPurchase = async () => {
     const { trxHash, err } = await mintGameTokenFromMainToken(
@@ -198,6 +225,180 @@ export default function Game({ wallet }) {
     });
   };
 
+  const addHMTKNApprovalListener = async () => {
+    if (!hmtknAddr) {
+      return;
+    }
+    console.log("HMTKN approval listener added");
+    const tokenContract = await new web3.eth.Contract(erc20TokenABI, hmtknAddr);
+    tokenContract.events.Approval({}, async (error, data) => {
+      if (error) {
+        console.log("listener error:", error);
+      } else {
+        const details = data.returnValues;
+        if (details.owner.toLowerCase() === wallet.toLowerCase()) {
+          toast({
+            title: "Approval success!",
+            description: `You have approved ${shortenAddr(
+              details.spender
+            )} as a spender for ${details.value} HMTKN!`,
+            status: "success",
+            duration: 5000,
+            isClosable: true,
+          });
+
+          if (
+            game &&
+            details.spender.toLowerCase() === game.addr.toLowerCase()
+          ) {
+            setMain2TknAllowance(details.value);
+          }
+        }
+      }
+    });
+  };
+
+  useEffect(() => {
+    addHMTKNApprovalListener();
+  }, [hmtknAddr]);
+
+  const addGYTListener = async () => {
+    if (!gytAddr) {
+      return;
+    }
+    console.log("gyt listener added");
+    const tokenContract = await new web3.eth.Contract(erc20TokenABI, gytAddr);
+    tokenContract.events.Approval({}, async (error, data) => {
+      if (error) {
+        console.log("listener error:", error);
+      } else {
+        const details = data.returnValues;
+        if (details.owner.toLowerCase() === wallet.toLowerCase()) {
+          toast({
+            title: "Approval success!",
+            description: `You have approved ${shortenAddr(
+              details.spender
+            )} as a spender for ${details.value} GYT!`,
+            status: "success",
+            duration: 5000,
+            isClosable: true,
+          });
+
+          if (game.gameOutcome === "1") {
+            setWinningTokenAllowance(details.value);
+          }
+        }
+      }
+    });
+    tokenContract.events.Transfer({}, async (error, data) => {
+      if (error) {
+        console.log("listener error:", error);
+      } else {
+        const details = data.returnValues;
+        if (details.from.toLowerCase() === wallet.toLowerCase()) {
+          toast({
+            title: "GYT Transfer success!",
+            description: `You have transferred ${
+              details.value
+            } GYT to ${shortenAddr(details.to)}!`,
+            status: "success",
+            duration: 5000,
+            isClosable: true,
+          });
+          setGytBalance((prev) =>
+            BigNumber.from(prev).sub(BigNumber.from(details.value)).toString()
+          );
+        } else if (details.to.toLowerCase() === wallet.toLowerCase()) {
+          toast({
+            title: "GYT Transfer success!",
+            description: `You have received ${
+              details.value
+            } GYT from ${shortenAddr(details.to)}!`,
+            status: "success",
+            duration: 5000,
+            isClosable: true,
+          });
+          setGytBalance((prev) =>
+            BigNumber.from(prev).add(BigNumber.from(details.value)).toString()
+          );
+        }
+      }
+    });
+  };
+
+  useEffect(() => {
+    addGYTListener();
+  }, [gytAddr]);
+
+  const addGNTApprovalListener = async () => {
+    if (!gntAddr) {
+      return;
+    }
+    console.log("gnt approval listener added");
+    const tokenContract = await new web3.eth.Contract(erc20TokenABI, gntAddr);
+    tokenContract.events.Approval({}, async (error, data) => {
+      if (error) {
+        console.log("listener error:", error);
+      } else {
+        const details = data.returnValues;
+        if (details.owner.toLowerCase() === wallet.toLowerCase()) {
+          toast({
+            title: "Approval success!",
+            description: `You have approved ${shortenAddr(
+              details.spender
+            )} as a spender for ${details.value} GNT!`,
+            status: "success",
+            duration: 5000,
+            isClosable: true,
+          });
+
+          if (game.gameOutcome === "2") {
+            setWinningTokenAllowance(details.value);
+          }
+        }
+      }
+    });
+
+    tokenContract.events.Transfer({}, async (error, data) => {
+      if (error) {
+        console.log("listener error:", error);
+      } else {
+        const details = data.returnValues;
+        if (details.from.toLowerCase() === wallet.toLowerCase()) {
+          toast({
+            title: "GNT Transfer success!",
+            description: `You have transferred ${
+              details.value
+            } GNT to ${shortenAddr(details.to)}!`,
+            status: "success",
+            duration: 5000,
+            isClosable: true,
+          });
+          setGntBalance((prev) =>
+            BigNumber.from(prev).sub(BigNumber.from(details.value)).toString()
+          );
+        } else if (details.to.toLowerCase() === wallet.toLowerCase()) {
+          toast({
+            title: "GNT Transfer success!",
+            description: `You have received ${
+              details.value
+            } GNT from ${shortenAddr(details.to)}!`,
+            status: "success",
+            duration: 5000,
+            isClosable: true,
+          });
+          setGntBalance((prev) =>
+            BigNumber.from(prev).add(BigNumber.from(details.value)).toString()
+          );
+        }
+      }
+    });
+  };
+
+  useEffect(() => {
+    addGNTApprovalListener();
+  }, [gntAddr]);
+
   useEffect(() => {
     const updateAllowance = async () => {
       setMain2TknAllowance(
@@ -228,28 +429,74 @@ export default function Game({ wallet }) {
     addListingFulfilledListener();
   }, [game]);
 
+  const addGameConcludedListener = async () => {
+    if (!game) {
+      return;
+    }
+    console.log("game concluded listener added");
+    hwangMarket.events.GameConcluded({}, async (error, data) => {
+      if (error) {
+        console.log("listener error:", error);
+      } else {
+        if (data.returnValues.gameId !== id) {
+          return;
+        }
+        const outcome = data.returnValues.gameOutcome;
+        toast({
+          title: "Game concluded!",
+          description: `The game has concluded with an outcome of "${
+            outcome === "1" ? "YES" : "NO"
+          }"!`,
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+        });
+
+        setGame((prev) => {
+          const copy = JSON.parse(JSON.stringify(prev));
+          copy.gameOutcome = outcome;
+          return copy;
+        });
+        setGameOutcome(data.returnValues.gameOutcome);
+        setWinningTokenBalance(
+          await getBalance(wallet, game.addr, parseInt(outcome))
+        );
+        setWinningTokenAllowance(
+          await getTokenAllowance(
+            wallet,
+            game.addr,
+            outcome === "1" ? gytAddr : gntAddr
+          )
+        );
+      }
+    });
+  };
+
   useEffect(() => {
     addPlayerJoinedGameListener();
-  }, []);
+    addGameConcludedListener();
+  }, [game]);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
       //assign interval to a variable to clear it.
-      setPercentage(
-        Math.max(
-          1,
-          Math.min(
-            Math.floor(
-              ((Date.now() / 1000 - game.createdTime) /
-                (game.resolveTime - game.createdTime)) *
-                100
-            ),
+      let perc = Math.min(
+        Math.floor(
+          ((Date.now() / 1000 - game.createdTime) /
+            (game.resolveTime - game.createdTime)) *
             100
-          )
-        )
+        ),
+        100
       );
+      if (perc < 0) {
+        perc = 100;
+      }
+      setPercentage(perc);
 
-      const timeLeft = Math.max(0, game.resolveTime - Date.now() / 1000);
+      const timeLeft = Math.max(
+        0,
+        Math.floor(game.resolveTime - Date.now() / 1000)
+      );
       let s = "";
       if (timeLeft === 0) {
         setDiffText("Closed");
@@ -277,6 +524,33 @@ export default function Game({ wallet }) {
 
     return () => clearInterval(intervalId); //This is important
   }, [game]);
+
+  const [gameOutcome, setGameOutcome] = useState("0");
+
+  useEffect(() => {
+    // fetch game outcome
+    if (percentage !== 100) {
+      return;
+    }
+    const updateGameOutcome = async () => {
+      // update game outcome
+      const game = await getGameById(id);
+      const outcome = game.gameOutcome;
+      setGameOutcome(outcome);
+      setWinningTokenBalance(
+        await getBalance(wallet, game.addr, parseInt(outcome))
+      );
+      setWinningTokenAllowance(
+        await getTokenAllowance(
+          wallet,
+          game.addr,
+          outcome === "1" ? gytAddr : gntAddr
+        )
+      );
+    };
+
+    updateGameOutcome();
+  }, [gntAddr, gytAddr, id, percentage, wallet]);
 
   /*
     addr: "0x64C3bb915Dd98231B3b2649A350B28d746a087Af"
@@ -361,12 +635,12 @@ export default function Game({ wallet }) {
                     data={[
                       {
                         title: "No",
-                        value: Math.max(1, parseInt(game.betNoAmount)),
+                        value: Math.max(0.01, parseInt(game.betNoAmount)),
                         color: "#FF1E1E",
                       },
                       {
                         title: "Yes",
-                        value: Math.max(1, parseInt(game.betYesAmount)),
+                        value: Math.max(0.01, parseInt(game.betYesAmount)),
                         color: "#3CCF4E",
                       },
                     ]}
@@ -527,27 +801,29 @@ export default function Game({ wallet }) {
               </Box>
 
               <Box>
-                <Heading size="md" mt="5" mb="3">
-                  Mintable token supply
-                </Heading>
-                <StatGroup>
-                  <Stat>
-                    <StatLabel>Exchange rate for 1 Game Token</StatLabel>
-                    <StatNumber>1 HMTKN</StatNumber>
-                    <StatHelpText>Fixed</StatHelpText>
-                  </Stat>
-                  <Stat>
-                    <StatLabel>Game Yes Token supply left</StatLabel>
-                    <StatNumber>{1000 - game.betYesAmount}</StatNumber>
-                  </Stat>
-                  <Stat>
-                    <StatLabel>Game No Token supply left</StatLabel>
-                    <StatNumber>{1000 - game.betNoAmount}</StatNumber>
-                  </Stat>
-                </StatGroup>
-
+                {gameOutcome === "0" && (
+                  <>
+                    <Heading size="md" mt="5" mb="3">
+                      Mintable token supply
+                    </Heading>
+                    <StatGroup>
+                      <Stat>
+                        <StatLabel>Exchange rate for 1 Game Token</StatLabel>
+                        <StatNumber>1 HMTKN</StatNumber>
+                        <StatHelpText>Fixed</StatHelpText>
+                      </Stat>
+                      <Stat>
+                        <StatLabel>Game Yes Token supply left</StatLabel>
+                        <StatNumber>{1000 - game.betYesAmount}</StatNumber>
+                      </Stat>
+                      <Stat>
+                        <StatLabel>Game No Token supply left</StatLabel>
+                        <StatNumber>{1000 - game.betNoAmount}</StatNumber>
+                      </Stat>
+                    </StatGroup>
+                  </>
+                )}
                 <Divider my="7" />
-
                 <Heading size="md" mb="3">
                   Owned tokens
                 </Heading>
@@ -569,180 +845,263 @@ export default function Game({ wallet }) {
                     </StatHelpText>
                   </Stat>
                 </StatGroup>
-
                 <Divider my="7" />
-                <Box>
-                  <Heading mb="4" size="md">
-                    Mint game tokens
-                  </Heading>
-                  <FormControl isRequired>
-                    <FormLabel>Game token side</FormLabel>
-                    <Select
-                      placeholder="Select game token side"
-                      onChange={(e) => {
-                        setBuyTokenSide(e.target.value);
-                        setMaxLimit(
-                          1000 -
-                            (e.target.value === "1"
-                              ? game.betYesAmount
-                              : game.betNoAmount)
-                        );
-                        setBuyTokenAmt(0);
-                      }}
-                      value={buyTokenSide}
-                    >
-                      <option value="1">Yes</option>
-                      <option value="2">No</option>
-                    </Select>
-                  </FormControl>
-                  <FormControl isRequired mt="3">
-                    <FormLabel>Amount of game token</FormLabel>
-                    <NumberInput
-                      value={buyTokenAmt}
-                      min={1}
-                      max={maxLimit}
-                      onChange={(v) => setBuyTokenAmt(v)}
-                    >
-                      <NumberInputField />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
-                  </FormControl>
+                {gameOutcome !== "0" ? (
+                  <Box>
+                    <Heading mb="4" size="md">
+                      Trade in game token
+                    </Heading>
+                    <StatGroup>
+                      <Stat>
+                        <StatLabel>Winning token</StatLabel>
+                        <StatNumber>
+                          {" "}
+                          {gameOutcome === "1"
+                            ? "Game Yes Token"
+                            : "Game No Token"}
+                        </StatNumber>
+                        <StatHelpText>
+                          <Text fontSize="xs">
+                            {gameOutcome === "1" ? gytAddr : gntAddr}
+                          </Text>
+                        </StatHelpText>
+                      </Stat>
+                    </StatGroup>
 
-                  {!(
-                    (buyTokenSide !== "1" && buyTokenSide !== "2") ||
-                    buyTokenAmt <= 0 ||
-                    buyTokenAmt > maxLimit ||
-                    buyTokenAmt > main2TknAllowance
-                  ) && (
-                    <Box>
-                      <Heading mt="8" mb="4" size="sm">
-                        Transaction Summary
-                      </Heading>
-                      <StatGroup w="100%">
-                        <Stat>
-                          <StatLabel>
-                            {buyTokenSide === "1" ? "GYT" : "GNT"}
-                          </StatLabel>
-                          <StatNumber>{buyTokenAmt}</StatNumber>
-                          <StatHelpText>
-                            <StatArrow type="increase" />
-                            Gain {buyTokenAmt}{" "}
-                            {buyTokenSide === "1" ? "GYT" : "GNT"}
-                          </StatHelpText>
-                          <StatHelpText>
-                            <Text fontSize="xs">
-                              {buyTokenSide === "1" ? gytAddr : gntAddr}
-                            </Text>
-                          </StatHelpText>
-                        </Stat>
-                        <Stat>
-                          <StatLabel>HMTKN</StatLabel>
-                          <StatNumber>
-                            {buyTokenAmt * game2MainConversionRate}
-                          </StatNumber>
-                          <StatHelpText>
-                            <StatArrow type="decrease" />
-                            Lose {buyTokenAmt} HMTKN
-                          </StatHelpText>
-                          <StatHelpText>
-                            <Text fontSize="xs">{hmtknAddr}</Text>
-                          </StatHelpText>
-                        </Stat>
-                      </StatGroup>
+                    <Box mt="3">
+                      {(gameOutcome === "1" &&
+                        BigNumber.from(gytBalance).gt(BigNumber.from(0))) ||
+                      (gameOutcome === "2" &&
+                        BigNumber.from(gntBalance).gt(BigNumber.from(0))) ? (
+                        <Button
+                          colorScheme="whatsapp"
+                          variant="outline"
+                          onClick={() => {
+                            setIsDialog(true);
+                            onOpen();
+                          }}
+                        >
+                          Collect Winnings{" "}
+                          {winningTokenAllowance < winningTokenBalance &&
+                            "(Approval required first)"}
+                        </Button>
+                      ) : (
+                        <Text fontWeight="bold">
+                          You have no winning tokens to claim.
+                        </Text>
+                      )}
                     </Box>
-                  )}
+                  </Box>
+                ) : (
+                  <Box>
+                    <Heading mb="4" size="md">
+                      Mint game tokens
+                    </Heading>
+                    <FormControl isRequired>
+                      <FormLabel>Game token side</FormLabel>
+                      <Select
+                        placeholder="Select game token side"
+                        onChange={(e) => {
+                          setBuyTokenSide(e.target.value);
+                          setMaxLimit(
+                            1000 -
+                              (e.target.value === "1"
+                                ? game.betYesAmount
+                                : game.betNoAmount)
+                          );
+                          setBuyTokenAmt(0);
+                        }}
+                        value={buyTokenSide}
+                      >
+                        <option value="1">Yes</option>
+                        <option value="2">No</option>
+                      </Select>
+                    </FormControl>
+                    <FormControl isRequired mt="3">
+                      <FormLabel>Amount of game token</FormLabel>
+                      <NumberInput
+                        value={buyTokenAmt}
+                        min={1}
+                        max={maxLimit}
+                        onChange={(v) => setBuyTokenAmt(v)}
+                      >
+                        <NumberInputField />
+                        <NumberInputStepper>
+                          <NumberIncrementStepper />
+                          <NumberDecrementStepper />
+                        </NumberInputStepper>
+                      </NumberInput>
+                    </FormControl>
 
-                  {buyTokenAmt > maxLimit && (
-                    <Box
-                      border="1px solid red"
-                      textAlign="center"
-                      p="1"
-                      borderRadius="20px"
-                      my="2"
-                    >
-                      <Text>
-                        Cannot mint the requested token amount, try purchasing
-                        from a player's listing.
-                      </Text>
-                    </Box>
-                  )}
-                  <Button
-                    colorScheme="green"
-                    variant="outline"
-                    mt="6"
-                    disabled={
+                    {!(
                       (buyTokenSide !== "1" && buyTokenSide !== "2") ||
                       buyTokenAmt <= 0 ||
                       buyTokenAmt > maxLimit ||
                       buyTokenAmt > main2TknAllowance
-                    }
-                    onClick={triggerPurchase}
-                  >
-                    Mint Game Tokens
-                  </Button>
-                  {buyTokenAmt > main2TknAllowance && (
-                    <Box display="flex" alignItems="center" mt="2">
-                      <FontAwesomeIcon
-                        icon={faX}
-                        color="red"
-                        style={{ marginRight: "5px" }}
-                      />
-                      <Text>
-                        You cannot complete the purchase as your allowance is
-                        too low.
-                      </Text>
-                      <Button
-                        mx="3"
-                        colorScheme="green"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setIsDialog(true);
-                          onOpen();
-                        }}
+                    ) && (
+                      <Box>
+                        <Heading mt="8" mb="4" size="sm">
+                          Transaction Summary
+                        </Heading>
+                        <StatGroup w="100%">
+                          <Stat>
+                            <StatLabel>
+                              {buyTokenSide === "1" ? "GYT" : "GNT"}
+                            </StatLabel>
+                            <StatNumber>{buyTokenAmt}</StatNumber>
+                            <StatHelpText>
+                              <StatArrow type="increase" />
+                              Gain {buyTokenAmt}{" "}
+                              {buyTokenSide === "1" ? "GYT" : "GNT"}
+                            </StatHelpText>
+                            <StatHelpText>
+                              <Text fontSize="xs">
+                                {buyTokenSide === "1" ? gytAddr : gntAddr}
+                              </Text>
+                            </StatHelpText>
+                          </Stat>
+                          <Stat>
+                            <StatLabel>HMTKN</StatLabel>
+                            <StatNumber>
+                              {buyTokenAmt * game2MainConversionRate}
+                            </StatNumber>
+                            <StatHelpText>
+                              <StatArrow type="decrease" />
+                              Lose {buyTokenAmt} HMTKN
+                            </StatHelpText>
+                            <StatHelpText>
+                              <Text fontSize="xs">{hmtknAddr}</Text>
+                            </StatHelpText>
+                          </Stat>
+                        </StatGroup>
+                      </Box>
+                    )}
+
+                    {buyTokenAmt > maxLimit && (
+                      <Box
+                        border="1px solid red"
+                        textAlign="center"
+                        p="1"
+                        borderRadius="20px"
+                        my="2"
                       >
-                        Increase allowance
-                      </Button>
-                    </Box>
-                  )}
+                        <Text>
+                          Cannot mint the requested token amount, try purchasing
+                          from a player's listing.
+                        </Text>
+                      </Box>
+                    )}
 
-                  <AlertDialog
-                    motionPreset="slideInBottom"
-                    leastDestructiveRef={cancelRef}
-                    onClose={onClose}
-                    isOpen={isDialog && isOpen}
-                    isCentered
-                  >
-                    <AlertDialogOverlay />
-
-                    <AlertDialogContent
-                      minW={{ base: "100%", lg: "max-content" }}
+                    <Button
+                      colorScheme="green"
+                      variant="outline"
+                      mt="6"
+                      disabled={
+                        (buyTokenSide !== "1" && buyTokenSide !== "2") ||
+                        buyTokenAmt <= 0 ||
+                        buyTokenAmt > maxLimit ||
+                        buyTokenAmt > main2TknAllowance
+                      }
+                      onClick={triggerPurchase}
                     >
-                      {errorMsg ? (
-                        <GameErrorDialog
-                          errorMsg={errorMsg}
-                          onClose={onClose}
+                      Mint Game Tokens
+                    </Button>
+
+                    {buyTokenAmt > main2TknAllowance && (
+                      <Box display="flex" alignItems="center" mt="2">
+                        <FontAwesomeIcon
+                          icon={faX}
+                          color="red"
+                          style={{ marginRight: "5px" }}
                         />
-                      ) : buyTokenAmt > main2TknAllowance ? (
-                        <IncreaseAllowanceDialog
-                          wallet={wallet}
-                          gameAddr={game && game.addr}
-                          onClose={onClose}
-                          allowAmt={buyTokenAmt * game2MainConversionRate}
-                          setMain2TknAllowance={setMain2TknAllowance}
-                        />
-                      ) : (
-                        <PurchaseConfirmationDialog
-                          trxHash={purchaseTrxHash}
-                          onClose={onClose}
-                        />
-                      )}
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </Box>
+                        <Text>
+                          You cannot complete the purchase as your allowance is
+                          too low.
+                        </Text>
+                        <Button
+                          mx="3"
+                          colorScheme="green"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setIsDialog(true);
+                            onOpen();
+                          }}
+                        >
+                          Increase allowance
+                        </Button>
+                      </Box>
+                    )}
+                  </Box>
+                )}
+                <AlertDialog
+                  motionPreset="slideInBottom"
+                  leastDestructiveRef={cancelRef}
+                  onClose={onClose}
+                  isOpen={isDialog && isOpen}
+                  isCentered
+                >
+                  <AlertDialogOverlay />
+
+                  <AlertDialogContent
+                    minW={{ base: "100%", lg: "max-content" }}
+                  >
+                    {gameOutcome === "0" && errorMsg ? (
+                      <GameErrorDialog errorMsg={errorMsg} onClose={onClose} />
+                    ) : gameOutcome === "0" &&
+                      buyTokenAmt > main2TknAllowance ? (
+                      <IncreaseAllowanceDialog
+                        wallet={wallet}
+                        gameAddr={game && game.addr}
+                        onClose={onClose}
+                        allowAmt={buyTokenAmt * game2MainConversionRate}
+                      />
+                    ) : gameOutcome === "0" ? (
+                      <PurchaseConfirmationDialog
+                        trxHash={purchaseTrxHash}
+                        onClose={onClose}
+                      />
+                    ) : winningTokenAllowance < winningTokenBalance ? (
+                      <ClaimWinningIncAllowanceDialog
+                        wallet={wallet}
+                        gameAddr={game && game.addr}
+                        onClose={onClose}
+                        outcome={game && game.gameOutcome}
+                        approvalAmt={winningTokenBalance}
+                        winningTokenAddr={
+                          gameOutcome === "1" ? gytAddr : gntAddr
+                        }
+                      />
+                    ) : winningTokenAllowance === winningTokenBalance ? (
+                      <ClaimWinningDialog
+                        wallet={wallet}
+                        gameAddr={game && game.addr}
+                        outcome={game && game.gameOutcome}
+                        onClose={onClose}
+                        withdrawAmt={winningTokenBalance}
+                        hmtknAddr={hmtknAddr}
+                        winningTokenAddr={
+                          gameOutcome === "1" ? gytAddr : gntAddr
+                        }
+                        totalLoseAmt={
+                          gameOutcome === "1"
+                            ? game && game.betNoAmount
+                            : game && game.betYesAmount
+                        }
+                        totalWinAmt={
+                          gameOutcome === "1"
+                            ? game && game.betYesAmount
+                            : game && game.betNoAmount
+                        }
+                      />
+                    ) : (
+                      <GameErrorDialog
+                        errorMsg="We got lost in the sauce. :("
+                        onClose={onClose}
+                      />
+                    )}
+                  </AlertDialogContent>
+                </AlertDialog>
               </Box>
 
               <Divider my="10" />

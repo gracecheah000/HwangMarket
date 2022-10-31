@@ -162,9 +162,10 @@ const CommonTop = ({ wallet, setWallet, colorMode, toggleColorMode }) => {
         <Text>The only place to lose your money, fast.</Text>
       </Box>
       <Box
-        mx="auto"
+        mr="auto"
+        ml="24"
         display="flex"
-        justifyContent="center"
+        justifyContent="flex-end"
         alignItems="center"
         columnGap="24"
       >
