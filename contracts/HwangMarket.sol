@@ -228,8 +228,8 @@ contract HwangMarket is IListingOwner {
       return;
     }
     uint256 existingGameIdx = uint256(temp);
-    Models.GameMetadata storage finisedGame = ongoingGames[existingGameIdx];
-    Models.GameMetadata storage lastOngoingGame = ongoingGames[SafeMath.sub(ongoingGamesCnt, 1)];
+    Models.GameMetadata memory finisedGame = ongoingGames[existingGameIdx];
+    Models.GameMetadata memory lastOngoingGame = ongoingGames[SafeMath.sub(ongoingGamesCnt, 1)];
     ongoingGamesId2Idx[lastOngoingGame.id] = int256(existingGameIdx);
     ongoingGamesId2Idx[gameId] = -1;
     ongoingGames[existingGameIdx] = lastOngoingGame;
@@ -257,5 +257,13 @@ contract HwangMarket is IListingOwner {
 
   function getPlayersTrxRecords(address player) public view returns (Models.Activity[] memory) {
     return playersRecords[player];
+  }
+
+  function checkAllOngoingGamesUpkeep() external {
+    for (uint256 i=0; i<ongoingGamesCnt; i++) {
+      Models.GameMetadata storage game = ongoingGames[i];
+      GameContract gameContract = GameContract(game.addr);
+      gameContract.performUpkeep();
+    }
   }
 }

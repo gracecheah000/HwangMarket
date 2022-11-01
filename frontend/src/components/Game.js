@@ -49,6 +49,7 @@ import {
   getTokenAllowance,
   hwangMarketAddr,
   erc20TokenABI,
+  triggerResolve,
 } from "../util/interact";
 import { PieChart } from "react-minimal-pie-chart";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
@@ -427,7 +428,7 @@ export default function Game({ wallet }) {
   useEffect(() => {
     addNewListingListener();
     addListingFulfilledListener();
-  }, [game]);
+  }, [game && game.id]);
 
   const addGameConcludedListener = async () => {
     if (!game) {
@@ -474,8 +475,11 @@ export default function Game({ wallet }) {
 
   useEffect(() => {
     addPlayerJoinedGameListener();
+  }, [game && game.id]);
+
+  useEffect(() => {
     addGameConcludedListener();
-  }, [game]);
+  }, [game && game.id]);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -798,6 +802,31 @@ export default function Game({ wallet }) {
                     />
                   </Box>
                 </Box>
+
+                {percentage === 100 && game.gameOutcome === "0" && (
+                  <Box textAlign="center">
+                    <Box w="500px" mx="auto" my="3">
+                      <Text fontSize="sm">
+                        Well this is awkward, it seems the game is already over
+                        but our auto trigger is late or not working correctly.
+                        Fret not, you can trigger the game resolution manually
+                        by clicking the button below.
+                      </Text>
+                      <Text fontSize="sm" fontWeight="bold">
+                        Note: You will be paying a small gas fee for the call.
+                        If you believe you are too early, maybe come back in a
+                        bit, our trigger runs hourly.
+                      </Text>
+                    </Box>
+                    <Button
+                      colorScheme="whatsapp"
+                      variant="outline"
+                      onClick={() => triggerResolve(wallet, game.addr)}
+                    >
+                      Resolve game
+                    </Button>
+                  </Box>
+                )}
               </Box>
 
               <Box>
@@ -846,7 +875,7 @@ export default function Game({ wallet }) {
                   </Stat>
                 </StatGroup>
                 <Divider my="7" />
-                {gameOutcome !== "0" ? (
+                {gameOutcome !== "0" || percentage === 100 ? (
                   <Box>
                     <Heading mb="4" size="md">
                       Trade in game token

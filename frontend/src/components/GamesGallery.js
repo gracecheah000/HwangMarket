@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from "react";
 import {
   Box,
+  Divider,
+  FormControl,
+  FormLabel,
   Heading,
   Spinner,
+  Switch,
   Text,
   useColorMode,
   useToast,
@@ -18,6 +22,7 @@ const GamesGallery = ({ walletAddress }) => {
   const [isLoading, setLoading] = useState(true);
   const [ongoingGames, setOngoingGames] = useState(null);
   const [closedGames, setClosedGames] = useState([]);
+  const [showClosed, setShowClosed] = useState(false);
 
   const { colorMode } = useColorMode();
   const toast = useToast();
@@ -41,6 +46,16 @@ const GamesGallery = ({ walletAddress }) => {
         // setStatus("🎉 Your game was created!");
       }
     });
+
+    hwangMarket.events.GameConcluded({}, async (error, data) => {
+      if (error) {
+        console.log("listener error:", error);
+      } else {
+        const games = await getAllGames();
+        setOngoingGames(games.ongoingGames);
+        setClosedGames(games.closedGames);
+      }
+    });
   }
 
   useEffect(() => {
@@ -49,7 +64,6 @@ const GamesGallery = ({ walletAddress }) => {
     async function getGames() {
       try {
         const games = await getAllGames();
-        console.log("games loaded in", games);
         setOngoingGames(games.ongoingGames);
         setClosedGames(games.closedGames);
       } catch {
@@ -72,6 +86,21 @@ const GamesGallery = ({ walletAddress }) => {
         columnGap="10"
         mt="7"
       >
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          columnGap="2"
+          rowGap="2"
+        >
+          <Text>Show closed games:</Text>
+          <Switch
+            colorScheme="teal"
+            size="lg"
+            isChecked={showClosed}
+            onChange={() => setShowClosed((prev) => !prev)}
+          />
+        </Box>
         <Text
           px="4"
           py="2"
@@ -102,8 +131,23 @@ const GamesGallery = ({ walletAddress }) => {
             .reverse()
             .map((g) => <GameCard key={g.addr} game={g} />)
         ) : (
-          <Text fontSize="3xl">No open games, create one to get started!</Text>
+          <Box>
+            <Text fontSize="3xl">
+              No open games, create one to get started!
+            </Text>
+          </Box>
         )}
+
+        <Divider />
+        {showClosed &&
+          (closedGames && closedGames.length > 0 ? (
+            closedGames
+              .slice()
+              .reverse()
+              .map((g) => <GameCard key={g.addr} game={g} />)
+          ) : (
+            <Text fontSize="3xl">No closed games!</Text>
+          ))}
       </Box>
     </Box>
   );

@@ -515,3 +515,33 @@ export const cashoutMainToken = async (wallet, cashoutAmt) => {
     return { trxHash: "", err: error.message };
   }
 };
+
+export const triggerResolve = async (wallet, gameAddr) => {
+  if (!wallet || !gameAddr) {
+    return;
+  }
+
+  //sign the transaction
+  try {
+    const gameContract = new web3.eth.Contract(gameContractABI, gameAddr);
+    const transactionParameters = {
+      to: gameAddr, // Required except during contract publications.
+      from: wallet, // must match user's active address.
+      data: gameContract.methods.performUpkeep().encodeABI(),
+    };
+    await window.ethereum.request({
+      method: "eth_sendTransaction",
+      params: [transactionParameters],
+    });
+  } catch (error) {
+    console.log("error thrown:", error.message);
+  }
+};
+
+export const getPlayersTrxRecords = async (wallet) => {
+  if (!wallet) {
+    return [];
+  }
+
+  return await hwangMarket.methods.getPlayersTrxRecords(wallet).call();
+};

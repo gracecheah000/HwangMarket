@@ -183,8 +183,9 @@ const CommonTop = ({ wallet, setWallet, colorMode, toggleColorMode }) => {
           colorScheme="facebook"
           borderRadius="13px"
           p="5"
+          onClick={() => navigate("/history")}
         >
-          Portfolio
+          History
         </Button>
       </Box>
       <Box>

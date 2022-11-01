@@ -8,6 +8,7 @@ import { Routes } from "react-router-dom";
 import { createBrowserRouter, RouterProvider, Route } from "react-router-dom";
 import Game from "./components/Game";
 import GetHMTKN from "./components/hmtknModals/GetHMTKN";
+import PlayersHistory from "./components/PlayersHistory";
 
 function App() {
   const [walletAddress, setWallet] = useState("");
@@ -30,6 +31,11 @@ function App() {
           exact
           path="/game/:id"
           element={<Game wallet={walletAddress} />}
+        />
+        <Route
+          exact
+          path="/history"
+          element={<PlayersHistory wallet={walletAddress} />}
         />
         <Route path="*" element={<ErrorPage />} />
       </Routes>

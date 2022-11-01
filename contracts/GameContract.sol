@@ -243,8 +243,9 @@ contract GameContract is IListingOwner {
   // impt: anyone can call the contract to perform upkeep but it has a guard to protect against early resolves
   // and it checks against a "trusted" oracle chainlink to fetch the result
   function performUpkeep() public {
-    require(block.timestamp >= gameResolveTime, "game is not ready to be resolved");
-    require(status != GameStatus.CLOSED, "game is already closed");
+    if (block.timestamp < gameResolveTime || status == GameStatus.CLOSED) {
+      return;
+    }
 
     status = GameStatus.CLOSED;
     gameSide side = gameSide.NO;
