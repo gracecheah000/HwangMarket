@@ -697,18 +697,5 @@
         ],
         "stateMutability": "view",
         "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "int256",
-                "name": "price",
-                "type": "int256"
-            }
-        ],
-        "name": "backdoor",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
     }
 ]

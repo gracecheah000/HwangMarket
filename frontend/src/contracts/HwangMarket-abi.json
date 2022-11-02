@@ -1284,5 +1284,12 @@
         "stateMutability": "view",
         "type": "function",
         "constant": true
+    },
+    {
+        "inputs": [],
+        "name": "checkAllOngoingGamesUpkeep",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
     }
 ]
