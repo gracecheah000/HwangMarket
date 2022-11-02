@@ -1,0 +1,25 @@
+{
+  "files": {
+    "main.css": "/HwangMarket/static/css/main.ba2b78f0.chunk.css",
+    "main.js": "/HwangMarket/static/js/main.3e71d147.chunk.js",
+    "main.js.map": "/HwangMarket/static/js/main.3e71d147.chunk.js.map",
+    "runtime-main.js": "/HwangMarket/static/js/runtime-main.c3ebbb72.js",
+    "runtime-main.js.map": "/HwangMarket/static/js/runtime-main.c3ebbb72.js.map",
+    "static/css/2.6c0f60ba.chunk.css": "/HwangMarket/static/css/2.6c0f60ba.chunk.css",
+    "static/js/2.e8201ef8.chunk.js": "/HwangMarket/static/js/2.e8201ef8.chunk.js",
+    "static/js/2.e8201ef8.chunk.js.map": "/HwangMarket/static/js/2.e8201ef8.chunk.js.map",
+    "static/js/3.22fb805d.chunk.js": "/HwangMarket/static/js/3.22fb805d.chunk.js",
+    "static/js/3.22fb805d.chunk.js.map": "/HwangMarket/static/js/3.22fb805d.chunk.js.map",
+    "index.html": "/HwangMarket/index.html",
+    "static/css/2.6c0f60ba.chunk.css.map": "/HwangMarket/static/css/2.6c0f60ba.chunk.css.map",
+    "static/css/main.ba2b78f0.chunk.css.map": "/HwangMarket/static/css/main.ba2b78f0.chunk.css.map",
+    "static/js/2.e8201ef8.chunk.js.LICENSE.txt": "/HwangMarket/static/js/2.e8201ef8.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.c3ebbb72.js",
+    "static/css/2.6c0f60ba.chunk.css",
+    "static/js/2.e8201ef8.chunk.js",
+    "static/css/main.ba2b78f0.chunk.css",
+    "static/js/main.3e71d147.chunk.js"
+  ]
+}
