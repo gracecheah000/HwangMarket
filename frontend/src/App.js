@@ -5,7 +5,7 @@ import CommonTop from "./components/CommonTop";
 import ErrorPage from "./components/ErrorPage";
 import { Routes } from "react-router-dom";
 
-import { createBrowserRouter, RouterProvider, Route } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Route, HashRouter } from "react-router-dom";
 import Game from "./components/Game";
 import GetHMTKN from "./components/hmtknModals/GetHMTKN";
 import PlayersHistory from "./components/PlayersHistory";
