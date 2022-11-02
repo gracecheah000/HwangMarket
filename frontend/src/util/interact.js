@@ -6,17 +6,22 @@ import {
 } from "./helper";
 
 /* Abstractions to deal with all functions interacting with the blockchain */
-require("dotenv").config();
-// const alchemyKey = process.env.REACT_APP_ALCHEMY_KEY;
-// const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
-// const web3 = createAlchemyWeb3(alchemyKey);
+require("dotenv").config({ path: `./.env.${process.env.NODE_ENV}` });
 
-// For development on local ganache, on goerli test net, its the above commented out snippet
-const Web3 = require("web3");
-export const web3 = new Web3(
-  new Web3.providers.WebsocketProvider("ws://127.0.0.1:7545")
-);
-// End
+let temp = null;
+
+if (process.env.NODE_ENV === "development") {
+  const Web3 = require("web3");
+  temp = new Web3(
+    new Web3.providers.WebsocketProvider(process.env.REACT_APP_Local_Provider)
+  );
+} else {
+  const alchemyKey = process.env.REACT_APP_ALCHEMY_KEY;
+  const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
+  temp = createAlchemyWeb3(alchemyKey);
+}
+
+export const web3 = temp;
 
 const hwangMarketABI = require("../contracts/HwangMarket-abi.json");
 export const hwangMarketAddr = process.env.REACT_APP_HwangMarket_Address;

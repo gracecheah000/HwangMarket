@@ -48,7 +48,6 @@ contract HwangMarket is IListingOwner {
   constructor() {
     // we start counting from game 1, game id 0 is nonsense since its also default value
     gameCount = 1;
-
     mainToken = new MainToken();
     mainTokenAddress = address(mainToken);
     gameFactory = new GameContractFactory();

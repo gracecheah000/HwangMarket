@@ -167,7 +167,7 @@ const CommonTop = ({ wallet, setWallet, colorMode, toggleColorMode }) => {
         display="flex"
         justifyContent="flex-end"
         alignItems="center"
-        columnGap="24"
+        columnGap="16"
       >
         <Button
           variant="outline"

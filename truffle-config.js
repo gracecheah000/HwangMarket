@@ -8,6 +8,8 @@ module.exports = {
       port: 7545, // Standard Ethereum port (default: none)
       network_id: "5777", // Any network (default: none)
       websockets: true,
+      gas: 16721975,
+      gasPrice: 20000000000,
     },
 
     //
@@ -20,9 +22,11 @@ module.exports = {
           `https://eth-goerli.g.alchemy.com/v2/${alchemyApiKey}`
         ),
       network_id: 5, // Goerli's id
-      confirmations: 0, // # of confirmations to wait between deployments. (default: 0)
+      confirmations: 2, // # of confirmations to wait between deployments. (default: 0)
+      gas: 5500000,
       timeoutBlocks: 200, // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true, // Skip dry run before migrations? (default: false for public nets )
+      networkCheckTimeout: 10000,
     },
   },
 
@@ -38,7 +42,7 @@ module.exports = {
       settings: {
         optimizer: {
           enabled: true,
-          runs: 200, // Optimize for how many times you intend to run the code
+          runs: 1000, // Optimize for how many times you intend to run the code
         },
         evmVersion: "byzantium",
       },
