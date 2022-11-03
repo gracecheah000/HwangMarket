@@ -6,31 +6,23 @@ import {
 } from "./helper";
 
 /* Abstractions to deal with all functions interacting with the blockchain */
-// require("dotenv").config({ path: `./.env.${process.env.NODE_ENV}` });
+const path = require("path");
+require("dotenv").config({
+  path: path.join(__dirname, `./.env.production`),
+});
 
-// let temp = null;
+let temp = null;
 
-// if (process.env.NODE_ENV === "development") {
-//   const Web3 = require("web3");
-//   temp = new Web3(
-//     new Web3.providers.WebsocketProvider(process.env.REACT_APP_Local_Provider)
-//   );
-// } else {
-//   const alchemyKey = process.env.REACT_APP_ALCHEMY_KEY;
-//   const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
-//   temp = createAlchemyWeb3(alchemyKey);
-// }
-
-require("dotenv").config({ path: `./.env.production` });
-const alchemyKey = process.env.REACT_APP_ALCHEMY_KEY;
-const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
-console.log(
-  alchemyKey,
-  "wss://eth-goerli.g.alchemy.com/v2/KYRqoykrOpZjvilrZ6Eo2pouGNX3Zpir"
-);
-const temp = createAlchemyWeb3(
-  "wss://eth-goerli.g.alchemy.com/v2/KYRqoykrOpZjvilrZ6Eo2pouGNX3Zpir"
-);
+if (process.env.NODE_ENV === "development") {
+  const Web3 = require("web3");
+  temp = new Web3(
+    new Web3.providers.WebsocketProvider(process.env.REACT_APP_Local_Provider)
+  );
+} else {
+  const alchemyKey = process.env.REACT_APP_ALCHEMY_KEY;
+  const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
+  temp = createAlchemyWeb3(alchemyKey);
+}
 
 export const web3 = temp;
 
