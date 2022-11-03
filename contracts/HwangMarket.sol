@@ -4,6 +4,7 @@ pragma solidity >=0.4.22 <0.9.0;
 import "./MainToken.sol";
 import "./GameContract.sol";
 import "./GameContractFactory.sol";
+import "./GameERC20TokenFactory.sol";
 import "./Models.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -12,8 +13,9 @@ contract HwangMarket {
   using SafeMath for uint256;
   address public mainTokenAddress;
 
-  // game contract factory is used to reduce contract build size :(
+  // factory contracts are used to reduce contract build size :(
   GameContractFactory gameFactory;
+  GameERC20TokenFactory gameTokenFactory;
 
   // for all activity
   uint256 private trxId;
@@ -37,11 +39,12 @@ contract HwangMarket {
 
   mapping(address => Models.Activity[]) public playersRecords;
 
-  constructor(address mainTokenAddr, address gameContractFactoryAddr) {
+  constructor(address mainTokenAddr, address gameContractFactoryAddr, address gameTokenFactoryAddr) {
     // we start counting from game 1, game id 0 is nonsense since its also default value
     gameCount = 1;
     mainTokenAddress = mainTokenAddr;
     gameFactory = GameContractFactory(gameContractFactoryAddr);
+    gameTokenFactory = GameERC20TokenFactory(gameTokenFactoryAddr);
   }
 
   event GameCreated(Models.GameMetadata gameMetadata);
@@ -53,8 +56,9 @@ contract HwangMarket {
 
   // create game contract instance
   function createGame(uint256 resolveTime, address oracleAddr, int256 threshold, string memory tag, string memory title) external {
-    GameContract newGame = gameFactory.createGame(address(this), resolveTime, oracleAddr, threshold, tag, title, gameCount); 
-    address newGameAddress = address(newGame);
+    address gytAddr = gameTokenFactory.createGameERC20Token("GameYes", "GYT", 1000);
+    address gntAddr = gameTokenFactory.createGameERC20Token("GameNo", "GNT", 1000);
+    address newGameAddress = gameFactory.createGame(address(this), resolveTime, oracleAddr, threshold, tag, title, gameCount, gytAddr, gntAddr);
     gameId2Addr[gameCount] = newGameAddress;
     gameAddr2Id[newGameAddress] = gameCount;
 
@@ -63,7 +67,7 @@ contract HwangMarket {
 
     ongoingGamesCnt = SafeMath.add(ongoingGamesCnt, 1);
 
-    emit GameCreated(newGame.getGameInfo());
+    emit GameCreated(GameContract(newGameAddress).getGameInfo());
 
     gameCount = SafeMath.add(gameCount, 1);
   }

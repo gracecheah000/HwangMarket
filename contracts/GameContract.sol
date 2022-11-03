@@ -7,6 +7,7 @@ import "./Models.sol";
 import "./HwangMarket.sol";
 import "./IterableMapping.sol";
 import "./GameERC20Token.sol";
+import "./GameERC20TokenFactory.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
@@ -42,7 +43,7 @@ contract GameContract is IListingOwner {
 
   // constructor takes in a resolve time, a oracleAddr (oracle address), and a threshold, 
   // where a gameSide of NO indicates < threshold, and a gameSide of YES indicates >= threshold
-  constructor(address hmAddr , uint256 _resolveTime, address _oracleAddr, int256 thres, string memory _tag, string memory _title, uint256 _id) {
+  constructor(address hmAddr , uint256 _resolveTime, address _oracleAddr, int256 thres, string memory _tag, string memory _title, uint256 _id, address gytAddr, address gntAddr) {
     hwangMarketAddr = hmAddr;
     priceFeed = AggregatorV3Interface(_oracleAddr);
     gameInfo = Models.GameMetadata({
@@ -62,10 +63,8 @@ contract GameContract is IListingOwner {
 
     // every game contract deploys 2 IERC20 token contracts
     // yes and no tokens
-    GameERC20Token gameNoTokenContract = new GameERC20Token("GameNoToken", "GNT", supplyLimit);
-    gameNoTokenContractAddress = address(gameNoTokenContract);
-    GameERC20Token gameYesTokenContract = new GameERC20Token("GameYesToken", "GYT", supplyLimit);
-    gameYesTokenContractAddress = address(gameYesTokenContract);
+    gameNoTokenContractAddress = gntAddr;
+    gameYesTokenContractAddress = gytAddr;
   }
 
   // creates a new listing
