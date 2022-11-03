@@ -47,8 +47,8 @@ library Models {
   }
 
   struct AllGames {
-    address[] ongoingGames;
-    address[] closedGames;
+    GameMetadata[] ongoingGames;
+    GameMetadata[] closedGames;
   }
 
   struct TokenInfo {

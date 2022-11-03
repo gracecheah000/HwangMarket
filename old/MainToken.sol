@@ -98,6 +98,21 @@ contract MainToken is IERC20, IListableToken {
     emit Transfer(msg.sender, address(0), amount);
   }
 
+  // player1 has to approve the token1 amount to the listing contract for spending
+  function listUpTokensForExchange(uint256 token1Amt, address token2, uint256 token2Amt) external returns (Models.ListingInfo memory) {
+    require(balanceOf[msg.sender] >= token1Amt, "insufficient balance in sender");
+    // require(totalAllowanceCommited[msg.sender] + token1Amt <= balanceOf[msg.sender], "total allowance for approver overcommited, you cannot allow more than you own");
+
+    // create a listing and approve the transfer amount for the newly listed contract
+    Models.ListingInfo memory listingInfo = mainContract.newListing(msg.sender, token1Amt, token2, token2Amt);
+    address listingAddress = listingInfo.listingAddr;
+    allowance[msg.sender][listingAddress] = token1Amt;
+    // totalAllowanceCommited[msg.sender] += token1Amt;
+    emit Approval(msg.sender, listingAddress, token1Amt);
+
+    return listingInfo;
+  }
+
   function acceptTokenExchange(address listingAddress) external returns (Models.ListingInfo memory) {
     ListingContract listingContract = ListingContract(listingAddress);
     require(listingContract.token2() == address(this), "listing wants a different token2");

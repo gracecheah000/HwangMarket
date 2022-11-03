@@ -2,6 +2,7 @@ const {
   alchemyApiKey,
   alchemyMaticApiKey,
   mnemonic,
+  INFURA_API_KEY,
 } = require("./secrets.json");
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 
@@ -43,6 +44,7 @@ module.exports = {
       confirmations: 0, // # of confirmations to wait between deployments. (default: 0)
       timeoutBlocks: 200, // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true, // Skip dry run before migrations? (default: false for public nets )
+      gasPrice: 207680002252,
     },
 
     matic: {
