@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
-import "./HwangMarket.sol";
 import "./IListableToken.sol";
-import "./IListingOwner.sol";
 import "./ListingContract.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
@@ -15,25 +13,18 @@ contract MainToken is IERC20, IListableToken {
   */
   uint public totalSupply;
   mapping(address => uint) public balanceOf;
-  // mapping(address => uint) public totalAllowanceCommited;
   mapping(address => mapping(address => uint)) public allowance;
   string public name = "HwangMarket";
   string public symbol = "HMTKN";
   uint8 public decimals = 18;
   uint256 public totalEthSupply = 0;
-  address public creator;
-  HwangMarket public mainContract;
 
   uint constant public eth2TknConversionRate = 1;
 
-  constructor() {
-    creator = msg.sender;
-    mainContract = HwangMarket(payable(msg.sender));
-  }
+  constructor() {}
 
   function transfer(address recipient, uint amount) external returns (bool) {
     require(balanceOf[msg.sender] >= amount, "insufficient balance in sender");
-    // totalAllowanceCommited[msg.sender] -= amount;
     balanceOf[msg.sender] -= amount;
     balanceOf[recipient] += amount;
     emit Transfer(msg.sender, recipient, amount);
@@ -42,8 +33,6 @@ contract MainToken is IERC20, IListableToken {
 
   function approve(address spender, uint amount) external returns (bool) {
     require(balanceOf[msg.sender] >= amount, "insufficient balance in sender");
-    // require(totalAllowanceCommited[msg.sender] + amount <= balanceOf[msg.sender], "total allowance for approver overcommited, you cannot allow more than you own");
-    // totalAllowanceCommited[msg.sender] += amount;
     allowance[msg.sender][spender] = amount;
     emit Approval(msg.sender, spender, amount);
     return true;
@@ -57,7 +46,6 @@ contract MainToken is IERC20, IListableToken {
     require(allowance[sender][msg.sender] >= amount, "insufficient allowance to recipient from msg sender");
     require(balanceOf[sender] >= amount, "insufficient balance in sender");
     
-    // totalAllowanceCommited[sender] -= amount;
     allowance[sender][msg.sender] -= amount;
     balanceOf[sender] -= amount;
     balanceOf[recipient] += amount;
@@ -82,7 +70,6 @@ contract MainToken is IERC20, IListableToken {
   function cashout(uint tokenAmt) external {
     require(balanceOf[msg.sender] >= tokenAmt, "insufficient balance in player");
 
-    // totalAllowanceCommited[msg.sender] -= tokenAmt;
     uint ethAmt = tokenAmt * (1 / eth2TknConversionRate);
     payable(msg.sender).transfer(ethAmt);
     balanceOf[msg.sender] -= tokenAmt;
@@ -102,27 +89,14 @@ contract MainToken is IERC20, IListableToken {
     ListingContract listingContract = ListingContract(listingAddress);
     require(listingContract.token2() == address(this), "listing wants a different token2");
     require(balanceOf[msg.sender] >= listingContract.token2Amt(), "insufficient balance in sender");
-    // require(totalAllowanceCommited[msg.sender] + listingContract.token2Amt() <= balanceOf[msg.sender], "total allowance for approver overcommited, you cannot allow more than you own");
 
     // perform approval
     allowance[msg.sender][listingAddress] = listingContract.token2Amt();
-    // totalAllowanceCommited[msg.sender] += listingContract.token2();
     emit Approval(msg.sender, listingAddress, listingContract.token2Amt());
 
     // trigger listing via main contract for book keeping
     Models.ListingInfo memory listingInfo = listingContract.trigger(msg.sender);
-    IListingOwner listingOwner = IListingOwner(listingContract.creator());
-    listingOwner.updateListing(listingInfo);
 
     return listingInfo;
-  }
-
-  // to get smart contract's balance
-  function getBalance() public view returns (uint256) {
-    return address(this).balance;
-  }
-
-  // @notice Will receive any eth sent to the contract
-  receive() external payable {
   }
 }

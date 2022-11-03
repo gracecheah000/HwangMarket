@@ -1,6 +1,12 @@
 [
     {
-        "inputs": [],
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "mainTokenAddr",
+                "type": "address"
+            }
+        ],
         "stateMutability": "nonpayable",
         "type": "constructor"
     },
@@ -314,69 +320,9 @@
         "name": "closedGames",
         "outputs": [
             {
-                "internalType": "uint256",
-                "name": "id",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "createdTime",
-                "type": "uint256"
-            },
-            {
                 "internalType": "address",
-                "name": "addr",
+                "name": "",
                 "type": "address"
-            },
-            {
-                "internalType": "string",
-                "name": "tag",
-                "type": "string"
-            },
-            {
-                "internalType": "string",
-                "name": "title",
-                "type": "string"
-            },
-            {
-                "internalType": "address",
-                "name": "oracleAddr",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "resolveTime",
-                "type": "uint256"
-            },
-            {
-                "internalType": "int256",
-                "name": "threshold",
-                "type": "int256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "totalAmount",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "betYesAmount",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "betNoAmount",
-                "type": "uint256"
-            },
-            {
-                "internalType": "bool",
-                "name": "ongoing",
-                "type": "bool"
-            },
-            {
-                "internalType": "uint8",
-                "name": "gameOutcome",
-                "type": "uint8"
             }
         ],
         "stateMutability": "view",
@@ -411,158 +357,10 @@
                 "type": "uint256"
             }
         ],
-        "name": "gameContractRegistry",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "id",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "createdTime",
-                "type": "uint256"
-            },
-            {
-                "internalType": "address",
-                "name": "addr",
-                "type": "address"
-            },
-            {
-                "internalType": "string",
-                "name": "tag",
-                "type": "string"
-            },
-            {
-                "internalType": "string",
-                "name": "title",
-                "type": "string"
-            },
-            {
-                "internalType": "address",
-                "name": "oracleAddr",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "resolveTime",
-                "type": "uint256"
-            },
-            {
-                "internalType": "int256",
-                "name": "threshold",
-                "type": "int256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "totalAmount",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "betYesAmount",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "betNoAmount",
-                "type": "uint256"
-            },
-            {
-                "internalType": "bool",
-                "name": "ongoing",
-                "type": "bool"
-            },
-            {
-                "internalType": "uint8",
-                "name": "gameOutcome",
-                "type": "uint8"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function",
-        "constant": true
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "name": "gameTokensRegistry",
+        "name": "gameId2Addr",
         "outputs": [
             {
                 "internalType": "address",
-                "name": "tokenAddr",
-                "type": "address"
-            },
-            {
-                "internalType": "uint8",
-                "name": "betSide",
-                "type": "uint8"
-            },
-            {
-                "internalType": "uint256",
-                "name": "gameId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "address",
-                "name": "gameAddr",
-                "type": "address"
-            },
-            {
-                "internalType": "string",
-                "name": "gameTag",
-                "type": "string"
-            },
-            {
-                "internalType": "string",
-                "name": "gameTitle",
-                "type": "string"
-            },
-            {
-                "internalType": "address",
-                "name": "gameOracleAddr",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "gameResolveTime",
-                "type": "uint256"
-            },
-            {
-                "internalType": "int256",
-                "name": "gameThreshold",
-                "type": "int256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function",
-        "constant": true
-    },
-    {
-        "inputs": [],
-        "name": "listingsCount",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function",
-        "constant": true
-    },
-    {
-        "inputs": [],
-        "name": "mainToken",
-        "outputs": [
-            {
-                "internalType": "contract MainToken",
                 "name": "",
                 "type": "address"
             }
@@ -596,69 +394,9 @@
         "name": "ongoingGames",
         "outputs": [
             {
-                "internalType": "uint256",
-                "name": "id",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "createdTime",
-                "type": "uint256"
-            },
-            {
                 "internalType": "address",
-                "name": "addr",
+                "name": "",
                 "type": "address"
-            },
-            {
-                "internalType": "string",
-                "name": "tag",
-                "type": "string"
-            },
-            {
-                "internalType": "string",
-                "name": "title",
-                "type": "string"
-            },
-            {
-                "internalType": "address",
-                "name": "oracleAddr",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "resolveTime",
-                "type": "uint256"
-            },
-            {
-                "internalType": "int256",
-                "name": "threshold",
-                "type": "int256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "totalAmount",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "betYesAmount",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "betNoAmount",
-                "type": "uint256"
-            },
-            {
-                "internalType": "bool",
-                "name": "ongoing",
-                "type": "bool"
-            },
-            {
-                "internalType": "uint8",
-                "name": "gameOutcome",
-                "type": "uint8"
             }
         ],
         "stateMutability": "view",
@@ -754,29 +492,9 @@
             }
         ],
         "name": "createGame",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
+        "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "getGameCount",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function",
-        "constant": true
     },
     {
         "inputs": [],
@@ -785,148 +503,14 @@
             {
                 "components": [
                     {
-                        "components": [
-                            {
-                                "internalType": "uint256",
-                                "name": "id",
-                                "type": "uint256"
-                            },
-                            {
-                                "internalType": "uint256",
-                                "name": "createdTime",
-                                "type": "uint256"
-                            },
-                            {
-                                "internalType": "address",
-                                "name": "addr",
-                                "type": "address"
-                            },
-                            {
-                                "internalType": "string",
-                                "name": "tag",
-                                "type": "string"
-                            },
-                            {
-                                "internalType": "string",
-                                "name": "title",
-                                "type": "string"
-                            },
-                            {
-                                "internalType": "address",
-                                "name": "oracleAddr",
-                                "type": "address"
-                            },
-                            {
-                                "internalType": "uint256",
-                                "name": "resolveTime",
-                                "type": "uint256"
-                            },
-                            {
-                                "internalType": "int256",
-                                "name": "threshold",
-                                "type": "int256"
-                            },
-                            {
-                                "internalType": "uint256",
-                                "name": "totalAmount",
-                                "type": "uint256"
-                            },
-                            {
-                                "internalType": "uint256",
-                                "name": "betYesAmount",
-                                "type": "uint256"
-                            },
-                            {
-                                "internalType": "uint256",
-                                "name": "betNoAmount",
-                                "type": "uint256"
-                            },
-                            {
-                                "internalType": "bool",
-                                "name": "ongoing",
-                                "type": "bool"
-                            },
-                            {
-                                "internalType": "uint8",
-                                "name": "gameOutcome",
-                                "type": "uint8"
-                            }
-                        ],
-                        "internalType": "struct Models.GameMetadata[]",
+                        "internalType": "address[]",
                         "name": "ongoingGames",
-                        "type": "tuple[]"
+                        "type": "address[]"
                     },
                     {
-                        "components": [
-                            {
-                                "internalType": "uint256",
-                                "name": "id",
-                                "type": "uint256"
-                            },
-                            {
-                                "internalType": "uint256",
-                                "name": "createdTime",
-                                "type": "uint256"
-                            },
-                            {
-                                "internalType": "address",
-                                "name": "addr",
-                                "type": "address"
-                            },
-                            {
-                                "internalType": "string",
-                                "name": "tag",
-                                "type": "string"
-                            },
-                            {
-                                "internalType": "string",
-                                "name": "title",
-                                "type": "string"
-                            },
-                            {
-                                "internalType": "address",
-                                "name": "oracleAddr",
-                                "type": "address"
-                            },
-                            {
-                                "internalType": "uint256",
-                                "name": "resolveTime",
-                                "type": "uint256"
-                            },
-                            {
-                                "internalType": "int256",
-                                "name": "threshold",
-                                "type": "int256"
-                            },
-                            {
-                                "internalType": "uint256",
-                                "name": "totalAmount",
-                                "type": "uint256"
-                            },
-                            {
-                                "internalType": "uint256",
-                                "name": "betYesAmount",
-                                "type": "uint256"
-                            },
-                            {
-                                "internalType": "uint256",
-                                "name": "betNoAmount",
-                                "type": "uint256"
-                            },
-                            {
-                                "internalType": "bool",
-                                "name": "ongoing",
-                                "type": "bool"
-                            },
-                            {
-                                "internalType": "uint8",
-                                "name": "gameOutcome",
-                                "type": "uint8"
-                            }
-                        ],
-                        "internalType": "struct Models.GameMetadata[]",
+                        "internalType": "address[]",
                         "name": "closedGames",
-                        "type": "tuple[]"
+                        "type": "address[]"
                     }
                 ],
                 "internalType": "struct Models.AllGames",
@@ -937,208 +521,6 @@
         "stateMutability": "view",
         "type": "function",
         "constant": true
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "player",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "token1Amt",
-                "type": "uint256"
-            },
-            {
-                "internalType": "address",
-                "name": "token2",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "token2Amt",
-                "type": "uint256"
-            }
-        ],
-        "name": "newListing",
-        "outputs": [
-            {
-                "components": [
-                    {
-                        "internalType": "uint256",
-                        "name": "listingId",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "listingAddr",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "player1",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "token1",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "token1Amt",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "player2",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "token2",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "token2Amt",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "bool",
-                        "name": "fulfilled",
-                        "type": "bool"
-                    }
-                ],
-                "internalType": "struct Models.ListingInfo",
-                "name": "",
-                "type": "tuple"
-            }
-        ],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "getAllListings",
-        "outputs": [
-            {
-                "components": [
-                    {
-                        "internalType": "uint256",
-                        "name": "listingId",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "listingAddr",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "player1",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "token1",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "token1Amt",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "player2",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "token2",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "token2Amt",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "bool",
-                        "name": "fulfilled",
-                        "type": "bool"
-                    }
-                ],
-                "internalType": "struct Models.ListingInfo[]",
-                "name": "",
-                "type": "tuple[]"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function",
-        "constant": true
-    },
-    {
-        "inputs": [
-            {
-                "components": [
-                    {
-                        "internalType": "uint256",
-                        "name": "listingId",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "listingAddr",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "player1",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "token1",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "token1Amt",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "player2",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "token2",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "token2Amt",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "bool",
-                        "name": "fulfilled",
-                        "type": "bool"
-                    }
-                ],
-                "internalType": "struct Models.ListingInfo",
-                "name": "listingInfo",
-                "type": "tuple"
-            }
-        ],
-        "name": "updateListing",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
     },
     {
         "inputs": [
@@ -1208,20 +590,6 @@
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "getBalance",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function",
-        "constant": true
     },
     {
         "inputs": [

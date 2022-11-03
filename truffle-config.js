@@ -72,7 +72,7 @@ module.exports = {
       settings: {
         optimizer: {
           enabled: true,
-          runs: 100, // Optimize for how many times you intend to run the code
+          runs: 1000, // Optimize for how many times you intend to run the code
         },
         evmVersion: "byzantium",
       },

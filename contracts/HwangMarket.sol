@@ -11,15 +11,14 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract HwangMarket {
   using SafeMath for uint256;
   address public mainTokenAddress;
-  MainToken public mainToken;
 
-  // // game contract factory is used to reduce contract build size :(
+  // game contract factory is used to reduce contract build size :(
   GameContractFactory gameFactory;
 
-  // // for all activity
+  // for all activity
   uint256 private trxId;
 
-  // // for all games created
+  // for all games created
   uint256 private gameCount;
   mapping(uint256 => address) public gameId2Addr;
   mapping(address => uint256) public gameAddr2Id;
@@ -38,11 +37,10 @@ contract HwangMarket {
 
   mapping(address => Models.Activity[]) public playersRecords;
 
-  constructor() {
+  constructor(address mainTokenAddr) {
     // we start counting from game 1, game id 0 is nonsense since its also default value
     gameCount = 1;
-    mainToken = new MainToken();
-    mainTokenAddress = address(mainToken);
+    mainTokenAddress = mainTokenAddr;
     gameFactory = new GameContractFactory();
   }
 
@@ -54,11 +52,10 @@ contract HwangMarket {
   event ListingFulfilled(Models.ListingInfo listingInfo);
 
   // create game contract instance
-  function createGame(uint256 resolveTime, address oracleAddr, int256 threshold, string memory tag, string memory title) public returns (address) {
-    GameContract newGame = gameFactory.createGame(address(this), resolveTime, oracleAddr, threshold); 
+  function createGame(uint256 resolveTime, address oracleAddr, int256 threshold, string memory tag, string memory title) external {
+    GameContract newGame = gameFactory.createGame(address(this), resolveTime, oracleAddr, threshold, tag, title, gameCount); 
     address newGameAddress = address(newGame);
     gameId2Addr[gameCount] = newGameAddress;
-
     gameAddr2Id[newGameAddress] = gameCount;
 
     ongoingGamesId2Idx[gameCount] = int256(ongoingGamesCnt);
@@ -83,7 +80,6 @@ contract HwangMarket {
     }));
 
     gameCount = SafeMath.add(gameCount, 1);
-    return newGameAddress;
   }
   
   // fetches all games

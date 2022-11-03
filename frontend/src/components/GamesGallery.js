@@ -64,6 +64,7 @@ const GamesGallery = ({ walletAddress }) => {
     async function getGames() {
       try {
         const games = await getAllGames();
+        console.log("check ", games);
         setOngoingGames(games.ongoingGames);
         setClosedGames(games.closedGames);
       } catch {

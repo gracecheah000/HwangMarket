@@ -177,7 +177,7 @@ export default function Game({ wallet }) {
   };
 
   const addNewListingListener = async () => {
-    if (!game) {
+    if (!game || !game.addr) {
       return;
     }
     console.log("new listing listener added");
@@ -202,7 +202,7 @@ export default function Game({ wallet }) {
   };
 
   const addListingFulfilledListener = async () => {
-    if (!game) {
+    if (!game || !game.addr) {
       return;
     }
     console.log("listing fulfilled listener added");
@@ -237,7 +237,12 @@ export default function Game({ wallet }) {
         console.log("listener error:", error);
       } else {
         const details = data.returnValues;
-        if (details.owner.toLowerCase() === wallet.toLowerCase()) {
+        if (
+          details &&
+          details.owner &&
+          wallet &&
+          details.owner.toLowerCase() === wallet.toLowerCase()
+        ) {
           toast({
             title: "Approval success!",
             description: `You have approved ${shortenAddr(
@@ -250,9 +255,12 @@ export default function Game({ wallet }) {
 
           if (
             game &&
+            game.addr &&
+            details &&
+            details.spender &&
             details.spender.toLowerCase() === game.addr.toLowerCase()
           ) {
-            setMain2TknAllowance(details.value);
+            setMain2TknAllowance(parseInt(details.value));
           }
         }
       }
@@ -261,7 +269,7 @@ export default function Game({ wallet }) {
 
   useEffect(() => {
     addHMTKNApprovalListener();
-  }, [hmtknAddr]);
+  }, [game && game.addr]);
 
   const addGYTListener = async () => {
     if (!gytAddr) {
@@ -403,7 +411,9 @@ export default function Game({ wallet }) {
   useEffect(() => {
     const updateAllowance = async () => {
       setMain2TknAllowance(
-        await getMainToken2SenderApprovalAmt(wallet, game && game.addr)
+        parseInt(
+          await getMainToken2SenderApprovalAmt(wallet, game && game.addr)
+        )
       );
     };
     const setBalance = async () => {
@@ -482,6 +492,9 @@ export default function Game({ wallet }) {
   }, [game && game.id]);
 
   useEffect(() => {
+    if (!game || !game.createdTime) {
+      return;
+    }
     const intervalId = setInterval(() => {
       //assign interval to a variable to clear it.
       let perc = Math.min(
@@ -773,15 +786,16 @@ export default function Game({ wallet }) {
                     whiteSpace="nowrap"
                     textDecor="underline"
                   >
-                    {new Intl.DateTimeFormat("en-US", {
-                      year: "numeric",
-                      month: "2-digit",
-                      day: "2-digit",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit",
-                      timeZoneName: "short",
-                    }).format(game.resolveTime * 1000)}
+                    {parseInt(game.resolveTime) &&
+                      new Intl.DateTimeFormat("en-US", {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                        timeZoneName: "short",
+                      }).format(parseInt(game.resolveTime) * 1000)}
                   </Text>
                   {/* <Timestamp date={Date} /> */}
                 </Box>
@@ -961,7 +975,6 @@ export default function Game({ wallet }) {
                         </NumberInputStepper>
                       </NumberInput>
                     </FormControl>
-
                     {!(
                       (buyTokenSide !== "1" && buyTokenSide !== "2") ||
                       buyTokenAmt <= 0 ||
@@ -1005,7 +1018,6 @@ export default function Game({ wallet }) {
                         </StatGroup>
                       </Box>
                     )}
-
                     {buyTokenAmt > maxLimit && (
                       <Box
                         border="1px solid red"
@@ -1020,7 +1032,6 @@ export default function Game({ wallet }) {
                         </Text>
                       </Box>
                     )}
-
                     <Button
                       colorScheme="green"
                       variant="outline"
@@ -1035,7 +1046,6 @@ export default function Game({ wallet }) {
                     >
                       Mint Game Tokens
                     </Button>
-
                     {buyTokenAmt > main2TknAllowance && (
                       <Box display="flex" alignItems="center" mt="2">
                         <FontAwesomeIcon

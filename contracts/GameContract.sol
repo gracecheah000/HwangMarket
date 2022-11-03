@@ -20,22 +20,22 @@ contract GameContract is IListingOwner {
     CLOSED
   }
 
-  enum hasWithdrawn {
-    YES,
-    NO
-  }
-
   enum gameSide {
     UNKNOWN,
     YES,
     NO
   }
 
-  address public creator; 
+  address public hwangMarketAddr; 
   GameStatus public status;
   gameSide public gameOutcome;
   uint256 public gameResolveTime;
   int256 public threshold;
+  string public tag;
+  string public title;
+  uint256 public id;
+  uint256 public createdTime;
+  address public oracleAddr;
 
   mapping(gameSide => uint256) public amtPlacedOnSide; // remember how much amount is placed on each side in terms of HMTKN
   AggregatorV3Interface internal priceFeed;
@@ -66,8 +66,6 @@ contract GameContract is IListingOwner {
   Trx[] trxs;
   uint256 internal trxId;
 
-  HwangMarket public mainContract;
-
   address public gameNoTokenContractAddress;
   GameERC20Token public gameNoTokenContract;
   address public gameYesTokenContractAddress;
@@ -81,15 +79,18 @@ contract GameContract is IListingOwner {
 
   // constructor takes in a resolve time, a oracleAddr (oracle address), and a threshold, 
   // where a gameSide of NO indicates < threshold, and a gameSide of YES indicates >= threshold
-  constructor(address _creator, uint256 resolveTime, address oracleAddr, int256 thres) {
-    creator = _creator;
-    mainContract = HwangMarket(_creator);
+  constructor(address hmAddr , uint256 resolveTime, address _oracleAddr, int256 thres, string memory _tag, string memory _title, uint256 _id) {
+    hwangMarketAddr = hmAddr;
     status = GameStatus.OPEN;
     gameResolveTime = resolveTime; // set when the game is allowed to conclude
     gameOutcome = gameSide.UNKNOWN; // explicitly set gameOutcome to undecided
-    
     priceFeed = AggregatorV3Interface(oracleAddr);
     threshold = thres;
+    tag = _tag;
+    title = _title;
+    id = _id;
+    createdTime = block.timestamp;
+    oracleAddr = _oracleAddr;
 
     // every game contract deploys 2 IERC20 token contracts
     // yes and no tokens
@@ -151,41 +152,41 @@ contract GameContract is IListingOwner {
       return price;
   }
 
-  // to check if message sent is by creator
-  modifier isCreator(bool isEqual) {
-    if (isEqual) {
-      require(
-        creator == msg.sender,
-        "You are not the creator of this game!"
-      );
-    }
-    _;
-  }
-
   // to get game information
   function getGameInfo() 
-    public 
+    external 
     view 
-    returns (
-      address,  // creator
-      GameStatus, // status
-      gameSide,
-      uint256,
-      int256
-  ) {
-    return (creator, status, gameOutcome, gameResolveTime, threshold);
+    returns (Models.GameMetadata memory) {
+    uint8 side = 0;
+    if (gameOutcome == gameSide.YES) {
+      side = 1;
+    } else if (gameOutcome == gameSide.NO) {
+      side = 2;
+    }
+    
+    return Models.GameMetadata({
+      id: id,
+      createdTime: createdTime,
+      addr: address(this),
+      tag: tag,
+      title: title,
+      oracleAddr: oracleAddr,
+      resolveTime: gameResolveTime,
+      threshold: threshold,
+      totalAmount: amtPlacedOnSide[gameSide.YES] + amtPlacedOnSide[gameSide.NO],
+      betYesAmount: amtPlacedOnSide[gameSide.YES],
+      betNoAmount: amtPlacedOnSide[gameSide.NO],
+      ongoing: gameOutcome == gameSide.UNKNOWN,
+      gameOutcome: side
+    });
   }
 
   // payable keyword should allow depositing of ethereum into smart contract
   // allow msg.sender address to register as a player
-  function addPlayer(address _player, uint256 hwangMktTokenAmt, uint8 betSide)
-    public
-    isCreator(false) {
+  function addPlayer(address _player, uint256 hwangMktTokenAmt, uint8 betSide) public {
       require(status == GameStatus.OPEN, "Game is closed, no further bets accepted");
       require(betSide == 1 || betSide == 2, "bet side is not recognised");
       require(block.timestamp <= gameResolveTime, "cannot put bets after resolve time");
-      require(mainContract.mainToken().allowance(_player, address(this)) >= hwangMktTokenAmt, "player's hwang market token allowance too low");
-      require(mainContract.mainToken().balanceOf(_player) >= hwangMktTokenAmt, "player's hwang market token balance too low");
       gameSide side = gameSide.NO; // 1 - YES, 2 - NO
       if (betSide == 1) {
         side = gameSide.YES;
@@ -195,12 +196,11 @@ contract GameContract is IListingOwner {
         gameTokenContract = gameYesTokenContract;
       }
       uint256 requestedMintAmt = hwangMktTokenAmt * mainTkn2GameTknConversionRate;
-      require(gameTokenContract.totalSupply() + requestedMintAmt <= gameTokenContract.supplyLimit(), "game token cannot mint requested amount");
-
       // mint the respective 1-1 game token to the player
       gameTokenContract.mint(_player, requestedMintAmt);
       // collect the player's main token, deposit under the game address
-      _safeTransferFrom(mainContract.mainToken(), _player, address(this), hwangMktTokenAmt);
+      HwangMarket hm = HwangMarket(hwangMarketAddr);
+      _safeTransferFrom(IERC20(hm.mainTokenAddress()), _player, address(this), hwangMktTokenAmt);
 
       // book keeping
       amtPlacedOnSide[side] += hwangMktTokenAmt;
@@ -216,19 +216,13 @@ contract GameContract is IListingOwner {
       }));
       trxId++;
 
-      mainContract.playerJoinedSide(_player, betSide, hwangMktTokenAmt, timestamp);
+      hm.playerJoinedSide(_player, betSide, hwangMktTokenAmt, timestamp);
     }
 
   // for now, we return all, can consider performing pagination here
   function getTrxs() external view returns(Trx[] memory) {
     return trxs;
   }
-
-  // disable any backdoor by creator
-  // // allow creator to cancel the game created.
-  // function cancelGame() public isCreator(true) {
-  //   status = GameStatus.CLOSED;
-  // }
 
   function getSideAmt(uint8 s) public view returns (uint256) {
     require((s == 1 || s == 2), "side must be one of 1 or 2");
@@ -256,7 +250,7 @@ contract GameContract is IListingOwner {
     }
     gameOutcome = side;
 
-    mainContract.concludeGame(rawSide);
+    HwangMarket(hwangMarketAddr).concludeGame(rawSide);
   }
 
   // allow winners to withdraw their winnings in term of HMTKN
@@ -280,7 +274,7 @@ contract GameContract is IListingOwner {
     uint256 winnings = ((hwangMarketTokenAmt / amtPlacedOnSide[gameOutcome]) * amtPlacedOnSide[oppSide]) + hwangMarketTokenAmt;
 
     // initiate transfer of hwang market tokens from game to player
-    mainContract.mainToken().transfer(msg.sender, winnings);
+    IERC20(HwangMarket(hwangMarketAddr).mainTokenAddress()).transfer(msg.sender, winnings);
     // initiate transfer of game token from player back to game
     _safeTransferFrom(gameTokenContract, msg.sender, address(this), withdrawAmt);
 
@@ -299,14 +293,7 @@ contract GameContract is IListingOwner {
       to: msg.sender
     }));
     trxId++;
-    mainContract.playerWithdrawWinnings(msg.sender, betSide, winnings, timestamp);
-  }
-
-  // function playerAddListing(address _player, )
-
-  // to get smart contract's balance
-  function getBalance() public view returns (uint256) {
-    return address(this).balance;
+    HwangMarket(hwangMarketAddr).playerWithdrawWinnings(msg.sender, betSide, winnings, timestamp);
   }
 
   function _safeTransferFrom(

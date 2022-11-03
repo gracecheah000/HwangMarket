@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
+import "./IListingOwner.sol";
 import "./Models.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -55,7 +56,7 @@ contract ListingContract {
     player2 = _player2;
     fulfilled = true;
 
-    return Models.ListingInfo({
+    Models.ListingInfo memory listingInfo = Models.ListingInfo({
       listingId: listingId,
       listingAddr: address(this),
       player1: player1,
@@ -66,6 +67,9 @@ contract ListingContract {
       token2Amt: token2Amt,
       fulfilled: fulfilled
     });
+    IListingOwner(creator).updateListing(listingInfo);
+
+    return listingInfo;
   }
 
   function _safeTransferFrom(

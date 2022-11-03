@@ -78,8 +78,22 @@ export const createAGame = async (
 };
 
 export const getGameById = async (id) => {
-  const game = await hwangMarket.methods.gameContractRegistry(id).call();
-  return game;
+  if (!id) {
+    return {};
+  }
+  const gameAddr = await hwangMarket.methods.gameId2Addr(id).call();
+  const gameContract = new web3.eth.Contract(gameContractABI, gameAddr);
+  return await gameContract.methods.getGameInfo().call();
+};
+
+export const getGameByAddr = async (gameAddr) => {
+  if (!gameAddr) {
+    console.log("get game by addr received invalid addr (empty)");
+    return;
+  }
+  const gameContract = new web3.eth.Contract(gameContractABI, gameAddr);
+  const info = await gameContract.methods.getGameInfo().call();
+  return info;
 };
 
 export const getMainTokenAddr = async () => {
@@ -87,6 +101,9 @@ export const getMainTokenAddr = async () => {
 };
 
 export const getGameTrxsByAddr = async (gameAddr) => {
+  if (!gameAddr) {
+    return [];
+  }
   const gameContract = new web3.eth.Contract(gameContractABI, gameAddr);
   const trxs = await gameContract.methods.getTrxs().call();
   console.log("received trxs: ", trxs);
@@ -172,8 +189,14 @@ export const connectWallet = async () => {
 };
 
 export const getAllGames = async () => {
-  const games = await hwangMarket.methods.getAllGames().call();
-  return games;
+  const gamesAddrs = await hwangMarket.methods.getAllGames().call();
+  const ongoingGames = await Promise.all(
+    gamesAddrs.ongoingGames.map(async (addr) => await getGameByAddr(addr))
+  );
+  const closedGames = await Promise.all(
+    gamesAddrs.closedGames.map(async (addr) => await getGameByAddr(addr))
+  );
+  return { ongoingGames, closedGames };
 };
 
 export const getMainTokenBalance = async (ownerAddr) => {
@@ -387,15 +410,12 @@ export const listTokensUp = async (
 
   //sign the transaction
   try {
-    const iListableTokenContract = new web3.eth.Contract(
-      iListableTokenABI,
-      token1Addr
-    );
+    const gameToken = new web3.eth.Contract(gameTokenABI, token1Addr);
 
     const transactionParameters = {
       to: token1Addr, // Required except during contract publications.
       from: wallet, // must match user's active address.
-      data: iListableTokenContract.methods
+      data: gameToken.methods
         .listUpTokensForExchange(token1Amt, token2Addr, token2Amt)
         .encodeABI(),
     };

@@ -2,11 +2,6 @@
     {
         "inputs": [
             {
-                "internalType": "address",
-                "name": "addr",
-                "type": "address"
-            },
-            {
                 "internalType": "uint256",
                 "name": "resolveTime",
                 "type": "uint256"
@@ -20,6 +15,21 @@
                 "internalType": "int256",
                 "name": "threshold",
                 "type": "int256"
+            },
+            {
+                "internalType": "string",
+                "name": "tag",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "title",
+                "type": "string"
+            },
+            {
+                "internalType": "uint256",
+                "name": "id",
+                "type": "uint256"
             }
         ],
         "name": "createGame",
