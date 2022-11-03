@@ -15,31 +15,10 @@ contract GameContract is IListingOwner {
   using SafeMath for uint256;
   using IterableMapping for IterableMapping.ListingsMap;
 
-  enum GameStatus {
-    OPEN,
-    CLOSED
-  }
-
-  enum gameSide {
-    UNKNOWN,
-    YES,
-    NO
-  }
-
   address public hwangMarketAddr; 
-  GameStatus public status;
-  gameSide public gameOutcome;
-  uint256 public gameResolveTime;
-  int256 public threshold;
-  string public tag;
-  string public title;
-  uint256 public id;
-  uint256 public createdTime;
-  address public oracleAddr;
+  Models.GameMetadata public gameInfo;
 
-  mapping(gameSide => uint256) public amtPlacedOnSide; // remember how much amount is placed on each side in terms of HMTKN
   AggregatorV3Interface internal priceFeed;
-
 
   // Trx types constant
   string constant BetActivityType = "BET";
@@ -49,27 +28,11 @@ contract GameContract is IListingOwner {
   uint constant mainTkn2GameTknConversionRate = 1;
   uint constant supplyLimit = 1000;
 
-  // for every record, we track a list of transactions
-  struct Trx {
-    // Common fields
-    uint256 trxId;
-    string activityType;  // "BET", "SELL"
-    uint256 trxAmt;
-    uint256 trxTime; // when the trx was initiated
-    uint8 gameSide;
-
-    // if BET, from = game contract addr, to = player addr
-    // if SELL, from = seller addr, to = buyer addr
-    address from;
-    address to;
-  }
-  Trx[] trxs;
+  Models.Trx[] trxs;
   uint256 internal trxId;
 
   address public gameNoTokenContractAddress;
-  GameERC20Token public gameNoTokenContract;
   address public gameYesTokenContractAddress;
-  GameERC20Token public gameYesTokenContract;
 
   IterableMapping.ListingsMap private listingContracts;
   uint256 public listingsCount;
@@ -79,24 +42,29 @@ contract GameContract is IListingOwner {
 
   // constructor takes in a resolve time, a oracleAddr (oracle address), and a threshold, 
   // where a gameSide of NO indicates < threshold, and a gameSide of YES indicates >= threshold
-  constructor(address hmAddr , uint256 resolveTime, address _oracleAddr, int256 thres, string memory _tag, string memory _title, uint256 _id) {
+  constructor(address hmAddr , uint256 _resolveTime, address _oracleAddr, int256 thres, string memory _tag, string memory _title, uint256 _id) {
     hwangMarketAddr = hmAddr;
-    status = GameStatus.OPEN;
-    gameResolveTime = resolveTime; // set when the game is allowed to conclude
-    gameOutcome = gameSide.UNKNOWN; // explicitly set gameOutcome to undecided
-    priceFeed = AggregatorV3Interface(oracleAddr);
-    threshold = thres;
-    tag = _tag;
-    title = _title;
-    id = _id;
-    createdTime = block.timestamp;
-    oracleAddr = _oracleAddr;
+    priceFeed = AggregatorV3Interface(_oracleAddr);
+    gameInfo = Models.GameMetadata({
+      id: _id,
+      createdTime: block.timestamp,
+      addr: address(this),
+      tag: _tag,
+      title: _title,
+      oracleAddr: _oracleAddr,
+      resolveTime: _resolveTime,
+      threshold: thres,
+      totalAmount: 0,
+      betYesAmount: 0,
+      betNoAmount: 0,
+      gameOutcome: 0
+    });
 
     // every game contract deploys 2 IERC20 token contracts
     // yes and no tokens
-    gameNoTokenContract = new GameERC20Token("GameNoToken", "GNT", supplyLimit);
+    GameERC20Token gameNoTokenContract = new GameERC20Token("GameNoToken", "GNT", supplyLimit);
     gameNoTokenContractAddress = address(gameNoTokenContract);
-    gameYesTokenContract = new GameERC20Token("GameYesToken", "GYT", supplyLimit);
+    GameERC20Token gameYesTokenContract = new GameERC20Token("GameYesToken", "GYT", supplyLimit);
     gameYesTokenContractAddress = address(gameYesTokenContract);
   }
 
@@ -128,6 +96,10 @@ contract GameContract is IListingOwner {
     return listingContracts.get(listingId).listingAddr;
   }
 
+  function getGameInfo() external view returns (Models.GameMetadata memory) {
+    return gameInfo;
+  }
+
   function getAllListings() external view returns (Models.ListingInfo[] memory) {
     return listingContracts.getlistingValues();
   }
@@ -152,48 +124,16 @@ contract GameContract is IListingOwner {
       return price;
   }
 
-  // to get game information
-  function getGameInfo() 
-    external 
-    view 
-    returns (Models.GameMetadata memory) {
-    uint8 side = 0;
-    if (gameOutcome == gameSide.YES) {
-      side = 1;
-    } else if (gameOutcome == gameSide.NO) {
-      side = 2;
-    }
-    
-    return Models.GameMetadata({
-      id: id,
-      createdTime: createdTime,
-      addr: address(this),
-      tag: tag,
-      title: title,
-      oracleAddr: oracleAddr,
-      resolveTime: gameResolveTime,
-      threshold: threshold,
-      totalAmount: amtPlacedOnSide[gameSide.YES] + amtPlacedOnSide[gameSide.NO],
-      betYesAmount: amtPlacedOnSide[gameSide.YES],
-      betNoAmount: amtPlacedOnSide[gameSide.NO],
-      ongoing: gameOutcome == gameSide.UNKNOWN,
-      gameOutcome: side
-    });
-  }
-
   // payable keyword should allow depositing of ethereum into smart contract
   // allow msg.sender address to register as a player
   function addPlayer(address _player, uint256 hwangMktTokenAmt, uint8 betSide) public {
-      require(status == GameStatus.OPEN, "Game is closed, no further bets accepted");
+      require(gameInfo.gameOutcome == 0, "Game is closed, no further bets accepted");
       require(betSide == 1 || betSide == 2, "bet side is not recognised");
-      require(block.timestamp <= gameResolveTime, "cannot put bets after resolve time");
-      gameSide side = gameSide.NO; // 1 - YES, 2 - NO
+      require(block.timestamp <= gameInfo.resolveTime, "cannot put bets after resolve time");
+
+      GameERC20Token gameTokenContract = GameERC20Token(gameNoTokenContractAddress);
       if (betSide == 1) {
-        side = gameSide.YES;
-      }
-      GameERC20Token gameTokenContract = gameNoTokenContract;
-      if (betSide == 1) {
-        gameTokenContract = gameYesTokenContract;
+        gameTokenContract = GameERC20Token(gameYesTokenContractAddress);
       }
       uint256 requestedMintAmt = hwangMktTokenAmt * mainTkn2GameTknConversionRate;
       // mint the respective 1-1 game token to the player
@@ -203,9 +143,13 @@ contract GameContract is IListingOwner {
       _safeTransferFrom(IERC20(hm.mainTokenAddress()), _player, address(this), hwangMktTokenAmt);
 
       // book keeping
-      amtPlacedOnSide[side] += hwangMktTokenAmt;
+      if (betSide == 1) {
+        gameInfo.betYesAmount += hwangMktTokenAmt;
+      } else {
+        gameInfo.betNoAmount += hwangMktTokenAmt;
+      }
       uint256 timestamp = block.timestamp;
-      trxs.push(Trx({
+      trxs.push(Models.Trx({
         trxId: trxId,
         activityType: BetActivityType,
         gameSide: betSide,
@@ -219,81 +163,60 @@ contract GameContract is IListingOwner {
       hm.playerJoinedSide(_player, betSide, hwangMktTokenAmt, timestamp);
     }
 
-  // for now, we return all, can consider performing pagination here
-  function getTrxs() external view returns(Trx[] memory) {
-    return trxs;
-  }
-
-  function getSideAmt(uint8 s) public view returns (uint256) {
-    require((s == 1 || s == 2), "side must be one of 1 or 2");
-    gameSide side = gameSide.NO;
-    if (s == 1) {
-      side = gameSide.YES;
-    }
-
-    return amtPlacedOnSide[side];
-  }
-
   // impt: anyone can call the contract to perform upkeep but it has a guard to protect against early resolves
   // and it checks against a "trusted" oracle chainlink to fetch the result
   function performUpkeep() public {
-    if (block.timestamp < gameResolveTime || status == GameStatus.CLOSED) {
+    if (block.timestamp < gameInfo.resolveTime || gameInfo.gameOutcome != 0) {
       return;
     }
 
-    status = GameStatus.CLOSED;
-    gameSide side = gameSide.NO;
     uint8 rawSide = 2;
-    if (getLatestPrice() >= threshold) {
-      side = gameSide.YES;
+    if (getLatestPrice() >= gameInfo.threshold) {
       rawSide = 1;
     }
-    gameOutcome = side;
+    gameInfo.gameOutcome = rawSide;
 
     HwangMarket(hwangMarketAddr).concludeGame(rawSide);
   }
 
   // allow winners to withdraw their winnings in term of HMTKN
   function withdrawWinnings(uint withdrawAmt) public {
-    require(status == GameStatus.CLOSED, "game is not yet closed"); // game must be closed
-    require(gameOutcome != gameSide.UNKNOWN, "game outcome cannot be unknown"); // game outcome cannot be unknown
-    IERC20 gameTokenContract = gameNoTokenContract;
-    if (gameOutcome == gameSide.YES) {
-      gameTokenContract = gameYesTokenContract;
+    require(gameInfo.gameOutcome != 0, "game outcome cannot be unknown"); // game outcome cannot be unknown
+    IERC20 gameTokenContract = IERC20(gameNoTokenContractAddress);
+    if (gameInfo.gameOutcome == 1) {
+      gameTokenContract = IERC20(gameYesTokenContractAddress);
     }
     require(gameTokenContract.allowance(msg.sender, address(this)) >= withdrawAmt, "player must approve withdraw amount");
     require(gameTokenContract.balanceOf(msg.sender) >= withdrawAmt, "player must have game token amount to withdraw");
 
     // where to calculate amount of winnings
     // calculated winnings = (player's bet amount / total bet amount on winning side) * total bet amount on losing side
-    gameSide oppSide = gameSide.NO;
-    if (gameOutcome == gameSide.NO) {
-      oppSide = gameSide.YES;
+    uint256 amtOnWinning = gameInfo.betNoAmount;
+    uint256 amtOnLosing = gameInfo.betYesAmount;
+    if (gameInfo.gameOutcome == 1) {
+      amtOnWinning = gameInfo.betYesAmount;
+      amtOnLosing = gameInfo.betNoAmount;
     }
-    uint256 hwangMarketTokenAmt = (1 / mainTkn2GameTknConversionRate) * withdrawAmt;
-    uint256 winnings = ((hwangMarketTokenAmt / amtPlacedOnSide[gameOutcome]) * amtPlacedOnSide[oppSide]) + hwangMarketTokenAmt;
+    uint256 deposit = (1 / mainTkn2GameTknConversionRate) * withdrawAmt;
+    uint256 winnings = ((deposit / amtOnWinning) * amtOnLosing) + deposit;
 
     // initiate transfer of hwang market tokens from game to player
     IERC20(HwangMarket(hwangMarketAddr).mainTokenAddress()).transfer(msg.sender, winnings);
     // initiate transfer of game token from player back to game
     _safeTransferFrom(gameTokenContract, msg.sender, address(this), withdrawAmt);
 
-    uint8 betSide = 2;
-    if (gameOutcome == gameSide.YES) {
-      betSide = 1;
-    }
     uint256 timestamp = block.timestamp;
-    trxs.push(Trx({
+    trxs.push(Models.Trx({
       trxId: trxId,
       activityType: WithdrawActivityType,
-      gameSide: betSide,
+      gameSide: gameInfo.gameOutcome,
       trxAmt: winnings,
       trxTime: timestamp,
       from: address(this),
       to: msg.sender
     }));
     trxId++;
-    HwangMarket(hwangMarketAddr).playerWithdrawWinnings(msg.sender, betSide, winnings, timestamp);
+    HwangMarket(hwangMarketAddr).playerWithdrawWinnings(msg.sender, gameInfo.gameOutcome, winnings, timestamp);
   }
 
   function _safeTransferFrom(

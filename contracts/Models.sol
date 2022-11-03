@@ -42,7 +42,6 @@ library Models {
     uint256 totalAmount;
     uint256 betYesAmount;
     uint256 betNoAmount;
-    bool ongoing;
     uint8 gameOutcome;
   }
 
@@ -62,5 +61,20 @@ library Models {
     address gameOracleAddr;
     uint256 gameResolveTime;
     int256 gameThreshold;
+  }
+
+  // for every record, we track a list of transactions
+  struct Trx {
+    // Common fields
+    uint256 trxId;
+    string activityType;  // "BET", "SELL"
+    uint256 trxAmt;
+    uint256 trxTime; // when the trx was initiated
+    uint8 gameSide;
+
+    // if BET, from = game contract addr, to = player addr
+    // if SELL, from = seller addr, to = buyer addr
+    address from;
+    address to;
   }
 }

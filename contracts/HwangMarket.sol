@@ -37,11 +37,11 @@ contract HwangMarket {
 
   mapping(address => Models.Activity[]) public playersRecords;
 
-  constructor(address mainTokenAddr) {
+  constructor(address mainTokenAddr, address gameContractFactoryAddr) {
     // we start counting from game 1, game id 0 is nonsense since its also default value
     gameCount = 1;
     mainTokenAddress = mainTokenAddr;
-    gameFactory = new GameContractFactory();
+    gameFactory = GameContractFactory(gameContractFactoryAddr);
   }
 
   event GameCreated(Models.GameMetadata gameMetadata);
@@ -63,21 +63,7 @@ contract HwangMarket {
 
     ongoingGamesCnt = SafeMath.add(ongoingGamesCnt, 1);
 
-    emit GameCreated(Models.GameMetadata({
-      id: gameCount,
-      createdTime: block.timestamp,
-      addr: newGameAddress,
-      tag: tag,
-      title: title,
-      oracleAddr: oracleAddr,
-      resolveTime: resolveTime,
-      threshold: threshold,
-      totalAmount: 0,
-      betYesAmount: 0,
-      betNoAmount: 0,
-      ongoing: true,
-      gameOutcome: 0
-    }));
+    emit GameCreated(newGame.getGameInfo());
 
     gameCount = SafeMath.add(gameCount, 1);
   }

@@ -576,7 +576,6 @@ export default function Game({ wallet }) {
     createdTime: "1666719306"
     gameOutcome: "0"
     id: "2"
-    ongoing: true
     oracleAddr: "0x0d79df66BE487753B02D015Fb622DED7f0E9798d"
     resolveTime: "1666722600"
     tag: "Price Feeds"
