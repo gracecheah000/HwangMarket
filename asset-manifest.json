@@ -1,25 +1,25 @@
 {
   "files": {
     "main.css": "/HwangMarket/static/css/main.ec5dcaab.chunk.css",
-    "main.js": "/HwangMarket/static/js/main.b0adcc85.chunk.js",
-    "main.js.map": "/HwangMarket/static/js/main.b0adcc85.chunk.js.map",
+    "main.js": "/HwangMarket/static/js/main.6b51918b.chunk.js",
+    "main.js.map": "/HwangMarket/static/js/main.6b51918b.chunk.js.map",
     "runtime-main.js": "/HwangMarket/static/js/runtime-main.c97552c2.js",
     "runtime-main.js.map": "/HwangMarket/static/js/runtime-main.c97552c2.js.map",
     "static/css/2.6c0f60ba.chunk.css": "/HwangMarket/static/css/2.6c0f60ba.chunk.css",
-    "static/js/2.24153bdc.chunk.js": "/HwangMarket/static/js/2.24153bdc.chunk.js",
-    "static/js/2.24153bdc.chunk.js.map": "/HwangMarket/static/js/2.24153bdc.chunk.js.map",
+    "static/js/2.f884e95c.chunk.js": "/HwangMarket/static/js/2.f884e95c.chunk.js",
+    "static/js/2.f884e95c.chunk.js.map": "/HwangMarket/static/js/2.f884e95c.chunk.js.map",
     "static/js/3.19dd7bfd.chunk.js": "/HwangMarket/static/js/3.19dd7bfd.chunk.js",
     "static/js/3.19dd7bfd.chunk.js.map": "/HwangMarket/static/js/3.19dd7bfd.chunk.js.map",
     "index.html": "/HwangMarket/index.html",
     "static/css/2.6c0f60ba.chunk.css.map": "/HwangMarket/static/css/2.6c0f60ba.chunk.css.map",
     "static/css/main.ec5dcaab.chunk.css.map": "/HwangMarket/static/css/main.ec5dcaab.chunk.css.map",
-    "static/js/2.24153bdc.chunk.js.LICENSE.txt": "/HwangMarket/static/js/2.24153bdc.chunk.js.LICENSE.txt"
+    "static/js/2.f884e95c.chunk.js.LICENSE.txt": "/HwangMarket/static/js/2.f884e95c.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.c97552c2.js",
     "static/css/2.6c0f60ba.chunk.css",
-    "static/js/2.24153bdc.chunk.js",
+    "static/js/2.f884e95c.chunk.js",
     "static/css/main.ec5dcaab.chunk.css",
-    "static/js/main.b0adcc85.chunk.js"
+    "static/js/main.6b51918b.chunk.js"
   ]
 }
