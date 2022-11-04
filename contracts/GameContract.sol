@@ -16,6 +16,7 @@ contract GameContract is IListingOwner {
   using SafeMath for uint256;
   using IterableMapping for IterableMapping.ListingsMap;
 
+  address creator;
   address public hwangMarketAddr; 
   Models.GameMetadata public gameInfo;
 
@@ -29,9 +30,10 @@ contract GameContract is IListingOwner {
   uint constant mainTkn2GameTknConversionRate = 1;
   uint constant supplyLimit = 1000;
 
-  Models.Trx[] trxs;
+  Models.Trx[] public trxs;
   uint256 internal trxId;
 
+  bool private tokenInit;
   address public gameNoTokenContractAddress;
   address public gameYesTokenContractAddress;
 
@@ -41,9 +43,9 @@ contract GameContract is IListingOwner {
   event NewListing(Models.ListingInfo listingInfo);
   event ListingFulfilled(Models.ListingInfo listingInfo);
 
-  // constructor takes in a resolve time, a oracleAddr (oracle address), and a threshold, 
-  // where a gameSide of NO indicates < threshold, and a gameSide of YES indicates >= threshold
-  constructor(address hmAddr , uint256 _resolveTime, address _oracleAddr, int256 thres, string memory _tag, string memory _title, uint256 _id, address gytAddr, address gntAddr) {
+  // a gameSide of NO indicates < threshold, and a gameSide of YES indicates >= threshold
+  constructor(address hmAddr , uint256 _resolveTime, address _oracleAddr, int256 thres, string memory _tag, string memory _title, uint256 _id) {
+    creator = msg.sender;
     hwangMarketAddr = hmAddr;
     priceFeed = AggregatorV3Interface(_oracleAddr);
     gameInfo = Models.GameMetadata({
@@ -61,19 +63,23 @@ contract GameContract is IListingOwner {
       gameOutcome: 0
     });
 
-    // every game contract deploys 2 IERC20 token contracts
-    // yes and no tokens
-    gameNoTokenContractAddress = gntAddr;
+    tokenInit = false;    
+  }
+
+  function initTokenAddr(address gytAddr, address gntAddr) external {
+    require(msg.sender == creator && !tokenInit);
+
     gameYesTokenContractAddress = gytAddr;
+    gameNoTokenContractAddress = gntAddr;
   }
 
   // creates a new listing
   function newListing(address _player, uint256 token1Amt, address token2, uint256 token2Amt) public returns(Models.ListingInfo memory) {
-    require(msg.sender == gameNoTokenContractAddress || msg.sender == gameYesTokenContractAddress, "only game token can create new listings");
-    uint256 newListingId = listingsCount;
-    ListingContract newListingContract = new ListingContract(newListingId, _player, msg.sender, token1Amt, token2, token2Amt);
+    require(msg.sender == gameNoTokenContractAddress || msg.sender == gameYesTokenContractAddress);
+    ListingContract newListingContract = new ListingContract(listingsCount, _player, msg.sender, token1Amt, token2, token2Amt);
     Models.ListingInfo memory listingInfo = Models.ListingInfo({
-      listingId: newListingId,
+      listingId: listingsCount,
+      createdTime: newListingContract.createdTime(),
       listingAddr: address(newListingContract),
       player1: _player,
       token1: msg.sender,
@@ -81,11 +87,12 @@ contract GameContract is IListingOwner {
       player2: address(0),
       token2: token2,
       token2Amt: token2Amt,
-      fulfilled: false
+      fulfilled: false,
+      fulfilledTime: 0
     });
-    listingContracts.set(newListingId, listingInfo);
+    listingContracts.set(listingsCount, listingInfo);
 
-    listingsCount++;
+    listingsCount = listingsCount.add(1);
 
     emit NewListing(listingInfo);
     return listingInfo;
@@ -103,32 +110,16 @@ contract GameContract is IListingOwner {
     return listingContracts.getlistingValues();
   }
 
-  function updateListing(Models.ListingInfo memory listingInfo) public {
+  function updateListing(Models.ListingInfo memory listingInfo) external {
     listingContracts.set(listingInfo.listingId, listingInfo);
 
     emit ListingFulfilled(listingInfo);
   }
 
-  /**
-    * Returns the latest price
-    */
-  function getLatestPrice() public view returns (int) {
-      (
-          /*uint80 roundID*/,
-          int price,
-          /*uint startedAt*/,
-          /*uint timeStamp*/,
-          /*uint80 answeredInRound*/
-      ) = priceFeed.latestRoundData();
-      return price;
-  }
-
   // payable keyword should allow depositing of ethereum into smart contract
   // allow msg.sender address to register as a player
   function addPlayer(address _player, uint256 hwangMktTokenAmt, uint8 betSide) public {
-      require(gameInfo.gameOutcome == 0, "Game is closed, no further bets accepted");
-      require(betSide == 1 || betSide == 2, "bet side is not recognised");
-      require(block.timestamp <= gameInfo.resolveTime, "cannot put bets after resolve time");
+      require(gameInfo.gameOutcome == 0 && (betSide == 1 || betSide == 2) && block.timestamp <= gameInfo.resolveTime);
 
       GameERC20Token gameTokenContract = GameERC20Token(gameNoTokenContractAddress);
       if (betSide == 1) {
@@ -157,7 +148,7 @@ contract GameContract is IListingOwner {
         from: address(this),
         to: _player
       }));
-      trxId++;
+      trxId = trxId.add(1);
 
       hm.playerJoinedSide(_player, betSide, hwangMktTokenAmt, timestamp);
     }
@@ -168,9 +159,15 @@ contract GameContract is IListingOwner {
     if (block.timestamp < gameInfo.resolveTime || gameInfo.gameOutcome != 0) {
       return;
     }
-
+    (
+      /*uint80 roundID*/,
+      int price,
+      /*uint startedAt*/,
+      /*uint timeStamp*/,
+      /*uint80 answeredInRound*/
+    ) = priceFeed.latestRoundData();
     uint8 rawSide = 2;
-    if (getLatestPrice() >= gameInfo.threshold) {
+    if (price >= gameInfo.threshold) {
       rawSide = 1;
     }
     gameInfo.gameOutcome = rawSide;
@@ -180,13 +177,11 @@ contract GameContract is IListingOwner {
 
   // allow winners to withdraw their winnings in term of HMTKN
   function withdrawWinnings(uint withdrawAmt) public {
-    require(gameInfo.gameOutcome != 0, "game outcome cannot be unknown"); // game outcome cannot be unknown
+    require(gameInfo.gameOutcome != 0); // game outcome cannot be unknown
     IERC20 gameTokenContract = IERC20(gameNoTokenContractAddress);
     if (gameInfo.gameOutcome == 1) {
       gameTokenContract = IERC20(gameYesTokenContractAddress);
     }
-    require(gameTokenContract.allowance(msg.sender, address(this)) >= withdrawAmt, "player must approve withdraw amount");
-    require(gameTokenContract.balanceOf(msg.sender) >= withdrawAmt, "player must have game token amount to withdraw");
 
     // where to calculate amount of winnings
     // calculated winnings = (player's bet amount / total bet amount on winning side) * total bet amount on losing side
@@ -214,8 +209,12 @@ contract GameContract is IListingOwner {
       from: address(this),
       to: msg.sender
     }));
-    trxId++;
+    trxId = trxId.add(1);
     HwangMarket(hwangMarketAddr).playerWithdrawWinnings(msg.sender, gameInfo.gameOutcome, winnings, timestamp);
+  }
+
+  function getTrxs() external view returns (Models.Trx[] memory) {
+    return trxs;
   }
 
   function _safeTransferFrom(
@@ -225,6 +224,6 @@ contract GameContract is IListingOwner {
     uint amount
     ) private {
       bool sent = token.transferFrom(sender, recipient, amount);
-      require(sent, "Token transfer failed");
+      require(sent);
     }
 }

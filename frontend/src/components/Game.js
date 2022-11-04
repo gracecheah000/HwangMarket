@@ -151,6 +151,9 @@ export default function Game({ wallet }) {
   };
 
   const addPlayerJoinedGameListener = () => {
+    if (!game) {
+      return;
+    }
     console.log("hwang market player joined game listener added");
     hwangMarket.events.PlayerJoinedGameEvent({}, async (error, data) => {
       if (error) {
@@ -159,6 +162,9 @@ export default function Game({ wallet }) {
         const details = data.returnValues;
         if (details.betSide === "1") {
           setGame((prev) => {
+            if (!prev) {
+              return;
+            }
             const copy = JSON.parse(JSON.stringify(prev));
             copy.betYesAmount =
               parseInt(copy.betYesAmount) + parseInt(details.amount);
@@ -166,6 +172,9 @@ export default function Game({ wallet }) {
           });
         } else {
           setGame((prev) => {
+            if (!prev) {
+              return;
+            }
             const copy = JSON.parse(JSON.stringify(prev));
             copy.betNoAmount =
               parseInt(copy.betNoAmount) + parseInt(details.amount);

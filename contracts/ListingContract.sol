@@ -11,6 +11,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract ListingContract {
   address public creator;
   uint256 public listingId;
+  uint256 public createdTime;
+  uint256 public newListingContract;
   address public player1;
   address public token1;
   IERC20 public token1Contract;
@@ -26,6 +28,7 @@ contract ListingContract {
   constructor(uint256 _listingId, address _player, address _token1, uint256 _token1Amt, address _token2, uint256 _token2Amt) {
     creator = msg.sender;
     listingId = _listingId;
+    createdTime = block.timestamp;
     player1 = _player;
     token1 = _token1;
     token1Amt = _token1Amt;
@@ -58,6 +61,7 @@ contract ListingContract {
 
     Models.ListingInfo memory listingInfo = Models.ListingInfo({
       listingId: listingId,
+      createdTime: createdTime,
       listingAddr: address(this),
       player1: player1,
       token1: token1,
@@ -65,7 +69,8 @@ contract ListingContract {
       player2: player2,
       token2: token2,
       token2Amt: token2Amt,
-      fulfilled: fulfilled
+      fulfilled: fulfilled,
+      fulfilledTime: block.timestamp
     });
     IListingOwner(creator).updateListing(listingInfo);
 

@@ -16,12 +16,22 @@ import {
   Badge,
   Tooltip,
   Tag,
+  StatGroup,
+  Stat,
+  StatLabel,
+  StatNumber,
+  StatHelpText,
+  StatArrow,
 } from "@chakra-ui/react";
 import {
+  faArrowRight,
+  faLineChart,
   faPlus,
   faPlusCircle,
   faPlusSquare,
   faQuestion,
+  faStop,
+  faStopCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useEffect, useState } from "react";
@@ -44,14 +54,18 @@ export default function GameActiveListings({
   const [openListings, setOpenListings] = useState([]);
   const [bgColor, setBgColor] = useState("");
   const [closedListings, setClosedListings] = useState([]);
-  const gameContract = new web3.eth.Contract(gameContractABI, game.addr);
+  const [gntPrice, setGntPrice] = useState([1, 1]);
+  const [gytPrice, setGytPrice] = useState([1, 1]);
   const [delListing, setDelListing] = useState(null);
 
   const { colorMode } = useColorMode();
 
   const addNewListingListener = () => {
+    if (!game || !game.addr || !gytAddr || !gntAddr) {
+      return;
+    }
     console.log("game new listing listener added");
-
+    const gameContract = new web3.eth.Contract(gameContractABI, game.addr);
     gameContract.events.NewListing({}, async (error, data) => {
       if (error) {
         console.log("listener error:", error);
@@ -82,7 +96,7 @@ export default function GameActiveListings({
   };
 
   const addListingFulfilledListener = async () => {
-    if (!game) {
+    if (!game || !game.addr || !gytAddr || !gntAddr) {
       return;
     }
     console.log("listing fulfilled listener added");
@@ -101,7 +115,42 @@ export default function GameActiveListings({
         setOpenListings((prev) =>
           prev.map((ol) => (ol.listingId === details.listingId ? details : ol))
         );
-        await sleep(1500);
+
+        if (details.token2.toLowerCase() === hmtknAddr.toLowerCase()) {
+          if (details.token1.toLowerCase() === gytAddr.toLowerCase()) {
+            setGytPrice((prev) => {
+              console.log("new", [
+                prev[1],
+                +(
+                  Number(details.token2Amt) / Number(details.token1Amt)
+                ).toFixed(2),
+              ]);
+              return [
+                prev[1],
+                +(
+                  Number(details.token2Amt) / Number(details.token1Amt)
+                ).toFixed(2),
+              ];
+            });
+          } else if (details.token1.toLowerCase() === gntAddr.toLowerCase()) {
+            setGntPrice((prev) => {
+              console.log("new", [
+                prev[1],
+                +(
+                  Number(details.token2Amt) / Number(details.token1Amt)
+                ).toFixed(2),
+              ]);
+              return [
+                prev[1],
+                +(
+                  Number(details.token2Amt) / Number(details.token1Amt)
+                ).toFixed(2),
+              ];
+            });
+          }
+        }
+
+        await sleep(1000);
 
         setOpenListings((prev) =>
           prev.filter((ol) => ol.listingId !== details.listingId)
@@ -115,15 +164,65 @@ export default function GameActiveListings({
   useEffect(() => {
     addNewListingListener();
     addListingFulfilledListener();
+  }, [game && game.addr, gytAddr, gntAddr]);
 
+  useEffect(() => {
     async function getAllListings() {
+      console.log("get all listings...");
+      if (!game || !game.addr) {
+        return;
+      }
+      const gameContract = new web3.eth.Contract(gameContractABI, game.addr);
       const listings = await gameContract.methods.getAllListings().call();
-      console.log("listings loaded in", listings);
       setOpenListings(listings.filter((l) => !l.fulfilled));
-      setClosedListings(listings.filter((l) => l.fulfilled));
+      const closed = listings.filter((l) => l.fulfilled);
+
+      setClosedListings(closed);
+      const closedGyt = closed.filter(
+        (l) =>
+          l.token1.toLowerCase() === gytAddr.toLowerCase() &&
+          l.token2.toLowerCase() === hmtknAddr.toLowerCase()
+      );
+      closedGyt.sort(
+        (x, y) => parseInt(y.fulfilledTime) - parseInt(x.fulfilledTime)
+      );
+
+      setGytPrice([
+        closedGyt.length > 1
+          ? +(
+              Number(closedGyt[1].token2Amt) / Number(closedGyt[1].token1Amt)
+            ).toFixed(2)
+          : 1,
+        closedGyt.length > 0
+          ? +(
+              Number(closedGyt[0].token2Amt) / Number(closedGyt[0].token1Amt)
+            ).toFixed(2)
+          : 1,
+      ]);
+
+      const closedGnt = closed.filter(
+        (l) =>
+          l.token1.toLowerCase() === gntAddr.toLowerCase() &&
+          l.token2.toLowerCase() === hmtknAddr.toLowerCase()
+      );
+      closedGnt.sort(
+        (x, y) => parseInt(y.fulfilledTime) - parseInt(x.fulfilledTime)
+      );
+      setGntPrice([
+        closedGnt.length > 1
+          ? +(
+              Number(closedGnt[1].token2Amt) / Number(closedGnt[1].token1Amt)
+            ).toFixed(2)
+          : 1,
+        closedGnt.length > 0
+          ? +(
+              Number(closedGnt[0].token2Amt) / Number(closedGnt[0].token1Amt)
+            ).toFixed(2)
+          : 1,
+      ]);
     }
     getAllListings();
-  }, []);
+  }, [game && game.addr, hmtknAddr, gytAddr, gntAddr]);
 
   const parseAddr = (addr) => {
     return addr === gntAddr
@@ -136,11 +235,51 @@ export default function GameActiveListings({
   };
 
   return (
-    <Box
-    // border="1px solid"
-    // borderColor={colorMode === "light" ? "gray" : "white"}
-    // borderRadius="21px"
-    >
+    <Box>
+      <Box display="flex" columnGap="16" mb="5">
+        <Box>
+          <Heading size="md">Insights</Heading>
+          <FontAwesomeIcon icon={faLineChart} />
+        </Box>
+        <StatGroup w="100%">
+          <Stat size="xs">
+            <StatLabel>GYT Price</StatLabel>
+            <StatNumber>{gytPrice[1]} HMTKN</StatNumber>
+            <StatHelpText>
+              {gytPrice[0] !== gytPrice[1] ? (
+                <StatArrow
+                  type={gytPrice[1] > gytPrice[0] ? "increase" : "decrease"}
+                />
+              ) : (
+                <FontAwesomeIcon
+                  icon={faArrowRight}
+                  style={{ marginRight: "5px" }}
+                />
+              )}
+              Prev: {gytPrice[0]} HMTKN
+            </StatHelpText>
+          </Stat>
+
+          <Stat size="xs">
+            <StatLabel>GNT Price</StatLabel>
+            <StatNumber>{gntPrice[1]} HMTKN</StatNumber>
+            <StatHelpText>
+              {gntPrice[0] !== gntPrice[1] ? (
+                <StatArrow
+                  type={gntPrice[1] > gntPrice[0] ? "increase" : "decrease"}
+                />
+              ) : (
+                <FontAwesomeIcon
+                  icon={faArrowRight}
+                  style={{ marginRight: "5px" }}
+                />
+              )}
+              Prev: {gntPrice[0]} HMTKN
+            </StatHelpText>
+          </Stat>
+        </StatGroup>
+      </Box>
+
       <Box
         mb="5"
         display="flex"
@@ -172,10 +311,9 @@ export default function GameActiveListings({
           </TableCaption>
           <Thead>
             <Tr>
-              <Th>Offered Token</Th>
-              <Th>Offered Amount</Th>
-              <Th>Expecting Token</Th>
-              <Th>Expecting Amount</Th>
+              <Th>Created time</Th>
+              <Th>Bid</Th>
+              <Th>Ask</Th>
               <Th>Info</Th>
             </Tr>
           </Thead>
@@ -186,7 +324,7 @@ export default function GameActiveListings({
                 .reverse()
                 .map((ol, i) => (
                   <Tr
-                    key={`${ol.listingId}|${ol.player2}|${ol.fulfilled}`}
+                    key={`${ol.listingId}`}
                     bgColor={
                       delListing && delListing.listingId === ol.listingId
                         ? colorMode === "light"
@@ -197,10 +335,23 @@ export default function GameActiveListings({
                         : ""
                     }
                   >
-                    <Td fontWeight="bold">{parseAddr(ol.token1)}</Td>
-                    <Td>{ol.token1Amt}</Td>
-                    <Td fontWeight="bold">{parseAddr(ol.token2)}</Td>
-                    <Td>{ol.token2Amt}</Td>
+                    <Td>
+                      {new Intl.DateTimeFormat("en-US", {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                        timeZoneName: "short",
+                      }).format(parseInt(ol.createdTime) * 1000)}
+                    </Td>
+                    <Td fontWeight="bold">
+                      {ol.token1Amt} {parseAddr(ol.token1)}
+                    </Td>
+                    <Td fontWeight="bold">
+                      {ol.token2Amt} {parseAddr(ol.token2)}
+                    </Td>
                     <Td>
                       <Button
                         size="sm"

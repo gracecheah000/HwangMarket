@@ -4,6 +4,7 @@ pragma solidity >=0.4.22 <0.9.0;
 library Models {
   struct ListingInfo {
     uint256 listingId;
+    uint256 createdTime;
     address listingAddr;
     address player1;
     address token1;
@@ -13,6 +14,7 @@ library Models {
     uint256 token2Amt;
 
     bool fulfilled;
+    uint256 fulfilledTime;
   }
 
   // Additionally, we want to keep a record of all player's movements on chain.

@@ -15,7 +15,6 @@ contract HwangMarket {
 
   // factory contracts are used to reduce contract build size :(
   GameContractFactory gameFactory;
-  GameERC20TokenFactory gameTokenFactory;
 
   // for all activity
   uint256 private trxId;
@@ -39,12 +38,11 @@ contract HwangMarket {
 
   mapping(address => Models.Activity[]) public playersRecords;
 
-  constructor(address mainTokenAddr, address gameContractFactoryAddr, address gameTokenFactoryAddr) {
+  constructor(address mainTokenAddr, address gameContractFactoryAddr) {
     // we start counting from game 1, game id 0 is nonsense since its also default value
     gameCount = 1;
     mainTokenAddress = mainTokenAddr;
     gameFactory = GameContractFactory(gameContractFactoryAddr);
-    gameTokenFactory = GameERC20TokenFactory(gameTokenFactoryAddr);
   }
 
   event GameCreated(Models.GameMetadata gameMetadata);
@@ -56,9 +54,8 @@ contract HwangMarket {
 
   // create game contract instance
   function createGame(uint256 resolveTime, address oracleAddr, int256 threshold, string memory tag, string memory title) external {
-    address gytAddr = gameTokenFactory.createGameERC20Token("GameYes", "GYT", 1000);
-    address gntAddr = gameTokenFactory.createGameERC20Token("GameNo", "GNT", 1000);
-    address newGameAddress = gameFactory.createGame(address(this), resolveTime, oracleAddr, threshold, tag, title, gameCount, gytAddr, gntAddr);
+    address newGameAddress = gameFactory.createGame(address(this), resolveTime, oracleAddr, threshold, tag, title, gameCount);
+    
     gameId2Addr[gameCount] = newGameAddress;
     gameAddr2Id[newGameAddress] = gameCount;
 

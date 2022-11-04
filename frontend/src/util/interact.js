@@ -109,7 +109,6 @@ export const getGameTrxsByAddr = async (gameAddr) => {
   }
   const gameContract = new web3.eth.Contract(gameContractABI, gameAddr);
   const trxs = await gameContract.methods.getTrxs().call();
-  console.log("received trxs: ", trxs);
   return trxs;
 };
 

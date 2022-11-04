@@ -1,62 +1,72 @@
 [
-  {
-    "inputs": [
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "listingId",
-            "type": "uint256"
-          },
-          {
-            "internalType": "address",
-            "name": "listingAddr",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "player1",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "token1",
-            "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "token1Amt",
-            "type": "uint256"
-          },
-          {
-            "internalType": "address",
-            "name": "player2",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "token2",
-            "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "token2Amt",
-            "type": "uint256"
-          },
-          {
-            "internalType": "bool",
-            "name": "fulfilled",
-            "type": "bool"
-          }
+    {
+        "inputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "uint256",
+                        "name": "listingId",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "createdTime",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "listingAddr",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "player1",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "token1",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "token1Amt",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "player2",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "token2",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "token2Amt",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "fulfilled",
+                        "type": "bool"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "fulfilledTime",
+                        "type": "uint256"
+                    }
+                ],
+                "internalType": "struct Models.ListingInfo",
+                "name": "listingInfo",
+                "type": "tuple"
+            }
         ],
-        "internalType": "struct Models.ListingInfo",
-        "name": "listingInfo",
-        "type": "tuple"
-      }
-    ],
-    "name": "updateListing",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  }
+        "name": "updateListing",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
 ]

@@ -9,14 +9,16 @@ async function doDeploy(deployer, network) {
   if (network === "development") {
     const iterableMapping = await deployer.deploy(IterableMapping);
     await deployer.link(iterableMapping, GameContractFactory);
-    const gameContractFactory = await deployer.deploy(GameContractFactory);
     const gameTokenFactory = await deployer.deploy(GameTokenFactory);
+    const gameContractFactory = await deployer.deploy(
+      GameContractFactory,
+      gameTokenFactory.address
+    );
     const mainToken = await deployer.deploy(MainToken);
     await deployer.deploy(
       HwangMarket,
       mainToken.address,
-      gameContractFactory.address,
-      gameTokenFactory.address
+      gameContractFactory.address
     );
   } else {
     // Because we are poor, we deploy the contracts one at a time
@@ -47,8 +49,7 @@ async function doDeploy(deployer, network) {
     await deployer.deploy(
       HwangMarket,
       mainTokenAddress,
-      gameContractFactoryAddr,
-      gameTokenFactoryAddr
+      gameContractFactoryAddr
     ); // 0xd71D6E0979bF943bB14adA44a3877c4855299B95
   }
 }
