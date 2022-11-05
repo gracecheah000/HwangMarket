@@ -1,0 +1,61 @@
+{
+  "name": "hello-world-part-four",
+  "version": "0.1.0",
+  "homepage":"https://gracecheah000.github.io/HwangMarket/",
+  "private": true,
+  "dependencies": {
+    "@alch/alchemy-web3": "^1.4.6",
+    "@chakra-ui/react": "^1.0.0",
+    "@emotion/react": "^11.0.0",
+    "@fortawesome/fontawesome-svg-core": "^6.2.0",
+    "@fortawesome/free-solid-svg-icons": "^6.2.0",
+    "@fortawesome/react-fontawesome": "^0.2.0",
+    "@ramonak/react-progress-bar": "^5.0.3",
+    "@testing-library/jest-dom": "^5.11.4",
+    "@testing-library/react": "^11.1.0",
+    "@testing-library/user-event": "^12.1.10",
+    "bootstrap": "^5.2.2",
+    "chakra-ui-flashless": "^0.0.8",
+    "dotenv": "^9.0.2",
+    "ethers": "^5.7.1",
+    "framer-motion": "^4.0.0",
+    "react": "^17.0.2",
+    "react-circular-progressbar": "^2.1.0",
+    "react-datepicker": "^4.8.0",
+    "react-dom": "^17.0.2",
+    "react-minimal-pie-chart": "^8.3.0",
+    "react-router-dom": "^6.4.2",
+    "react-scripts": "4.0.3",
+    "web-vitals": "^1.0.1",
+    "web3": "^1.8.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "gh-pages": "^4.0.0"
+  }
+}
