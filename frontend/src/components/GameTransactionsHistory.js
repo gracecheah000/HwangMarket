@@ -27,7 +27,7 @@ import {
 import { getGameTrxsByAddr, hwangMarket } from "../util/interact";
 import { shortenAddr, sleep } from "../util/helper";
 
-export default function GameTransactionsHistory({ gameAddr }) {
+export default function GameTransactionsHistory({ gameAddr, setPJL2 }) {
   const [gameTrxs, setGameTrxs] = useState([]);
   const [bgColor, setBgColor] = useState("");
   const { colorMode } = useColorMode();
@@ -43,10 +43,13 @@ export default function GameTransactionsHistory({ gameAddr }) {
 
   const addPlayerJoinedGameListener = () => {
     console.log("hwang market player joined game listener added");
-    hwangMarket.events.PlayerJoinedGameEvent({}, async (error, data) => {
-      if (error) {
-        console.log("listener error:", error);
-      } else {
+    const l = hwangMarket.events
+      .PlayerJoinedGameEvent({}, (error, data) => {
+        if (error) {
+          console.log("listener error:", error);
+        }
+      })
+      .on("data", async (data) => {
         const details = data.returnValues;
         setGameTrxs((prev) => [
           ...prev,
@@ -68,7 +71,11 @@ export default function GameTransactionsHistory({ gameAddr }) {
         await sleep(1500);
         // reset back to normal color
         setBgColor("");
-      }
+      });
+
+    setPJL2((prev) => {
+      prev && prev.removeAllListeners("data");
+      return l;
     });
   };
 

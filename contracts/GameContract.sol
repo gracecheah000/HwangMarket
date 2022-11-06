@@ -192,7 +192,7 @@ contract GameContract is IListingOwner {
       amtOnLosing = gameInfo.betNoAmount;
     }
     uint256 deposit = (1 / mainTkn2GameTknConversionRate) * withdrawAmt;
-    uint256 winnings = ((deposit / amtOnWinning) * amtOnLosing) + deposit;
+    uint256 winnings = ((deposit * amtOnLosing) / amtOnWinning) + deposit;
 
     // initiate transfer of hwang market tokens from game to player
     IERC20(HwangMarket(hwangMarketAddr).mainTokenAddress()).transfer(msg.sender, winnings);

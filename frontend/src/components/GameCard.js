@@ -128,7 +128,7 @@ const GameCard = ({ game }) => {
           <Box px="5" py="2" textAlign="center" mr="1">
             <Text fontSize="md">Total Amount</Text>
             <Text fontSize="lg" fontWeight="bold">
-              {game.totalAmount} HMTKN
+              {parseInt(game.betNoAmount) + parseInt(game.betYesAmount)} HMTKN
             </Text>
           </Box>
           <Box pb="5" pt="1" mx="auto" w="450px" maxW="65%">

@@ -20,6 +20,7 @@ import {
   StatNumber,
   StatHelpText,
   StatArrow,
+  Code,
 } from "@chakra-ui/react";
 import { withdrawWinnings } from "../../util/interact";
 import { shortenAddr } from "../../util/helper";
@@ -65,11 +66,10 @@ export default function ClaimWinningDialog({
     onClose();
   };
 
-  console.log(withdrawAmt);
-  const winningAmt = BigNumber.from(withdrawAmt).add(
-    BigNumber.from(withdrawAmt)
-      .div(totalWinAmt)
-      .mul(BigNumber.from(totalLoseAmt))
+  console.log(withdrawAmt, totalLoseAmt, totalWinAmt);
+  const winningAmt = Math.floor(
+    parseInt(withdrawAmt) +
+      (parseInt(withdrawAmt) / parseInt(totalWinAmt)) * parseInt(totalLoseAmt)
   );
 
   return (
@@ -118,6 +118,22 @@ export default function ClaimWinningDialog({
               FAQ 🙋
             </Heading>
             <Accordion maxW="550px" allowToggle>
+              <AccordionItem>
+                <Heading>
+                  <AccordionButton>
+                    <Box flex="1" textAlign="left">
+                      How are my winnings calculated?
+                    </Box>
+                    <AccordionIcon />
+                  </AccordionButton>
+                </Heading>
+                <AccordionPanel pb={4}>
+                  <Code fontSize="9pt">
+                    Winnings = (Your ratio of the winning pool) * (total amount
+                    in losing pool) + your initial deposit
+                  </Code>
+                </AccordionPanel>
+              </AccordionItem>
               <AccordionItem>
                 <Heading>
                   <AccordionButton>

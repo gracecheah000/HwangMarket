@@ -40,7 +40,13 @@ import { BigNumber } from "ethers";
 import GetHMTKN from "./hmtknModals/GetHMTKN";
 import CashoutHMTKN from "./hmtknModals/CashoutHMTKN";
 
-const CommonTop = ({ wallet, setWallet, colorMode, toggleColorMode }) => {
+const CommonTop = ({
+  wallet,
+  setWallet,
+  colorMode,
+  toggleColorMode,
+  setCTL,
+}) => {
   const [status, setStatus] = useState("");
   const [hmtknAddr, setHmtknAddr] = useState("");
   const [hmtknBalance, setHmtknBalance] = useState("-");
@@ -56,10 +62,13 @@ const CommonTop = ({ wallet, setWallet, colorMode, toggleColorMode }) => {
       mainTokenABI,
       await getMainTokenAddr()
     );
-    mainTokenContract.events.Transfer({}, (error, data) => {
-      if (error) {
-        console.log("listener error:", error);
-      } else {
+    const t = mainTokenContract.events
+      .Transfer({}, (error, data) => {
+        if (error) {
+          console.log("listener error:", error);
+        }
+      })
+      .on("data", (data) => {
         const details = data.returnValues;
         /*
         from: "0x3E0944145a5B83D03C09b93CD4CCdFaE6dd817AB"
@@ -96,7 +105,10 @@ const CommonTop = ({ wallet, setWallet, colorMode, toggleColorMode }) => {
             BigNumber.from(prev).sub(BigNumber.from(details.value)).toString()
           );
         }
-      }
+      });
+    setCTL((prev) => {
+      prev && prev.removeAllListeners("data");
+      return t;
     });
   };
 
@@ -247,6 +259,7 @@ const CommonTop = ({ wallet, setWallet, colorMode, toggleColorMode }) => {
           >
             <Stat>
               <StatLabel>HMTKN Balance</StatLabel>
+              {/* <StatNumber>{hmtknBalance} HMTKN</StatNumber> */}
               <StatNumber>{hmtknBalance} HMTKN</StatNumber>
               <StatHelpText>{shortenAddr(hmtknAddr)}</StatHelpText>
             </Stat>

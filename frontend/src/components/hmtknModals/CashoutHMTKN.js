@@ -78,7 +78,7 @@ export default function CashoutHMTKN({ wallet, isOpen, onClose }) {
       });
     } else {
       toast({
-        title: "Creating listing...",
+        title: "Transaction processing...",
         description: `Your transaction hash is: ${trxHash}. This message will be removed in 20 seconds and lost permanently, save the transaction hash if you wish.`,
         status: "info",
         duration: 20000,

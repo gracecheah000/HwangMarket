@@ -116,8 +116,8 @@
       "https://faucet.goerli.mudit.blog"
     ],
     "nativeCurrency": {
-      "name": "Görli Ether",
-      "symbol": "ETH",
+      "name": "Görli Wei",
+      "symbol": "ETH WEI",
       "decimals": 18
     },
     "infoURL": "https://goerli.net/#about",

@@ -47,6 +47,8 @@ export default function GameActiveListings({
   hmtknAddr,
   setIsCreate,
   setListingSelected,
+  setGAL,
+  setGALF,
 }) {
   // useEffect(() => {
   //   getGameTrxs(gameAddr, setGameTrxs);
@@ -66,10 +68,13 @@ export default function GameActiveListings({
     }
     console.log("game new listing listener added");
     const gameContract = new web3.eth.Contract(gameContractABI, game.addr);
-    gameContract.events.NewListing({}, async (error, data) => {
-      if (error) {
-        console.log("listener error:", error);
-      } else {
+    const l = gameContract.events
+      .NewListing({}, (error, data) => {
+        if (error) {
+          console.log("listener error:", error);
+        }
+      })
+      .on("data", async (data) => {
         const details = data.returnValues.listingInfo;
         /*
           fulfilled: false
@@ -91,7 +96,11 @@ export default function GameActiveListings({
         await sleep(1500);
         // reset back to normal color
         setBgColor("");
-      }
+      });
+
+    setGAL((prev) => {
+      prev && prev.removeAllListeners("data");
+      return l;
     });
   };
 
@@ -104,10 +113,13 @@ export default function GameActiveListings({
       gameContractABI,
       game.addr
     );
-    gameContract.events.ListingFulfilled({}, async (error, data) => {
-      if (error) {
-        console.log("listener error:", error);
-      } else {
+    const l = gameContract.events
+      .ListingFulfilled({}, (error, data) => {
+        if (error) {
+          console.log("listener error:", error);
+        }
+      })
+      .on("data", async (data) => {
         const details = data.returnValues.listingInfo;
         // let it shine red for 1.5s
         setDelListing(details);
@@ -157,7 +169,11 @@ export default function GameActiveListings({
         );
         setClosedListings((prev) => [...prev, details]);
         setDelListing(null);
-      }
+      });
+
+    setGALF((prev) => {
+      prev && prev.removeAllListeners("data");
+      return l;
     });
   };
 

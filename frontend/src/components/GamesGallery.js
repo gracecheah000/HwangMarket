@@ -16,7 +16,7 @@ import { hwangMarket, getAllGames } from "../util/interact";
 import CreateGame from "./CreateGame";
 import GameCard from "./GameCard";
 
-const GamesGallery = ({ walletAddress }) => {
+const GamesGallery = ({ walletAddress, setGC1 }) => {
   const [status, setStatus] = useState("");
   const [getGameId, setGetGameId] = useState(0);
   const [isLoading, setLoading] = useState(true);
@@ -29,22 +29,31 @@ const GamesGallery = ({ walletAddress }) => {
 
   function addHwangMarketListener() {
     console.log("hwang market game created listener added");
-    hwangMarket.events.GameCreated({}, (error, data) => {
-      if (error) {
-        setStatus("😥 Cannot connect to the network");
-        console.log(error.message);
-        setLoading(false);
-      } else if (data && data.returnValues && data.returnValues.gameMetadata) {
-        toast({
-          title: "New game created!",
-          description: `${data.returnValues.gameMetadata.title}`,
-          status: "success",
-          duration: 8000,
-          isClosable: true,
-        });
-        setOngoingGames((prev) => [...prev, data.returnValues.gameMetadata]);
-        // setStatus("🎉 Your game was created!");
-      }
+    const g1 = hwangMarket.events
+      .GameCreated({}, (error, data) => {
+        if (error) {
+          setStatus("😥 Cannot connect to the network");
+          console.log(error.message);
+          setLoading(false);
+        }
+      })
+      .on("data", (data) => {
+        if (data && data.returnValues && data.returnValues.gameMetadata) {
+          toast({
+            title: "New game created!",
+            description: `${data.returnValues.gameMetadata.title}`,
+            status: "success",
+            duration: 8000,
+            isClosable: true,
+          });
+          setOngoingGames((prev) => [...prev, data.returnValues.gameMetadata]);
+          // setStatus("🎉 Your game was created!");
+        }
+      });
+
+    setGC1((prev) => {
+      prev && prev.removeAllListeners("data");
+      return g1;
     });
 
     hwangMarket.events.GameConcluded({}, async (error, data) => {

@@ -74,7 +74,21 @@ import ClaimWinningIncAllowanceDialog from "./GameDialogs/ClaimWinningIncAllowan
 import ClaimWinningDialog from "./GameDialogs/ClaimWinningDialog";
 import { BigNumber } from "ethers";
 
-export default function Game({ wallet }) {
+export default function Game({
+  wallet,
+  setPJL,
+  setNL,
+  setLF,
+  setTknL,
+  setYLA,
+  setYLT,
+  setNLA,
+  setNLT,
+  setGC,
+  setGAL,
+  setGALF,
+  setPJL2,
+}) {
   const { id } = useParams();
   const [game, setGame] = useState(null);
   const { colorMode } = useColorMode();
@@ -155,10 +169,13 @@ export default function Game({ wallet }) {
       return;
     }
     console.log("hwang market player joined game listener added");
-    hwangMarket.events.PlayerJoinedGameEvent({}, async (error, data) => {
-      if (error) {
-        console.log("listener error:", error);
-      } else {
+    const l = hwangMarket.events
+      .PlayerJoinedGameEvent({}, async (error, data) => {
+        if (error) {
+          console.log("listener error:", error);
+        }
+      })
+      .on("data", (data) => {
         const details = data.returnValues;
         if (details.betSide === "1") {
           setGame((prev) => {
@@ -181,7 +198,12 @@ export default function Game({ wallet }) {
             return copy;
           });
         }
-      }
+      });
+
+    setPJL((prev) => {
+      prev && prev.removeAllListeners("data");
+
+      return l;
     });
   };
 
@@ -194,10 +216,13 @@ export default function Game({ wallet }) {
       gameContractABI,
       game.addr
     );
-    gameContract.events.NewListing({}, async (error, data) => {
-      if (error) {
-        console.log("listener error:", error);
-      } else {
+    const l = gameContract.events
+      .NewListing({}, async (error, data) => {
+        if (error) {
+          console.log("listener error:", error);
+        }
+      })
+      .on("data", (data) => {
         // const details = data.returnValues;
         toast({
           title: "Listing created!",
@@ -206,7 +231,10 @@ export default function Game({ wallet }) {
           duration: 5000,
           isClosable: true,
         });
-      }
+      });
+    setNL((prev) => {
+      prev && prev.removeAllListeners("data");
+      return l;
     });
   };
 
@@ -219,10 +247,13 @@ export default function Game({ wallet }) {
       gameContractABI,
       game.addr
     );
-    gameContract.events.ListingFulfilled({}, async (error, data) => {
-      if (error) {
-        console.log("listener error:", error);
-      } else {
+    const l = gameContract.events
+      .ListingFulfilled({}, async (error, data) => {
+        if (error) {
+          console.log("listener error:", error);
+        }
+      })
+      .on("data", (ata) => {
         // const details = data.returnValues;
         toast({
           title: "Listing Fulfilled!",
@@ -231,20 +262,27 @@ export default function Game({ wallet }) {
           duration: 5000,
           isClosable: true,
         });
-      }
+      });
+
+    setLF((prev) => {
+      prev && prev.removeAllListeners("data");
+      return l;
     });
   };
 
   const addHMTKNApprovalListener = async () => {
-    if (!hmtknAddr) {
+    if (!game || !game.addr || !hmtknAddr) {
       return;
     }
     console.log("HMTKN approval listener added");
     const tokenContract = await new web3.eth.Contract(erc20TokenABI, hmtknAddr);
-    tokenContract.events.Approval({}, async (error, data) => {
-      if (error) {
-        console.log("listener error:", error);
-      } else {
+    const l = tokenContract.events
+      .Approval({}, async (error, data) => {
+        if (error) {
+          console.log("listener error:", error);
+        }
+      })
+      .on("data", (data) => {
         const details = data.returnValues;
         if (
           details &&
@@ -272,13 +310,17 @@ export default function Game({ wallet }) {
             setMain2TknAllowance(parseInt(details.value));
           }
         }
-      }
+      });
+
+    setTknL((prev) => {
+      prev && prev.removeAllListeners("data");
+      return l;
     });
   };
 
   useEffect(() => {
     addHMTKNApprovalListener();
-  }, [game && game.addr]);
+  }, [game && game.addr, hmtknAddr]);
 
   const addGYTListener = async () => {
     if (!gytAddr) {
@@ -286,10 +328,13 @@ export default function Game({ wallet }) {
     }
     console.log("gyt listener added");
     const tokenContract = await new web3.eth.Contract(erc20TokenABI, gytAddr);
-    tokenContract.events.Approval({}, async (error, data) => {
-      if (error) {
-        console.log("listener error:", error);
-      } else {
+    const lA = tokenContract.events
+      .Approval({}, async (error, data) => {
+        if (error) {
+          console.log("listener error:", error);
+        }
+      })
+      .on("data", (data) => {
         const details = data.returnValues;
         if (details.owner.toLowerCase() === wallet.toLowerCase()) {
           toast({
@@ -306,12 +351,19 @@ export default function Game({ wallet }) {
             setWinningTokenAllowance(details.value);
           }
         }
-      }
+      });
+    setYLA((prev) => {
+      prev && prev.removeAllListeners("data");
+      return lA;
     });
-    tokenContract.events.Transfer({}, async (error, data) => {
-      if (error) {
-        console.log("listener error:", error);
-      } else {
+
+    const lT = tokenContract.events
+      .Transfer({}, async (error, data) => {
+        if (error) {
+          console.log("listener error:", error);
+        }
+      })
+      .on("data", (data) => {
         const details = data.returnValues;
         if (details.from.toLowerCase() === wallet.toLowerCase()) {
           toast({
@@ -340,7 +392,11 @@ export default function Game({ wallet }) {
             BigNumber.from(prev).add(BigNumber.from(details.value)).toString()
           );
         }
-      }
+      });
+
+    setYLT((prev) => {
+      prev && prev.removeAllListeners("data");
+      return lT;
     });
   };
 
@@ -354,10 +410,13 @@ export default function Game({ wallet }) {
     }
     console.log("gnt approval listener added");
     const tokenContract = await new web3.eth.Contract(erc20TokenABI, gntAddr);
-    tokenContract.events.Approval({}, async (error, data) => {
-      if (error) {
-        console.log("listener error:", error);
-      } else {
+    const lA = tokenContract.events
+      .Approval({}, async (error, data) => {
+        if (error) {
+          console.log("listener error:", error);
+        }
+      })
+      .on("data", (data) => {
         const details = data.returnValues;
         if (details.owner.toLowerCase() === wallet.toLowerCase()) {
           toast({
@@ -374,13 +433,19 @@ export default function Game({ wallet }) {
             setWinningTokenAllowance(details.value);
           }
         }
-      }
+      });
+    setNLA((prev) => {
+      prev && prev.removeAllListeners("data");
+      return lA;
     });
 
-    tokenContract.events.Transfer({}, async (error, data) => {
-      if (error) {
-        console.log("listener error:", error);
-      } else {
+    const lT = tokenContract.events
+      .Transfer({}, async (error, data) => {
+        if (error) {
+          console.log("listener error:", error);
+        }
+      })
+      .on("data", (data) => {
         const details = data.returnValues;
         if (details.from.toLowerCase() === wallet.toLowerCase()) {
           toast({
@@ -409,7 +474,10 @@ export default function Game({ wallet }) {
             BigNumber.from(prev).add(BigNumber.from(details.value)).toString()
           );
         }
-      }
+      });
+    setNLT((prev) => {
+      prev && prev.removeAllListeners("data");
+      return lT;
     });
   };
 
@@ -454,10 +522,13 @@ export default function Game({ wallet }) {
       return;
     }
     console.log("game concluded listener added");
-    hwangMarket.events.GameConcluded({}, async (error, data) => {
-      if (error) {
-        console.log("listener error:", error);
-      } else {
+    const gc = hwangMarket.events
+      .GameConcluded({}, (error, data) => {
+        if (error) {
+          console.log("listener error:", error);
+        }
+      })
+      .on("data", async (data) => {
         if (data.returnValues.gameId !== id) {
           return;
         }
@@ -488,7 +559,11 @@ export default function Game({ wallet }) {
             outcome === "1" ? gytAddr : gntAddr
           )
         );
-      }
+      });
+
+    setGC((prev) => {
+      prev && prev.removeAllListeners("data");
+      return gc;
     });
   };
 
@@ -626,7 +701,11 @@ export default function Game({ wallet }) {
                   <Box textAlign="center">
                     <Stat size="sm">
                       <StatLabel>Total Amount</StatLabel>
-                      <StatNumber>{game.totalAmount} HMTKN</StatNumber>
+                      <StatNumber>
+                        {parseInt(game.betNoAmount) +
+                          parseInt(game.betYesAmount)}{" "}
+                        HMTKN
+                      </StatNumber>
                     </Stat>
                   </Box>
                   <Box
@@ -725,7 +804,19 @@ export default function Game({ wallet }) {
                       ? "Yes"
                       : "No"}
                   </Badge>
-                  <Text>{game.createdTime}</Text>
+
+                  <Text>
+                    {game.createdTime &&
+                      new Intl.DateTimeFormat("en-US", {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                        timeZoneName: "short",
+                      }).format(parseInt(game.createdTime) * 1000)}
+                  </Text>
 
                   <Link
                     isExternal
@@ -771,7 +862,10 @@ export default function Game({ wallet }) {
               </Box>
               <Divider my="10" />
               <Box>
-                <GameTransactionsHistory gameAddr={game && game.addr} />
+                <GameTransactionsHistory
+                  gameAddr={game && game.addr}
+                  setPJL2={setPJL2}
+                />
               </Box>
             </Box>
             <Box display="flex" flexDir="column">
@@ -897,7 +991,7 @@ export default function Game({ wallet }) {
                   </Stat>
                 </StatGroup>
                 <Divider my="7" />
-                {gameOutcome !== "0" || percentage === 100 ? (
+                {gameOutcome !== "0" ? (
                   <Box>
                     <Heading mb="4" size="md">
                       Trade in game token
@@ -943,7 +1037,7 @@ export default function Game({ wallet }) {
                       )}
                     </Box>
                   </Box>
-                ) : (
+                ) : percentage < 100 ? (
                   <Box>
                     <Heading mb="4" size="md">
                       Mint game tokens
@@ -1080,6 +1174,10 @@ export default function Game({ wallet }) {
                       </Box>
                     )}
                   </Box>
+                ) : (
+                  <Box>
+                    <Heading size="md">Game is closed.</Heading>
+                  </Box>
                 )}
                 <AlertDialog
                   motionPreset="slideInBottom"
@@ -1163,6 +1261,8 @@ export default function Game({ wallet }) {
                   hmtknAddr={hmtknAddr}
                   setIsCreate={setIsCreate}
                   setListingSelected={setListingSelected}
+                  setGAL={setGAL}
+                  setGALF={setGALF}
                 />
 
                 <Drawer
