@@ -45,13 +45,33 @@ npm install ganache
 npm install
 ```
 
-5. Enter truffle console. (Ensure your ganache server is running already.)
+5. Now, create a file called `secrets.json`. This is where deployment variables would be contained for truffle to prepare for deployment on goerli or polygon network. Alternatively, if you do not need it, you can simply fill in any random blank values for the API keys and it will still work.
+
+The mnemoic can be any mneomic generated simply using a tool like:
+https://www.npmjs.com/package/mnemonic
+
+Tha Alchemy keys can be obtained from your own alchemy account at:
+https://www.alchemy.com/
+
+The Infura API key from infura:
+https://infura.io/
+
+```
+{
+  "mnemonic": "REPLACE_WITH_YOUR_MNEMOIC",
+  "alchemyApiKey": "REPLACE_WITH_YOUR_KEY",
+  "alchemyMaticApiKey": "REPLACE_WITH_YOUR_KEY",
+  "INFURA_API_KEY": "REPLACE_WITH_YOUR_KEY"
+}
+```
+
+6. Enter truffle console. (Ensure your ganache server is running already.)
    `truffle console`
 
-6. Deploy the contracts to your local network.
+7. Deploy the contracts to your local network.
    `deploy`
 
-7. Get the deployed contract address.
+8. Get the deployed contract address.
 
 You should see an address for the deployed HwangMarket contract. Copy it, we will need it later.
 
