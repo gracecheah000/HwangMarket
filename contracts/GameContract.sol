@@ -68,7 +68,8 @@ contract GameContract is IListingOwner {
 
   function initTokenAddr(address gytAddr, address gntAddr) external {
     require(msg.sender == creator && !tokenInit);
-
+    
+    tokenInit = true;
     gameYesTokenContractAddress = gytAddr;
     gameNoTokenContractAddress = gntAddr;
   }
